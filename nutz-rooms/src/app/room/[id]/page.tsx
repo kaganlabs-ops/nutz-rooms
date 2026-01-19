@@ -3,14 +3,21 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import VoiceCall from "@/components/VoiceCall";
 
 type VideoState = "idle" | "listening" | "speaking";
 
 interface Character {
   id: string;
   name: string;
+  fullName?: string;
+  title?: string;
   avatar: string;
   phone?: string;
+  interests?: string[];
+  tools?: string[];
+  helpTopics?: { title: string; description: string }[];
+  agentId?: string;
   videoSources: {
     idle: string;
     listening: string;
@@ -22,12 +29,23 @@ const CHARACTERS: Character[] = [
   {
     id: "kagan",
     name: "Kagan",
+    fullName: "Kagan Sumer",
+    title: "Entrepreneur, founder Gorillas",
     avatar: "/kagan-avatar.jpg",
     phone: "4917665845156",
+    interests: ["AI", "Cyberpunk", "Groceries", "Brands", "Fundraising"],
+    tools: ["Claude", "ElevenLabs", "FAL", "Next.js"],
+    helpTopics: [
+      { title: "Get first customers", description: "Customer acquisition" },
+      { title: "Build a demo", description: "Product development" },
+      { title: "Craft your pitch", description: "Pitch deck creation" },
+      { title: "Investor outreach", description: "Fundraising strategy" },
+    ],
+    agentId: "agent_1001kefsejbwfs38hagtrp87e3zw",
     videoSources: {
-      idle: "https://v3b.fal.media/files/b/0a89ae17/C0eaf9KGKYo4KL7-rUSTR_output.mp4",
-      listening: "https://v3b.fal.media/files/b/0a89ae17/C0eaf9KGKYo4KL7-rUSTR_output.mp4",
-      speaking: "https://v3b.fal.media/files/b/0a89ae17/C0eaf9KGKYo4KL7-rUSTR_output.mp4",
+      idle: "/kagan.mp4",
+      listening: "/kagan.mp4",
+      speaking: "/kagan.mp4",
     },
   },
   {
@@ -60,6 +78,18 @@ const CHARACTERS: Character[] = [
       speaking: "/elon-listening.mp4",
     },
   },
+  {
+    id: "alexandra-cooper",
+    name: "Alexandra Cooper",
+    fullName: "Alexandra Cooper",
+    title: "Host, Call Her Daddy",
+    avatar: "/alexandra-cooper-avatar.jpg",
+    videoSources: {
+      idle: "/alexandra-cooper.mp4",
+      listening: "/alexandra-cooper.mp4",
+      speaking: "/alexandra-cooper.mp4",
+    },
+  },
 ];
 
 export default function RoomPage() {
@@ -69,14 +99,53 @@ export default function RoomPage() {
 
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [videoState] = useState<VideoState>("idle");
+  const [showVoiceCall, setShowVoiceCall] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Info panel expanded state
+  const [isInfoExpanded, setIsInfoExpanded] = useState(false);
 
-  // Nutz button state
-  const [nutzPosition, setNutzPosition] = useState({ x: 80, y: 200 });
+  // Nutz button state - starts big in center on desktop
+  const [nutzPosition, setNutzPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  const [nutzSize, setNutzSize] = useState(64);
+  const [nutzSize, setNutzSize] = useState(300);
+  const [nutzInitialized, setNutzInitialized] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
+
+  // Initialize nutz position - load from localStorage or use defaults
+  useEffect(() => {
+    if (typeof window !== "undefined" && !nutzInitialized) {
+      const saved = localStorage.getItem("nutz-position");
+      if (saved) {
+        try {
+          const { x, y, size } = JSON.parse(saved);
+          setNutzPosition({ x, y });
+          setNutzSize(size);
+        } catch {
+          // Fall back to defaults if parse fails
+          const isMobile = window.innerWidth < 768;
+          if (isMobile) {
+            setNutzPosition({ x: window.innerWidth - 60, y: 60 });
+            setNutzSize(80);
+          } else {
+            setNutzPosition({ x: window.innerWidth / 2, y: 200 });
+            setNutzSize(350);
+          }
+        }
+      } else {
+        // No saved position, use defaults
+        const isMobile = window.innerWidth < 768;
+        if (isMobile) {
+          setNutzPosition({ x: window.innerWidth - 60, y: 60 });
+          setNutzSize(80);
+        } else {
+          setNutzPosition({ x: window.innerWidth / 2, y: 200 });
+          setNutzSize(350);
+        }
+      }
+      setNutzInitialized(true);
+    }
+  }, [nutzInitialized]);
 
   // Initialize character from URL
   useEffect(() => {
@@ -121,13 +190,20 @@ export default function RoomPage() {
   }, [isDragging]);
 
   const handleMouseUp = useCallback(() => {
+    if (isDragging) {
+      // Save position to localStorage when drag ends
+      localStorage.setItem("nutz-position", JSON.stringify({
+        x: nutzPosition.x,
+        y: nutzPosition.y,
+        size: nutzSize,
+      }));
+    }
     setIsDragging(false);
-  }, []);
+  }, [isDragging, nutzPosition, nutzSize]);
 
   const handleSendMessage = () => {
-    if (selectedCharacter?.phone) {
-      window.open(`https://wa.me/${selectedCharacter.phone}`, "_blank");
-    }
+    // Navigate to chat page for this character
+    router.push(`/chat/${selectedCharacter?.id || "kagan"}`);
   };
 
   useEffect(() => {
@@ -150,7 +226,7 @@ export default function RoomPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
+    <div className="h-[100dvh] bg-black relative overflow-hidden fixed inset-0">
       {/* Fullscreen Video */}
       <video
         ref={videoRef}
@@ -165,21 +241,82 @@ export default function RoomPage() {
       {/* Bottom gradient */}
       <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
 
-      {/* Left sidebar */}
-      <div className="absolute left-4 top-4 bottom-4 flex flex-col justify-between z-20">
-        <div className="flex flex-col gap-4">
-          {/* Home */}
+      {/* Left side - Character Info Panel */}
+      <div className="absolute left-4 top-4 z-20">
+        <div
+          className={`bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden transition-all duration-300 ${
+            isInfoExpanded ? "w-72" : "w-auto"
+          }`}
+        >
+          {/* Collapsed: Name and Title header (clickable) */}
           <button
-            onClick={() => router.push("/")}
-            className="w-10 h-10 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors"
+            onClick={() => setIsInfoExpanded(!isInfoExpanded)}
+            className="w-full p-4 flex items-center gap-3 text-left hover:bg-white/5 transition-colors"
           >
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-semibold text-white truncate">
+                {selectedCharacter.fullName || selectedCharacter.name}
+              </h2>
+              {selectedCharacter.title && (
+                <p className="text-white/60 text-sm truncate">{selectedCharacter.title}</p>
+              )}
+            </div>
+            <svg
+              className={`w-5 h-5 text-white/60 transition-transform ${isInfoExpanded ? "rotate-180" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
-        </div>
 
-        {/* Settings */}
+          {/* Expanded content */}
+          {isInfoExpanded && (
+            <div className="px-4 pb-4 flex flex-col gap-4">
+              {/* Interests */}
+              {selectedCharacter.interests && selectedCharacter.interests.length > 0 && (
+                <div>
+                  <h3 className="text-white/40 text-xs uppercase tracking-wider mb-2">Interests</h3>
+                  <p className="text-white/80 text-sm">
+                    {selectedCharacter.interests.join(" • ")}
+                  </p>
+                </div>
+              )}
+
+              {/* Tools */}
+              {selectedCharacter.tools && selectedCharacter.tools.length > 0 && (
+                <div>
+                  <h3 className="text-white/40 text-xs uppercase tracking-wider mb-2">Tools</h3>
+                  <p className="text-white/80 text-sm">
+                    {selectedCharacter.tools.join(" • ")}
+                  </p>
+                </div>
+              )}
+
+              {/* Help Topics */}
+              {selectedCharacter.helpTopics && selectedCharacter.helpTopics.length > 0 && (
+                <div>
+                  <h3 className="text-white/40 text-xs uppercase tracking-wider mb-3">I can help you with</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {selectedCharacter.helpTopics.map((topic, index) => (
+                      <button
+                        key={index}
+                        className="px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-left hover:bg-white/10 transition-colors"
+                      >
+                        <span className="text-white text-sm font-medium block">{topic.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Settings button - bottom left (hidden on mobile) */}
+      <div className="absolute left-4 bottom-4 z-20 hidden md:block">
         <button className="w-10 h-10 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors">
           <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -261,14 +398,24 @@ export default function RoomPage() {
         </div>
       </div>
 
-      {/* Send message button */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+      {/* Send message and call buttons */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
         <button
           onClick={handleSendMessage}
-          className="px-6 py-2.5 rounded-full font-medium transition-all bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20"
+          className="px-6 py-2.5 rounded-full font-medium transition-all bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 whitespace-nowrap"
         >
           Send a message
         </button>
+        {selectedCharacter.agentId && (
+          <button
+            onClick={() => setShowVoiceCall(true)}
+            className="w-11 h-11 rounded-full flex items-center justify-center transition-all bg-green-500/80 backdrop-blur-sm border border-green-400/30 text-white hover:bg-green-500"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Draggable Nutz Button */}
@@ -277,9 +424,10 @@ export default function RoomPage() {
         style={{
           left: nutzPosition.x,
           top: nutzPosition.y,
-          transform: "translate(-100%, -50%)",
+          transform: "translate(-50%, -50%)",
           width: nutzSize,
           height: nutzSize,
+          opacity: nutzInitialized ? 1 : 0,
         }}
         onMouseDown={handleNutzMouseDown}
       >
@@ -292,6 +440,15 @@ export default function RoomPage() {
           draggable={false}
         />
       </div>
+
+      {/* Voice Call Overlay */}
+      {showVoiceCall && selectedCharacter.agentId && (
+        <VoiceCall
+          agentId={selectedCharacter.agentId}
+          characterName={selectedCharacter.name}
+          onClose={() => setShowVoiceCall(false)}
+        />
+      )}
     </div>
   );
 }

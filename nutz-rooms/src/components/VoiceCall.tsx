@@ -91,10 +91,18 @@ export default function VoiceCall({ agentId, characterName, onClose }: VoiceCall
       setConversation(conv);
     } catch (err) {
       console.error("Failed to start call:", err);
-      setError("Failed to access microphone. Please allow microphone access.");
+      // Check if it's a security/HTTPS issue
+      const isSecure = typeof window !== "undefined" && (window.location.protocol === "https:" || window.location.hostname === "localhost");
+      if (!isSecure) {
+        setError("Microphone requires HTTPS. Please use the secure site.");
+      } else if (err instanceof DOMException && err.name === "NotAllowedError") {
+        setError("Microphone access denied. Please allow microphone in your browser settings.");
+      } else {
+        setError("Failed to access microphone. Please check your browser settings.");
+      }
       setStatus("idle");
     }
-  }, [agentId]);
+  }, [agentId, characterName]);
 
   // Auto-start call when component mounts
   useEffect(() => {

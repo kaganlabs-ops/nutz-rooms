@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     if (searchResults && searchResults.edges && searchResults.edges.length > 0) {
       memories = searchResults.edges
         .map((edge: { fact?: string }) => edge.fact)
-        .filter(Boolean)
+        .filter((fact): fact is string => Boolean(fact))
         .slice(0, 10); // Top 10 most relevant facts
     }
 
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     if (searchResults && searchResults.edges && searchResults.edges.length > 0) {
       memories = searchResults.edges
         .map((edge: { fact?: string }) => edge.fact)
-        .filter(Boolean)
+        .filter((fact): fact is string => Boolean(fact))
         .slice(0, 10);
     }
 
