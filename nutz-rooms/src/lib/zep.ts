@@ -109,3 +109,52 @@ export async function addToGraph(userId: string, data: string, type: "text" | "j
   }
 }
 
+// ============================================
+// USER MEMORY SYSTEM (per-user, separate from Kagan's brain)
+// ============================================
+
+// Get user's personal memory/context
+export async function getUserMemory(userId: string, query: string, limit: number = 5): Promise<string[]> {
+  console.log(`[ZEP] getUserMemory called - userId: ${userId}, query: "${query.slice(0, 50)}..."`);
+  try {
+    const results = await zep.graph.search({
+      userId,
+      query,
+      limit,
+    });
+
+    const memories = results?.edges
+      ?.map((edge: { fact?: string }) => edge.fact)
+      .filter((f): f is string => Boolean(f)) || [];
+
+    console.log(`[ZEP] getUserMemory found ${memories.length} memories`);
+    return memories;
+  } catch (e) {
+    console.error(`[ZEP] getUserMemory ERROR:`, e);
+    return [];
+  }
+}
+
+// Save fact to user's personal memory (NOT Kagan's brain)
+export async function saveUserMemory(userId: string, fact: string): Promise<boolean> {
+  console.log(`[ZEP] saveUserMemory - userId: ${userId}, fact: "${fact.slice(0, 100)}..."`);
+  try {
+    await zep.graph.add({
+      userId,
+      type: "text",
+      data: fact,
+    });
+    console.log(`[ZEP] saveUserMemory SUCCESS`);
+    return true;
+  } catch (e) {
+    console.error(`[ZEP] saveUserMemory FAILED:`, e);
+    return false;
+  }
+}
+
+// Format user memories for inclusion in prompt
+export function formatUserMemoryContext(memories: string[]): string {
+  if (memories.length === 0) return "";
+  return `## What I remember about you:\n${memories.map(m => `- ${m}`).join('\n')}`;
+}
+

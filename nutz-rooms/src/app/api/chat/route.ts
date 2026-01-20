@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ensureUser, createThread, addMessages, getThreadMessages, searchGraph, addToGraph } from "@/lib/zep";
+import { ensureUser, createThread, addMessages, getThreadMessages, getUserMemory, saveUserMemory, formatUserMemoryContext } from "@/lib/zep";
 import { anthropic, KAGAN_SYSTEM_PROMPT } from "@/lib/openai";
 import { parseArtifact } from "@/lib/artifacts";
 import { searchGif } from "@/lib/giphy";
+import { findRelevantFacts, formatBrainContext, getKaganBrain } from "@/lib/brain";
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
+
   try {
     const { message, threadId: existingThreadId, userId } = await req.json();
 
@@ -15,24 +18,50 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Ensure user exists in Zep
-    await ensureUser(userId);
+    console.log(`[CHAT] Request from user: ${userId}`);
 
-    // Get or create thread
-    let threadId = existingThreadId;
-    if (!threadId) {
-      threadId = await createThread(userId);
-    }
+    // ============================================
+    // STEP 1: PARALLEL FETCH (before Claude)
+    // - Kagan's brain (cached, instant)
+    // - User's memory (from Zep, ~150ms)
+    // - Thread setup (if needed)
+    // ============================================
 
-    // Add user message to Zep thread
+    // Start parallel operations
+    const [
+      _brainPreload,        // Just to ensure cache is warm
+      userMemories,         // User's personal memories
+      threadSetup,          // Ensure user + thread exists
+    ] = await Promise.all([
+      // 1. Kagan's brain - instant from cache
+      Promise.resolve(getKaganBrain()),
+
+      // 2. User's memory from Zep
+      getUserMemory(userId, message, 5),
+
+      // 3. Setup: ensure user exists + get/create thread
+      (async () => {
+        await ensureUser(userId);
+        let threadId = existingThreadId;
+        if (!threadId) {
+          threadId = await createThread(userId);
+        }
+        return threadId;
+      })(),
+    ]);
+
+    const threadId = threadSetup;
+    const parallelTime = Date.now() - startTime;
+    console.log(`[CHAT] Parallel fetch completed in ${parallelTime}ms`);
+
+    // Add user message to thread (for history)
     await addMessages(threadId, [
       { role: "user", content: message, name: "User" },
     ]);
 
-    // Get message history from thread (last 10 messages)
+    // Get conversation history
     const threadMessages = await getThreadMessages(threadId);
     const messageHistory: Array<{ role: "user" | "assistant"; content: string }> = [];
-
     const recentMessages = threadMessages.slice(-10);
     for (const msg of recentMessages) {
       if (msg.role === "user" || msg.role === "assistant") {
@@ -43,29 +72,42 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Search for relevant memories
-    let memories: string[] = [];
-    const memoryResults = await searchGraph(userId, message);
-    if (memoryResults?.edges) {
-      memories = memoryResults.edges
-        .map((e: { fact?: string }) => e.fact)
-        .filter((f): f is string => Boolean(f))
-        .slice(0, 10);
-    }
+    // ============================================
+    // BUILD CONTEXT: Combine brain + user memory
+    // ============================================
 
-    // Build system prompt with memories
+    // Get relevant facts from Kagan's brain based on message
+    const relevantBrainFacts = findRelevantFacts(message, 8);
+
+    // Build system prompt with combined context
     let systemPrompt = KAGAN_SYSTEM_PROMPT;
-    if (memories.length > 0) {
-      systemPrompt += `\n\n## Context from memory:\n${memories.join('\n')}`;
+
+    // Add Kagan's brain (shared knowledge)
+    if (relevantBrainFacts.length > 0) {
+      systemPrompt += `\n\n${formatBrainContext(relevantBrainFacts)}`;
     }
 
-    // Call Claude
+    // Add user's personal memory
+    if (userMemories.length > 0) {
+      systemPrompt += `\n\n${formatUserMemoryContext(userMemories)}`;
+    }
+
+    console.log(`[CHAT] Context: ${relevantBrainFacts.length} brain facts, ${userMemories.length} user memories`);
+
+    // ============================================
+    // STEP 2: CALL CLAUDE (stream to user)
+    // ============================================
+
+    const claudeStartTime = Date.now();
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1000,
       system: systemPrompt,
       messages: [...messageHistory, { role: "user", content: message }],
     });
+
+    const claudeTime = Date.now() - claudeStartTime;
+    console.log(`[CHAT] Claude responded in ${claudeTime}ms`);
 
     const textBlock = response.content.find((block) => block.type === "text");
     const rawResponse = textBlock?.type === "text" ? textBlock.text : "";
@@ -83,15 +125,27 @@ export async function POST(req: NextRequest) {
       responseText = textWithGifMarkers.replace(gifMatch[0], '').trim();
     }
 
-    // Add AI response to Zep thread
-    await addMessages(threadId, [
-      { role: "assistant", content: responseText, name: "Kagan" },
-    ]);
+    // ============================================
+    // STEP 3: BACKGROUND SAVE (user doesn't wait)
+    // - Save AI response to thread
+    // - Extract and save user facts to USER memory only
+    // ============================================
 
-    // Save facts to Zep in background (non-blocking)
-    extractAndSaveFacts(userId, message).catch(err =>
-      console.error('[CHAT] Background fact save failed:', err)
-    );
+    // Fire and forget - user doesn't wait for these
+    Promise.all([
+      // Save AI response to thread
+      addMessages(threadId, [
+        { role: "assistant", content: responseText, name: "Kagan" },
+      ]),
+
+      // Extract and save facts to USER's memory (not Kagan's brain)
+      extractAndSaveUserFacts(userId, message, responseText),
+    ]).catch(err => {
+      console.error('[CHAT] Background save failed:', err);
+    });
+
+    const totalTime = Date.now() - startTime;
+    console.log(`[CHAT] Total request time: ${totalTime}ms`);
 
     return NextResponse.json({
       response: responseText,
@@ -108,22 +162,39 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Extract facts from message and save to Zep
-async function extractAndSaveFacts(userId: string, message: string): Promise<void> {
-  const importantPatterns = [
-    /i(?:'m| am) building (.+)/i,
-    /my (?:startup|company|project) is (.+)/i,
-    /i work (?:on|at) (.+)/i,
-    /my name is (.+)/i,
-    /i(?:'m| am) a (.+)/i,
-    /i founded (.+)/i,
+// Extract facts from user message and AI response, save to USER's memory only
+async function extractAndSaveUserFacts(userId: string, userMessage: string, aiResponse: string): Promise<void> {
+  const factsToSave: string[] = [];
+
+  // Patterns to extract from user message
+  const userPatterns = [
+    { pattern: /i(?:'m| am) building (.+)/i, template: "User is building: $1" },
+    { pattern: /my (?:startup|company|project) is (?:called )?(.+)/i, template: "User's project: $1" },
+    { pattern: /i work (?:on|at|for) (.+)/i, template: "User works at/on: $1" },
+    { pattern: /my name is (.+)/i, template: "User's name: $1" },
+    { pattern: /i(?:'m| am) a (.+?)(?:\.|,|$)/i, template: "User is a: $1" },
+    { pattern: /i founded (.+)/i, template: "User founded: $1" },
+    { pattern: /i have (\d+) (?:users|customers)/i, template: "User has $1 users/customers" },
+    { pattern: /we(?:'ve| have) raised (.+)/i, template: "User raised: $1" },
+    { pattern: /i(?:'m| am) (?:feeling |)(?:stuck|overwhelmed|lost|stressed)/i, template: "User mentioned feeling stuck/overwhelmed" },
+    { pattern: /my (?:biggest |main )?(?:problem|challenge|issue) is (.+)/i, template: "User's main challenge: $1" },
   ];
 
-  for (const pattern of importantPatterns) {
-    const match = message.match(pattern);
+  for (const { pattern, template } of userPatterns) {
+    const match = userMessage.match(pattern);
     if (match) {
-      await addToGraph(userId, `User fact: ${match[0]}`);
-      break;
+      const fact = template.replace('$1', match[1]?.trim() || match[0]);
+      factsToSave.push(fact);
     }
+  }
+
+  // Save extracted facts (max 3 per message to avoid noise)
+  const factsToActuallySave = factsToSave.slice(0, 3);
+  for (const fact of factsToActuallySave) {
+    await saveUserMemory(userId, fact);
+  }
+
+  if (factsToActuallySave.length > 0) {
+    console.log(`[CHAT] Saved ${factsToActuallySave.length} facts to user memory: ${factsToActuallySave.join(', ')}`);
   }
 }

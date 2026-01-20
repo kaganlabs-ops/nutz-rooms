@@ -63,8 +63,21 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
-  const userId = "kagan-sumer";
+  const [userId, setUserId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Initialize or retrieve user ID from localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      let storedUserId = localStorage.getItem("nutz-user-id");
+      if (!storedUserId) {
+        // Generate new user ID
+        storedUserId = `user-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+        localStorage.setItem("nutz-user-id", storedUserId);
+      }
+      setUserId(storedUserId);
+    }
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -75,7 +88,7 @@ export default function ChatPage() {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || !userId) return;
 
     const userMessage = input.trim();
     setInput("");
