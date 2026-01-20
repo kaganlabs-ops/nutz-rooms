@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { anthropic, KAGAN_SYSTEM_PROMPT } from "@/lib/openai";
+import { openai, KAGAN_SYSTEM_PROMPT } from "@/lib/openai";
 import { searchGraph, KAGAN_USER_ID, getModeState, saveModeState, clearModeState, isModeStateStale } from "@/lib/zep";
 import { detectMode, detectExplicitModeSwitch } from "@/lib/router";
 import { getMode, buildModePrompt } from "@/lib/modes";
@@ -166,51 +166,78 @@ export async function POST(req: NextRequest) {
     }
 
     console.log("Stream mode:", stream, "Mode:", modeState?.mode || "thought-partner");
+    console.log("System prompt length:", systemPrompt.length);
+    console.log("System prompt preview:", systemPrompt.slice(0, 200));
+    console.log("Chat messages:", JSON.stringify(chatMessages.slice(-2)));
 
     if (stream) {
-      // Streaming response for ElevenLabs
-      const response = await anthropic.messages.create({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: chatMessages,
+      // Streaming response for ElevenLabs using GPT-4o-mini
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        max_tokens: 80,
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...chatMessages,
+        ],
         stream: true,
       });
 
       // Create a streaming response in OpenAI format
       const encoder = new TextEncoder();
-      let fullResponse = ""; // Collect full response for stage advancement check
+      let fullResponse = "";
 
       const readable = new ReadableStream({
         async start(controller) {
           const id = `chatcmpl-${Date.now()}`;
 
           try {
-            for await (const event of response) {
-              if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-                fullResponse += event.delta.text;
-                const chunk = {
+            for await (const chunk of response) {
+              const content = chunk.choices[0]?.delta?.content || "";
+              if (content) {
+                // Stop at first newline for shorter responses
+                if (content.includes('\n')) {
+                  const beforeNewline = content.split('\n')[0];
+                  fullResponse += beforeNewline;
+                  if (beforeNewline) {
+                    const outChunk = {
+                      id,
+                      object: "chat.completion.chunk",
+                      created: Math.floor(Date.now() / 1000),
+                      model: "gpt-4o-mini",
+                      choices: [{
+                        index: 0,
+                        delta: { content: beforeNewline },
+                        finish_reason: null,
+                      }],
+                    };
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(outChunk)}\n\n`));
+                  }
+                  break; // Stop streaming at newline
+                }
+                fullResponse += content;
+                const outChunk = {
                   id,
                   object: "chat.completion.chunk",
                   created: Math.floor(Date.now() / 1000),
-                  model: "claude-sonnet-4-20250514",
+                  model: "gpt-4o-mini",
                   choices: [{
                     index: 0,
-                    delta: { content: event.delta.text },
+                    delta: { content },
                     finish_reason: null,
                   }],
                 };
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`));
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(outChunk)}\n\n`));
               }
             }
 
-            // Check stage completion and advance (after streaming is done)
+            console.log("Full response:", fullResponse);
+
+            // Check stage completion and advance
             if (modeState && modeState.currentStage) {
               const shouldAdvance = shouldAdvanceStage(fullResponse, userMessage, modeState);
               if (shouldAdvance) {
                 const advanced = await advanceStage(userId, modeState);
                 if (!advanced) {
-                  // Mode complete
                   await clearModeState(userId, modeState.mode);
                 }
                 console.log("Stage advanced:", advanced);
@@ -222,7 +249,7 @@ export async function POST(req: NextRequest) {
               id,
               object: "chat.completion.chunk",
               created: Math.floor(Date.now() / 1000),
-              model: "claude-sonnet-4-20250514",
+              model: "gpt-4o-mini",
               choices: [{
                 index: 0,
                 delta: {},
@@ -249,15 +276,18 @@ export async function POST(req: NextRequest) {
       });
     } else {
       // Non-streaming response
-      const response = await anthropic.messages.create({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: chatMessages,
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        max_tokens: 80,
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...chatMessages,
+        ],
       });
 
-      const textBlock = response.content.find(block => block.type === "text");
-      const content = textBlock?.type === "text" ? textBlock.text : "";
+      let content = response.choices[0]?.message?.content || "";
+      // Post-process: take first line only
+      content = content.split('\n')[0].trim();
 
       // Check stage completion and advance
       if (modeState && modeState.currentStage) {
@@ -274,7 +304,7 @@ export async function POST(req: NextRequest) {
         id: `chatcmpl-${Date.now()}`,
         object: "chat.completion",
         created: Math.floor(Date.now() / 1000),
-        model: "claude-sonnet-4-20250514",
+        model: "gpt-4o-mini",
         choices: [{
           index: 0,
           message: { role: "assistant", content },

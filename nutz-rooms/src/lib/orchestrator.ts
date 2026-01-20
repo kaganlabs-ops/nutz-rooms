@@ -2,7 +2,7 @@ import { detectMode, detectExplicitModeSwitch } from './router';
 import { getMode, buildModePrompt } from './modes';
 import type { ModeState, ToolkitMode } from './modes/types';
 import { getModeState, saveModeState, clearModeState, isModeStateStale, searchGraph, addToGraph } from './zep';
-import { anthropic, KAGAN_SYSTEM_PROMPT } from './openai';
+import { openai, KAGAN_SYSTEM_PROMPT } from './openai';
 
 interface ConversationContext {
   userId: string;
@@ -68,7 +68,7 @@ export class Orchestrator {
     const systemPrompt = this.buildSystemPrompt(modeState, memories);
 
     // 7. Call Claude
-    const response = await this.callClaude(message, messageHistory, systemPrompt);
+    const response = await this.callLLM(message, messageHistory, systemPrompt);
 
     // 8. Check stage completion and advance (skip for modes with no stages)
     if (modeState && modeState.currentStage) {
@@ -135,25 +135,27 @@ export class Orchestrator {
     return prompt;
   }
 
-  private async callClaude(
+  private async callLLM(
     message: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }>,
     systemPrompt: string
   ): Promise<string> {
-    const messages = [
+    const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+      { role: 'system', content: systemPrompt },
       ...history,
-      { role: 'user' as const, content: message }
+      { role: 'user', content: message }
     ];
 
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 50,
-      system: systemPrompt,
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      max_tokens: 80,
       messages: messages,
     });
 
-    const textBlock = response.content.find((block) => block.type === 'text');
-    return textBlock?.type === 'text' ? textBlock.text : '';
+    let text = response.choices[0]?.message?.content || '';
+    // Post-process: take first line only, strip newlines
+    text = text.split('\n')[0].trim();
+    return text;
   }
 
   private shouldAdvanceStage(response: string, userMessage: string, state: ModeState): boolean {
