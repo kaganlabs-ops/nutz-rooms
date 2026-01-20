@@ -3,10 +3,13 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import ArtifactCard from "@/components/ArtifactCard";
+import type { Artifact } from "@/lib/artifacts";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+  artifact?: Artifact | null;
 }
 
 interface Character {
@@ -60,7 +63,6 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
-  // Use consistent userId across voice and text for shared mode state
   const userId = "kagan-sumer";
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -101,7 +103,7 @@ export default function ChatPage() {
       setThreadId(data.threadId);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: data.response },
+        { role: "assistant", content: data.response, artifact: data.artifact },
       ]);
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -177,14 +179,17 @@ export default function ChatPage() {
                 />
               </div>
             )}
-            <div
-              className={`max-w-[75%] rounded-2xl px-4 py-3 ${
-                message.role === "user"
-                  ? "bg-blue-600 text-white"
-                  : "bg-white/10 text-white"
-              }`}
-            >
-              <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+            <div className="max-w-[75%]">
+              <div
+                className={`rounded-2xl px-4 py-3 ${
+                  message.role === "user"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white/10 text-white"
+                }`}
+              >
+                <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+              </div>
+              {message.artifact && <ArtifactCard artifact={message.artifact} />}
             </div>
           </div>
         ))}

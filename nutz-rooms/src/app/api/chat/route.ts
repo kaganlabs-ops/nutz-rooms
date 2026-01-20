@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ensureUser, createThread, addMessages, getThreadMessages } from "@/lib/zep";
-import { orchestrator } from "@/lib/orchestrator";
+import { ensureUser, createThread, addMessages, getThreadMessages, searchGraph, addToGraph } from "@/lib/zep";
+import { anthropic, KAGAN_SYSTEM_PROMPT } from "@/lib/openai";
+import { parseArtifact } from "@/lib/artifacts";
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,25 +42,50 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Use orchestrator to process the conversation
-    const result = await orchestrator.process({
-      userId,
-      message,
-      messageHistory,
+    // Search for relevant memories
+    let memories: string[] = [];
+    const memoryResults = await searchGraph(userId, message);
+    if (memoryResults?.edges) {
+      memories = memoryResults.edges
+        .map((e: { fact?: string }) => e.fact)
+        .filter((f): f is string => Boolean(f))
+        .slice(0, 10);
+    }
+
+    // Build system prompt with memories
+    let systemPrompt = KAGAN_SYSTEM_PROMPT;
+    if (memories.length > 0) {
+      systemPrompt += `\n\n## Context from memory:\n${memories.join('\n')}`;
+    }
+
+    // Call Claude
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: [...messageHistory, { role: "user", content: message }],
     });
+
+    const textBlock = response.content.find((block) => block.type === "text");
+    const rawResponse = textBlock?.type === "text" ? textBlock.text : "";
+
+    // Parse artifacts from response
+    const { text: responseText, artifact } = parseArtifact(rawResponse);
 
     // Add AI response to Zep thread
     await addMessages(threadId, [
-      { role: "assistant", content: result.response, name: "Kagan" },
+      { role: "assistant", content: responseText, name: "Kagan" },
     ]);
 
+    // Save facts to Zep in background (non-blocking)
+    extractAndSaveFacts(userId, message).catch(err =>
+      console.error('[CHAT] Background fact save failed:', err)
+    );
+
     return NextResponse.json({
-      response: result.response,
+      response: responseText,
       threadId,
-      mode: result.modeState?.mode || null,
-      stage: result.modeState?.currentStage || null,
-      modeChanged: result.modeChanged,
-      stageAdvanced: result.stageAdvanced,
+      artifact,
     });
   } catch (error) {
     console.error("Chat error:", error);
@@ -67,5 +93,25 @@ export async function POST(req: NextRequest) {
       { error: "Failed to process chat" },
       { status: 500 }
     );
+  }
+}
+
+// Extract facts from message and save to Zep
+async function extractAndSaveFacts(userId: string, message: string): Promise<void> {
+  const importantPatterns = [
+    /i(?:'m| am) building (.+)/i,
+    /my (?:startup|company|project) is (.+)/i,
+    /i work (?:on|at) (.+)/i,
+    /my name is (.+)/i,
+    /i(?:'m| am) a (.+)/i,
+    /i founded (.+)/i,
+  ];
+
+  for (const pattern of importantPatterns) {
+    const match = message.match(pattern);
+    if (match) {
+      await addToGraph(userId, `User fact: ${match[0]}`);
+      break;
+    }
   }
 }
