@@ -41,7 +41,7 @@ const CHARACTERS: Character[] = [
       { title: "Craft your pitch", description: "Pitch deck creation" },
       { title: "Investor outreach", description: "Fundraising strategy" },
     ],
-    agentId: "agent_1001kefsejbwfs38hagtrp87e3zw",
+    agentId: "ITTUnT6ahAcn9uFKwNj0",
     videoSources: {
       idle: "/kagan.mp4",
       listening: "/kagan.mp4",
