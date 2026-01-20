@@ -1,0 +1,4189 @@
+{
+  "userId": "kagan-sumer",
+  "exportedAt": "2026-01-19T22:53:29.846Z",
+  "totalFacts": 697,
+  "facts": [
+    {
+      "fact": "The mode state for 'clarity-walk' started at 2026-01-19T22:40:19.352Z.",
+      "createdAt": "2026-01-19T22:40:23.257923Z",
+      "uuid": "f9ed6be2-f0fc-4a9a-ba39-e6dec9721f67",
+      "relation": "STARTED_AT"
+    },
+    {
+      "fact": "The clarity-walk mode is associated with the mode_state",
+      "createdAt": "2026-01-19T22:35:59.490232Z",
+      "uuid": "0827c39f-416a-4b04-bb6d-cdef53395661",
+      "relation": "IS_MODE_OF"
+    },
+    {
+      "fact": "The 'clarity-walk' mode was started during the 'brain-dump' stage.",
+      "createdAt": "2026-01-19T22:31:08.521093Z",
+      "uuid": "d4eff6e0-4ec4-43e1-84f5-45e133284be2",
+      "relation": "STARTED_IN_STAGE"
+    },
+    {
+      "fact": "The mode_state is currently in the 'brain-dump' stage.",
+      "createdAt": "2026-01-19T22:25:15.787Z",
+      "uuid": "6e85d692-ee49-4115-8815-b96d94655eb4",
+      "relation": "IS_IN_STAGE"
+    },
+    {
+      "fact": "The mode_state currently has the 'clarity-walk' mode.",
+      "createdAt": "2026-01-19T22:25:15.787Z",
+      "uuid": "53caeece-b685-4a60-bb4c-d1b0a7eaa711",
+      "relation": "HAS_STATE"
+    },
+    {
+      "fact": "Kagan Sumer prefers sassier and wittier responses.",
+      "createdAt": "2026-01-18T17:34:34.416496Z",
+      "uuid": "b359e03f-695e-424e-9a97-6189ac569e96",
+      "relation": "PREFERS"
+    },
+    {
+      "fact": "Gatna Pilates is equipped with 12 Megaform beds.",
+      "createdAt": "2026-01-18T17:23:36.326486Z",
+      "uuid": "b8a46cec-f362-44d5-9980-05472b35c403",
+      "relation": "HAS_ITEM"
+    },
+    {
+      "fact": "Gatna Pilates is situated in Munich.",
+      "createdAt": "2026-01-18T17:23:36.326438Z",
+      "uuid": "b7bf786e-0a73-4740-9553-195d1667aade",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan Sumer is currently building a Pilates studio.",
+      "createdAt": "2026-01-18T17:22:58.776785Z",
+      "uuid": "2858f570-7db8-4964-b36b-255919442226",
+      "relation": "BUILDING"
+    },
+    {
+      "fact": "The Pilates studio is associated with Kagan Sumer.",
+      "createdAt": "2026-01-18T17:22:58.776852Z",
+      "uuid": "21e9dfac-5e49-47ae-a7d4-fc11efd93944",
+      "relation": "RELATES_TO"
+    },
+    {
+      "fact": "Kagan Sumer is with Manlybone.",
+      "createdAt": "2026-01-18T15:31:38.07255Z",
+      "uuid": "bb6e9956-5fbd-41f9-8044-ecebf44ab6d3",
+      "relation": "WITH"
+    },
+    {
+      "fact": "The API contains information related to a test fact.",
+      "createdAt": "2026-01-18T15:18:16.638766Z",
+      "uuid": "fb2749f7-2850-4dc9-8c3f-725e46520d84",
+      "relation": "CONTAINS_INFORMATION"
+    },
+    {
+      "fact": "Kagan advocates for complete commitment, rejecting half measures.",
+      "createdAt": "2026-01-18T13:54:34.645567Z",
+      "uuid": "c8e3b9bc-8ed1-4c34-9c2c-589832be21f4",
+      "relation": "BELIEVES_COMMITMENT_LEVEL"
+    },
+    {
+      "fact": "A key group should love the idea.",
+      "createdAt": "2026-01-18T13:54:22.403542Z",
+      "uuid": "df9b46ab-878b-46bf-b997-7e571b62ec54",
+      "relation": "ASSOCIATED_WITH"
+    },
+    {
+      "fact": "Kagan holds the belief that convincing everyone is not required.",
+      "createdAt": "2026-01-18T13:54:22.403489Z",
+      "uuid": "6fb7e651-766b-4d9c-b115-7ff69220521c",
+      "relation": "BELIEVES_CONVINCEMENT_UNNECESSARY"
+    },
+    {
+      "fact": "Kagan suggests that the focus should be on finding a key group.",
+      "createdAt": "2026-01-18T13:54:22.403529Z",
+      "uuid": "37d1b1c8-9476-480e-aeeb-aa2f4ceac042",
+      "relation": "ADVISES_TARGETING_GROUP"
+    },
+    {
+      "fact": "Kagan suggests that one should first believe in their idea",
+      "createdAt": "2026-01-18T13:54:10.988887Z",
+      "uuid": "d430f18d-14e7-4950-84ba-0cfd141f57b9",
+      "relation": "BELIEVES_ONE_SHOULD"
+    },
+    {
+      "fact": "Kagan advises to subsequently find reasons to support the idea",
+      "createdAt": "2026-01-18T13:54:10.988937Z",
+      "uuid": "c30b52f9-5d65-4b81-b567-cb2f3c632fce",
+      "relation": "SUGGESTS_ACTION"
+    },
+    {
+      "fact": "Kagan thinks one should make oneself believe in the idea",
+      "createdAt": "2026-01-18T13:54:10.988925Z",
+      "uuid": "b66c3bd4-9545-4dd1-952e-9671fd8ee338",
+      "relation": "SUGGESTS_ACTION"
+    },
+    {
+      "fact": "Kagan believes in the concept represented by a Turkish saying about starting motion.",
+      "createdAt": "2026-01-18T13:53:58.438809Z",
+      "uuid": "144aebef-55e9-4763-b644-4a5b0bf7f07c",
+      "relation": "BELIEVES_IN"
+    },
+    {
+      "fact": "The Turkish saying states that camels get on a line once they start moving.",
+      "createdAt": "2026-01-18T13:53:58.438862Z",
+      "uuid": "0768b4df-d381-4430-a496-bdc2922939d4",
+      "relation": "STATES_THAT"
+    },
+    {
+      "fact": "Most hard ideas can be restated as easy ideas.",
+      "createdAt": "2026-01-18T13:53:47.208772Z",
+      "uuid": "50d40831-e985-4dd8-b7f3-b42d43afd87a",
+      "relation": "CAN_BE_RESTATE_AS"
+    },
+    {
+      "fact": "Kagan learned that easy ideas get built much faster.",
+      "createdAt": "2026-01-18T13:53:47.208727Z",
+      "uuid": "16e43e1e-602d-4c4c-a40b-4f54109c96b3",
+      "relation": "LEARNED_ABOUT"
+    },
+    {
+      "fact": "The brainstorm process should include putting every idea on the board.",
+      "createdAt": "2026-01-18T13:53:35.593514Z",
+      "uuid": "fe86f29e-f552-48aa-8f30-f744aae2b813",
+      "relation": "INVOLVES"
+    },
+    {
+      "fact": "Kagan believes that the brainstorm process should make everyone feel heard.",
+      "createdAt": "2026-01-18T13:53:35.593463Z",
+      "uuid": "064e19de-1c5d-4a97-8e53-b0a4db7d655c",
+      "relation": "BELIEVES_IN"
+    },
+    {
+      "fact": "Kagan advises that measurement should be part of the product spec.",
+      "createdAt": "2026-01-18T13:53:25.055094Z",
+      "uuid": "3f015af8-fed4-4d08-ac49-1bd1f7d8642b",
+      "relation": "ADVISES_INCLUSION_IN"
+    },
+    {
+      "fact": "Kagan advises that measurement should be included.",
+      "createdAt": "2026-01-18T13:53:25.055056Z",
+      "uuid": "21c76b97-9a09-4a4b-aebd-18d2bd04bc6b",
+      "relation": "ADVISES_INCLUSION_OF"
+    },
+    {
+      "fact": "Measurement should be made part of the product spec from day one.",
+      "createdAt": "2026-01-18T13:53:25.055105Z",
+      "uuid": "02a3c2d1-8774-479e-8600-fc82ac4385ee",
+      "relation": "SHOULD_BE_PART_OF"
+    },
+    {
+      "fact": "Kagan suggests tracking between 5 and 10 simple stats initially, rather than 150 things.",
+      "createdAt": "2026-01-18T13:53:14.469686Z",
+      "uuid": "4c6c0781-2d09-47bd-a57c-7d119e888769",
+      "relation": "SUGGESTS_SELECTION_COUNT"
+    },
+    {
+      "fact": "Technical teams can implement metrics and iterate much faster than non-technical teams, according to Kagan.",
+      "createdAt": "2026-01-18T13:53:04.760207Z",
+      "uuid": "9599a313-a999-42ca-b51e-448157930212",
+      "relation": "CAN_IMPLEMENT_METRICS_AND_ITERATE_FASTER_THAN"
+    },
+    {
+      "fact": "Kagan believes technical teams can iterate much faster than non-technical teams.",
+      "createdAt": "2026-01-18T13:53:04.760162Z",
+      "uuid": "19c903ab-701c-4e3c-abd8-4e0808048a2e",
+      "relation": "BELIEVES_CAPABILITY_TO_ITERATE_FASTER_THAN"
+    },
+    {
+      "fact": "A low burn rate gives the ability to make mistakes.",
+      "createdAt": "2026-01-18T13:52:54.66848Z",
+      "uuid": "e0fc2850-a18c-405f-957b-3edda43dbe36",
+      "relation": "ENABLES"
+    },
+    {
+      "fact": "Kagan learned that having a low burn rate provides the ability to make mistakes.",
+      "createdAt": "2026-01-18T13:52:54.668433Z",
+      "uuid": "e02739c2-4a03-4f90-b354-0b160b48a91a",
+      "relation": "LEARNED_ABOUT"
+    },
+    {
+      "fact": "Kagan believes that the concept of being a fake Steve Jobs who strives for perfection is wrong.",
+      "createdAt": "2026-01-18T13:52:42.018534Z",
+      "uuid": "a9fd6a13-7e25-477b-aac2-b0becd5e2024",
+      "relation": "DISAPPROVES_OF"
+    },
+    {
+      "fact": "The fake version of Steve Jobs dreams about perfection.",
+      "createdAt": "2026-01-18T13:52:42.018605Z",
+      "uuid": "96c514dd-579d-4c5e-9a4d-a10696422c70",
+      "relation": "ASPIRES_TO"
+    },
+    {
+      "fact": "The real Steve Jobs released MVPs that were considered low quality.",
+      "createdAt": "2026-01-18T13:52:42.018583Z",
+      "uuid": "13d19235-db00-4960-abbe-d939d8d72de9",
+      "relation": "RELEASED"
+    },
+    {
+      "fact": "Kagan reminded people the first iPhone did not have an App Store.",
+      "createdAt": "2026-01-18T13:52:25.495488Z",
+      "uuid": "eb5446d5-9945-4674-b5c2-b96b5355afa3",
+      "relation": "STATED_OBSERVATION"
+    },
+    {
+      "fact": "Steve Jobs iterated from an initial, poorly performing Minimum Viable Product (MVP).",
+      "createdAt": "2026-01-18T13:52:25.495Z",
+      "uuid": "d8c3c3e1-4107-4ba8-af0b-f6fb99f3ef87",
+      "relation": "ITERATED_FROM"
+    },
+    {
+      "fact": "Kagan mentioned the first iPhone was limited to a single carrier.",
+      "createdAt": "2026-01-18T13:52:25.49545Z",
+      "uuid": "cecfdece-142b-46e8-905f-47d53267c016",
+      "relation": "STATED_OBSERVATION"
+    },
+    {
+      "fact": "Kagan pointed out that the first iPhone suffered from cracking screens.",
+      "createdAt": "2026-01-18T13:52:25.495478Z",
+      "uuid": "ad9a4ec2-c41d-4d71-9b0b-a3d699c89362",
+      "relation": "STATED_OBSERVATION"
+    },
+    {
+      "fact": "Kagan noted that the first iPhone had poor battery life.",
+      "createdAt": "2026-01-18T13:52:25.495467Z",
+      "uuid": "ad7b27b5-e27b-4d35-8ed1-d13910a1383d",
+      "relation": "STATED_OBSERVATION"
+    },
+    {
+      "fact": "Kagan reminded people that the first iPhone lacked 3G connectivity.",
+      "createdAt": "2026-01-18T13:52:25.495401Z",
+      "uuid": "4855541f-bbad-4246-849f-381b6462c742",
+      "relation": "STATED_OBSERVATION"
+    },
+    {
+      "fact": "The genius part is attributed to identifying a problem others have not figured out",
+      "createdAt": "2026-01-18T13:52:11.500206Z",
+      "uuid": "e137e6e6-ac59-43ec-bc31-88ac0bc48b35",
+      "relation": "IS_ATTRIBUTED_TO"
+    },
+    {
+      "fact": "Kagan Sumer believes identifying an unsolved problem is the genius part",
+      "createdAt": "2026-01-18T13:52:11.500147Z",
+      "uuid": "d7be2d0f-0f8d-4540-acf1-e25cabaaba1a",
+      "relation": "BELIEVES"
+    },
+    {
+      "fact": "Kagan Sumer believes the solution is not the genius part of problem solving",
+      "createdAt": "2026-01-18T13:52:11.500192Z",
+      "uuid": "9f2b8d1b-9969-47bb-90f1-a2a5685524dc",
+      "relation": "DISAGREES_ON_IMPORTANCE"
+    },
+    {
+      "fact": "Kagan thinks that changing the solution (iterating) should be common.",
+      "createdAt": "2026-01-18T13:51:58.004332Z",
+      "uuid": "c20a4886-0a56-4dc6-8860-cd5fa9fb7262",
+      "relation": "SHOULD_BE_COMMON"
+    },
+    {
+      "fact": "Kagan thinks that pivoting involves changing the customer.",
+      "createdAt": "2026-01-18T13:51:58.004161Z",
+      "uuid": "8cee6072-53b7-4866-ad76-ece3d5a066ca",
+      "relation": "CONSIDERS_EQUIVALENT_TO_PIVOTING"
+    },
+    {
+      "fact": "Kagan thinks that pivoting involves changing the problem.",
+      "createdAt": "2026-01-18T13:51:58.004283Z",
+      "uuid": "732f6f46-fac1-4044-ad76-711f3657c244",
+      "relation": "CONSIDERS_EQUIVALENT_TO_PIVOTING"
+    },
+    {
+      "fact": "Kagan thinks that iterating means changing the solution.",
+      "createdAt": "2026-01-18T13:51:58.004302Z",
+      "uuid": "4b9147e4-ff2c-4798-9f20-2533a65de309",
+      "relation": "CONSIDERS_ITERATING_AS_CHANGING"
+    },
+    {
+      "fact": "Kagan thinks that changing the problem (pivoting) should be rare.",
+      "createdAt": "2026-01-18T13:51:58.004323Z",
+      "uuid": "2d3fbc4b-76f6-4fab-a5a2-be6bdfeeb9f2",
+      "relation": "SHOULD_BE_RARE"
+    },
+    {
+      "fact": "Kagan thinks that changing the customer (pivoting) should be rare.",
+      "createdAt": "2026-01-18T13:51:58.004313Z",
+      "uuid": "2ab1eef5-3241-412b-b03a-67cc8bdf5268",
+      "relation": "SHOULD_BE_RARE"
+    },
+    {
+      "fact": "Kagan suggests daily active users as a possible single KPI for the company.",
+      "createdAt": "2026-01-18T13:51:44.055015Z",
+      "uuid": "f35d6ce7-282f-4983-a97d-129ae7a5c399",
+      "relation": "SUGGESTED_AS_KPI"
+    },
+    {
+      "fact": "Revenue is usually the single KPI that everyone in the company knows.",
+      "createdAt": "2026-01-18T13:51:44.055024Z",
+      "uuid": "c6279582-bc0f-4e9f-9065-5d0ec683df48",
+      "relation": "IS_EXAMPLE_OF_KPI"
+    },
+    {
+      "fact": "Daily active users is usually the single KPI that everyone in the company knows.",
+      "createdAt": "2026-01-18T13:51:44.055031Z",
+      "uuid": "56ef8ab2-7e0d-42f5-b6b1-f4dfeaca65bc",
+      "relation": "IS_EXAMPLE_OF_KPI"
+    },
+    {
+      "fact": "Kagan suggests revenue as a possible single KPI for the company.",
+      "createdAt": "2026-01-18T13:51:44.055003Z",
+      "uuid": "503b2588-219b-404c-8186-d446b4afaefa",
+      "relation": "SUGGESTED_AS_KPI"
+    },
+    {
+      "fact": "Kagan believes a company needs a single Key Performance Indicator (KPI) known by everyone.",
+      "createdAt": "2026-01-18T13:51:44.054959Z",
+      "uuid": "29e5b08a-0cfd-4283-9105-8e199f741f6b",
+      "relation": "BELIEVES_REQUIRES_KPI"
+    },
+    {
+      "fact": "Kagan learned to work with 1-2 week dev cycles that included only one meeting",
+      "createdAt": "2026-01-18T13:51:32.604837Z",
+      "uuid": "5d7883c0-ea75-409a-8d80-9c475a2b65e5",
+      "relation": "ESTABLISHED_PROCESS_FOR"
+    },
+    {
+      "fact": "Kagan learned to work with 1-2 week dev cycles that included written specs",
+      "createdAt": "2026-01-18T13:51:32.604794Z",
+      "uuid": "148e05b6-02a6-4cf1-8236-178238500a23",
+      "relation": "ESTABLISHED_PROCESS_FOR"
+    },
+    {
+      "fact": "justin.tv had a disastrous experience with 3-month dev cycles involving arguing.",
+      "createdAt": "2026-01-18T13:51:22.783491Z",
+      "uuid": "d3f805a7-cc84-4ae3-824b-02908114936b",
+      "relation": "EXPERIENCED_NEGATIVE_OUTCOME_WITH"
+    },
+    {
+      "fact": "Kagan considers long dev cycles to be horrible.",
+      "createdAt": "2026-01-18T13:51:22.783448Z",
+      "uuid": "a7ede778-7a27-4663-9c6a-6c9af5eac418",
+      "relation": "HAS_OPINION_ON"
+    },
+    {
+      "fact": "Desperate customers are the easiest customers.",
+      "createdAt": "2026-01-18T13:51:10.964311Z",
+      "uuid": "aa521917-3268-4e49-abb5-19104007ae12",
+      "relation": "IS_CONSIDERED"
+    },
+    {
+      "fact": "Kagan advises targeting desperate customers first for action.",
+      "createdAt": "2026-01-18T13:51:10.964232Z",
+      "uuid": "4e28a605-ea80-45cd-a33d-f4973f3fc9aa",
+      "relation": "ADVISES_ACTION"
+    },
+    {
+      "fact": "Products are not art",
+      "createdAt": "2026-01-18T13:50:58.786093Z",
+      "uuid": "bf459788-4078-41a9-8b5d-71566392755f",
+      "relation": "CONTRASTS_WITH"
+    },
+    {
+      "fact": "Products must be useful to users according to Kagan",
+      "createdAt": "2026-01-18T13:50:58.786105Z",
+      "uuid": "70140abf-b67e-45b7-a556-91f1484a6c95",
+      "relation": "MUST_HAVE_PROPERTY"
+    },
+    {
+      "fact": "Kagan believes the MVP should actually solve the problem",
+      "createdAt": "2026-01-18T13:50:58.786046Z",
+      "uuid": "2e2d74e0-662a-483f-b576-ad9191847155",
+      "relation": "BELIEVES_NEED_FOR_UTILITY"
+    },
+    {
+      "fact": "MVP must be useful to users according to Kagan",
+      "createdAt": "2026-01-18T13:50:58.786114Z",
+      "uuid": "1e8cd4b1-103d-4650-a26a-cb682bf15e5f",
+      "relation": "MUST_HAVE_PROPERTY"
+    },
+    {
+      "fact": "Friends usually do not have the problem that Kagan is concerned about solving.",
+      "createdAt": "2026-01-18T13:50:46.630209Z",
+      "uuid": "a5935f67-cfe7-4824-a1b7-ed9bb435910f",
+      "relation": "TYPICALLY_DO_NOT_HAVE_PROBLEM_SOLVED_BY"
+    },
+    {
+      "fact": "Investors usually do not have the problem that Kagan is concerned about solving.",
+      "createdAt": "2026-01-18T13:50:46.630225Z",
+      "uuid": "9c008fe7-68f2-41a9-ba9e-32c0c05d85e1",
+      "relation": "TYPICALLY_DO_NOT_HAVE_PROBLEM_SOLVED_BY"
+    },
+    {
+      "fact": "Kagan thinks communicating with customers who are not the correct target audience is very bad.",
+      "createdAt": "2026-01-18T13:50:46.630164Z",
+      "uuid": "74fe8cbf-786a-4715-89c5-c3a75ee033fc",
+      "relation": "BELIEVES_NEGATIVE_INTERACTION_WITH"
+    },
+    {
+      "fact": "Charging money is perceived by Kagan as almost always better than starting free.",
+      "createdAt": "2026-01-18T13:50:34.101428Z",
+      "uuid": "c28be62c-ecef-4eb5-b862-4d9e48a4688d",
+      "relation": "PERCEIVED_AS_SUPERIOR_TO"
+    },
+    {
+      "fact": "Kagan believes that charging money is almost always better than starting free.",
+      "createdAt": "2026-01-18T13:50:34.101388Z",
+      "uuid": "bc2efd8c-7245-444d-aa9b-e0d2ab89ef1e",
+      "relation": "BELIEVES_SUPERIORITY_OF"
+    },
+    {
+      "fact": "Charging money filters for people with real problems.",
+      "createdAt": "2026-01-18T13:50:34.101443Z",
+      "uuid": "701467e6-3c9f-4414-84e0-0c400129f14d",
+      "relation": "FILTERING_OUTCOME"
+    },
+    {
+      "fact": "Starting free results in filtering out people with real problems (implied contrast to charging money).",
+      "createdAt": "2026-01-18T13:50:34.101455Z",
+      "uuid": "0cf24f7a-12df-43b2-b14e-9c8756dd8a08",
+      "relation": "FILTERING_OUTCOME"
+    },
+    {
+      "fact": "Transportation, as solved by Uber, is an example of a high frequency and high intensity problem.",
+      "createdAt": "2026-01-18T13:50:21.68819Z",
+      "uuid": "d9bc1e87-09f4-4809-83c3-92ddcb2639ea",
+      "relation": "IS_EXAMPLE_OF"
+    },
+    {
+      "fact": "Uber solves the problem of transportation.",
+      "createdAt": "2026-01-18T13:50:21.688176Z",
+      "uuid": "86d89bcf-2182-47d2-8922-aa2dac2fa315",
+      "relation": "SOLVES"
+    },
+    {
+      "fact": "Kagan places high value on problems that are characterized by high frequency and high intensity.",
+      "createdAt": "2026-01-18T13:50:21.688122Z",
+      "uuid": "0cecc8cb-457c-485d-a451-34e9aef5f8a5",
+      "relation": "VALUES"
+    },
+    {
+      "fact": "Kagan thinks the statement that everyone is the customer is a mistake.",
+      "createdAt": "2026-01-18T13:50:10.967384Z",
+      "uuid": "81def0ef-c739-47ec-a868-277e21410ddd",
+      "relation": "BELIEVES_IS_MISTAKE"
+    },
+    {
+      "fact": "Kagan believes that an ideal first customer is necessary.",
+      "createdAt": "2026-01-18T13:50:10.967435Z",
+      "uuid": "00b8db92-75f7-41e0-a6f2-64e39ad620ce",
+      "relation": "REQUIRES"
+    },
+    {
+      "fact": "Kagan believes that Kagan Sumer does not understand the problem until they understand who they are solving it for.",
+      "createdAt": "2026-01-18T13:50:01.513601Z",
+      "uuid": "839be751-a46c-484a-903d-55b2cfbe1bf6",
+      "relation": "BELIEVES"
+    },
+    {
+      "fact": "Kagan noted that gamers were ignored by the product's developers/stakeholders for years.",
+      "createdAt": "2026-01-18T13:49:48.205027Z",
+      "uuid": "fdda86b6-918c-4542-a99f-b2262930de8c",
+      "relation": "IGNORING_ENTITY"
+    },
+    {
+      "fact": "The continued usage by gamers proved product-market fit.",
+      "createdAt": "2026-01-18T13:49:48.205045Z",
+      "uuid": "dc677e4e-f682-4842-88b4-19bc91844087",
+      "relation": "PROVED"
+    },
+    {
+      "fact": "Gamers constituted 20% of traffic for justin.tv for years.",
+      "createdAt": "2026-01-18T13:49:48.205014Z",
+      "uuid": "c28f914c-916e-43cd-9550-d59cfb843198",
+      "relation": "CONSTITUTED_PORTION_OF"
+    },
+    {
+      "fact": "Gamers continued using the product associated with justin.tv despite being ignored.",
+      "createdAt": "2026-01-18T13:49:48.205037Z",
+      "uuid": "7f7dc87e-0399-4dc9-8e65-34e2b7a6a46a",
+      "relation": "CONTINUED_USAGE"
+    },
+    {
+      "fact": "Kagan learned from justin.tv about the composition of traffic.",
+      "createdAt": "2026-01-18T13:49:48.204967Z",
+      "uuid": "834ce9ed-eb06-46b3-9086-9aff77a5ca0d",
+      "relation": "LEARNED_FROM"
+    },
+    {
+      "fact": "Kagan suggests that problems should be defined narrowly because one cannot solve for everyone initially.",
+      "createdAt": "2026-01-18T13:49:38.619833Z",
+      "uuid": "067b2932-d3b7-4d47-833d-3f5626c449fd",
+      "relation": "ADVISES_ON_STRATEGY"
+    },
+    {
+      "fact": "Founders must clearly understand the problems they are addressing.",
+      "createdAt": "2026-01-18T13:49:18.49573Z",
+      "uuid": "54df8364-04dd-472a-9e42-d72fa70319d1",
+      "relation": "REQUIRES_UNDERSTANDING_OF"
+    },
+    {
+      "fact": "Kagan believes that founders need to state their problem clearly in two sentences.",
+      "createdAt": "2026-01-18T13:49:18.495677Z",
+      "uuid": "379ef318-b7e5-4b30-9967-4ed4c4a19541",
+      "relation": "BELIEVES_ABOUT"
+    },
+    {
+      "fact": "Kagan believes that having ego tied to the startup saved justin.tv.",
+      "createdAt": "2026-01-18T13:49:01.422582Z",
+      "uuid": "fa88938b-7e12-4a97-b076-4572a9f114ef",
+      "relation": "BELIEVES"
+    },
+    {
+      "fact": "The startup concept is related to justin.tv.",
+      "createdAt": "2026-01-18T13:49:01.422619Z",
+      "uuid": "e8f12978-8742-4039-a5b5-1ec49d7af681",
+      "relation": "IS_RELATED_TO"
+    },
+    {
+      "fact": "The extremely technical founding team was involved with twitch.",
+      "createdAt": "2026-01-18T13:49:01.42261Z",
+      "uuid": "e657301e-9114-443a-b3e0-b8e044521c94",
+      "relation": "IS_PART_OF"
+    },
+    {
+      "fact": "The extremely technical founding team was involved with justin.tv.",
+      "createdAt": "2026-01-18T13:49:01.422601Z",
+      "uuid": "ad930963-260c-4667-a67b-564dde1d67d7",
+      "relation": "IS_PART_OF"
+    },
+    {
+      "fact": "The startup concept is related to twitch.",
+      "createdAt": "2026-01-18T13:49:01.422628Z",
+      "uuid": "a5256efe-a6f1-4bce-afa1-34027821094a",
+      "relation": "IS_RELATED_TO"
+    },
+    {
+      "fact": "Kagan believes that not spending much money saved justin.tv.",
+      "createdAt": "2026-01-18T13:49:01.422563Z",
+      "uuid": "a51b86a8-dbd1-4f2f-b19c-853769ce71be",
+      "relation": "BELIEVES"
+    },
+    {
+      "fact": "Kagan believes that having ego tied to the startup saved twitch.",
+      "createdAt": "2026-01-18T13:49:01.422591Z",
+      "uuid": "a45d4174-24b7-490a-bef1-4ef968a61b54",
+      "relation": "BELIEVES"
+    },
+    {
+      "fact": "Kagan believes that an extremely technical founding team saved justin.tv.",
+      "createdAt": "2026-01-18T13:49:01.422503Z",
+      "uuid": "77e356e1-b959-4168-8769-e64838ba095f",
+      "relation": "BELIEVES"
+    },
+    {
+      "fact": "Kagan believes that an extremely technical founding team saved twitch.",
+      "createdAt": "2026-01-18T13:49:01.422549Z",
+      "uuid": "5979a40b-964d-4bb3-ba7f-1f6031c857ce",
+      "relation": "BELIEVES"
+    },
+    {
+      "fact": "Kagan believes that not spending much money saved twitch.",
+      "createdAt": "2026-01-18T13:49:01.422573Z",
+      "uuid": "0f8e372e-81e7-47b0-a35b-e5aa05199863",
+      "relation": "BELIEVES"
+    },
+    {
+      "fact": "Kagan advises never to compromise on talent.",
+      "createdAt": "2026-01-18T13:48:47.907121Z",
+      "uuid": "e0f91df9-74e6-41ef-837a-8bc5a3cc0b8e",
+      "relation": "ADVISES_AGAINST_COMPROMISE_ON"
+    },
+    {
+      "fact": "Kagan believes that hiring, which involves talent, is one of the most important decisions.",
+      "createdAt": "2026-01-18T13:48:47.907073Z",
+      "uuid": "ba1d6ee0-a1f3-421e-9b48-6507583e35e9",
+      "relation": "CONSIDERS_IMPORTANT"
+    },
+    {
+      "fact": "The bootstrapping mindset is considered important by Kagan even in the presence of funding.",
+      "createdAt": "2026-01-18T13:48:37.251006Z",
+      "uuid": "c2bbd2de-86db-4e6f-8f5e-75bd7499d508",
+      "relation": "CONSIDERS_IMPORTANT_DESPITE"
+    },
+    {
+      "fact": "Kagan thinks that the bootstrapping mindset is important, even when funding is present.",
+      "createdAt": "2026-01-18T13:48:37.250962Z",
+      "uuid": "a4b0bf87-dfbd-46bd-9c5a-441dbd018333",
+      "relation": "BELIEVES_IMPORTANCE_OF"
+    },
+    {
+      "fact": "Kagan advises that journalists and media should be treated like business partners.",
+      "createdAt": "2026-01-18T13:48:25.135535Z",
+      "uuid": "951c15e4-2c02-41cd-81c3-b2d5b6acb8ef",
+      "relation": "SUGGESTED_TREATMENT"
+    },
+    {
+      "fact": "Kagan advises treating journalists as potential business partners.",
+      "createdAt": "2026-01-18T13:48:25.135473Z",
+      "uuid": "435b24d2-e356-4325-93ae-b355ae3abbd3",
+      "relation": "ADVISES_TREATING_AS"
+    },
+    {
+      "fact": "Kagan advises treating media as potential business partners.",
+      "createdAt": "2026-01-18T13:48:25.135521Z",
+      "uuid": "2ae4cf24-d645-4b63-99d5-8a23bb019fc1",
+      "relation": "ADVISES_TREATING_AS"
+    },
+    {
+      "fact": "B2B startups need to find 2-4 reference customers.",
+      "createdAt": "2026-01-18T13:48:12.496374Z",
+      "uuid": "f3d8f7da-0c80-4435-b809-0b52612acf2a",
+      "relation": "NEEDS"
+    },
+    {
+      "fact": "Kagan thinks that B2B startups should find 2-4 reference customers who genuinely need the product.",
+      "createdAt": "2026-01-18T13:48:12.496322Z",
+      "uuid": "9f1bbcf4-ba94-4bd5-ba99-51b66690ae28",
+      "relation": "BELIEVES_RECOMMENDATION"
+    },
+    {
+      "fact": "Reference customers genuinely need the product.",
+      "createdAt": "2026-01-18T13:48:12.496389Z",
+      "uuid": "9b10e058-437c-4bbe-a407-0593b9b6938b",
+      "relation": "NEEDS"
+    },
+    {
+      "fact": "Kagan believes that viral growth is caused by users naturally wanting to share the product.",
+      "createdAt": "2026-01-18T13:48:00.58Z",
+      "uuid": "81d0ca8c-f548-4205-b3fa-34f3d882ca40",
+      "relation": "BELIEVES_CAUSES"
+    },
+    {
+      "fact": "Kagan attributes the source of viral growth to users wanting to share the product.",
+      "createdAt": "2026-01-18T13:48:00.580972Z",
+      "uuid": "0b83d316-a5f9-4ce5-8ee0-9f094ff0b03e",
+      "relation": "ATTRIBUTES_SOURCE_TO"
+    },
+    {
+      "fact": "Perfection is considered the enemy of progress.",
+      "createdAt": "2026-01-18T13:47:48.083Z",
+      "uuid": "496a9185-94d6-46c7-8677-3df8aaf90797",
+      "relation": "IS_ENEMY_OF"
+    },
+    {
+      "fact": "Kagan places a high value on speed in getting to market.",
+      "createdAt": "2026-01-18T13:47:48.083591Z",
+      "uuid": "3a1b3295-99b1-4985-bb85-6fc09345bc23",
+      "relation": "VALUES"
+    },
+    {
+      "fact": "Perfection is considered the enemy of speed in getting to market.",
+      "createdAt": "2026-01-18T13:47:48.083637Z",
+      "uuid": "29da28e3-5a28-4018-a341-74214ea38179",
+      "relation": "IS_ENEMY_OF"
+    },
+    {
+      "fact": "Kagan suggests that one should solve problems that are deeply understood from personal experience.",
+      "createdAt": "2026-01-18T13:47:37.03Z",
+      "uuid": "c037ef9b-4ad1-4ef2-8e9d-55221e580a36",
+      "relation": "BELIEVES_SHOULD_SOLVE"
+    },
+    {
+      "fact": "The solving of problems should be based on deep personal experience.",
+      "createdAt": "2026-01-18T13:47:37.030176Z",
+      "uuid": "35cc64bb-195d-48f0-820d-ad9f50b6a252",
+      "relation": "SHOULD_BE_BASED_ON"
+    },
+    {
+      "fact": "Kagan believes each new hire should improve the average talent level of the company.",
+      "createdAt": "2026-01-18T13:47:26.943699Z",
+      "uuid": "81ca94a1-e162-4fff-be99-6cd104829837",
+      "relation": "BELIEVES_NEW_HIRE_IMPACT"
+    },
+    {
+      "fact": "Kagan expects each new hire to increase the average talent level of the company.",
+      "createdAt": "2026-01-18T13:47:26.943746Z",
+      "uuid": "2f9cc71c-d39e-4d14-b371-0657fbd30d9c",
+      "relation": "EXPECTS_IMPACT_ON"
+    },
+    {
+      "fact": "Kagan advises spending as little money as possible during the early stages.",
+      "createdAt": "2026-01-18T13:47:16.337Z",
+      "uuid": "9dbd2f44-cddc-4864-bc82-6470eddfd180",
+      "relation": "ADVISES_MINIMIZING_USE_OF"
+    },
+    {
+      "fact": "Kagan holds the belief known as the fundraising paradox.",
+      "createdAt": "2026-01-18T13:47:06.392313Z",
+      "uuid": "a53c9733-ee3a-4d8c-a559-8a2927bb9982",
+      "relation": "BELIEVES_IN"
+    },
+    {
+      "fact": "The fundraising paradox relates to the concept of needing or not needing money.",
+      "createdAt": "2026-01-18T13:47:06.392362Z",
+      "uuid": "613c839a-fb50-4fb0-bd5e-4fb35369c728",
+      "relation": "CONCERNS"
+    },
+    {
+      "fact": "Kagan thinks business development should involve identifying targets and reaching out directly.",
+      "createdAt": "2026-01-18T13:46:53.626138Z",
+      "uuid": "b73371f4-9f52-4023-a3df-dc0ecc8caf86",
+      "relation": "SHOULD_IDENTIFY_TARGETS_AND_REACH_OUT"
+    },
+    {
+      "fact": "Kagan thinks PR should be treated like business development.",
+      "createdAt": "2026-01-18T13:46:53.626114Z",
+      "uuid": "83d67873-61f4-4a18-800e-ea8a9ea98a05",
+      "relation": "THINKS_SHOULD_BE_TREATED_LIKE"
+    },
+    {
+      "fact": "Kagan thinks PR should be treated similarly to business development.",
+      "createdAt": "2026-01-18T13:46:53.626065Z",
+      "uuid": "1fce6034-88b8-4e40-a940-59319000ab79",
+      "relation": "BELIEVES_TREATMENT_IS_SIMILAR_TO"
+    },
+    {
+      "fact": "Kagan thinks PR should involve identifying targets and reaching out directly.",
+      "createdAt": "2026-01-18T13:46:53.626128Z",
+      "uuid": "004fc6b9-d61a-4310-8ddb-c898cffa360e",
+      "relation": "SHOULD_IDENTIFY_TARGETS_AND_REACH_OUT"
+    },
+    {
+      "fact": "Kagan believes that PR should be handled internally rather than outsourced to agencies.",
+      "createdAt": "2026-01-18T13:46:43.503849Z",
+      "uuid": "589891a5-38ee-4232-994d-388db6adf164",
+      "relation": "BELIEVES_ACTION_SHOULD_BE_PERFORMED_BY"
+    },
+    {
+      "fact": "Kagan believes that PR should not be outsourced to agencies.",
+      "createdAt": "2026-01-18T13:46:43.503899Z",
+      "uuid": "2fd1449a-8dfc-4e88-a8ed-13950d7251c6",
+      "relation": "DISAPPROVES_OUTSOURCING_TO"
+    },
+    {
+      "fact": "Kagan thinks achieving growth for a B2B company depends on reference customers.",
+      "createdAt": "2026-01-18T13:46:28.556696Z",
+      "uuid": "ab1bdb1d-42f6-4e87-8fcc-fb9446be863f",
+      "relation": "THINKS_GROWTH_DEPENDS_ON"
+    },
+    {
+      "fact": "Consumer companies need viral sharing to achieve growth.",
+      "createdAt": "2026-01-18T13:46:28.556Z",
+      "uuid": "718a4c9d-f9c7-41d6-ae5e-b2ff0ada92e0",
+      "relation": "REQUIRES"
+    },
+    {
+      "fact": "Kagan thinks achieving growth for a consumer company depends on viral sharing.",
+      "createdAt": "2026-01-18T13:46:28.556Z",
+      "uuid": "5e3d6da9-72f3-460d-a0fd-c13ffff1415a",
+      "relation": "THINKS_GROWTH_DEPENDS_ON"
+    },
+    {
+      "fact": "B2B companies need reference customers to achieve growth.",
+      "createdAt": "2026-01-18T13:46:28.556Z",
+      "uuid": "16b2e90c-d78c-4ca7-b291-753e58262be3",
+      "relation": "REQUIRES"
+    },
+    {
+      "fact": "Kagan believes the MVP should be launched within a maximum timeframe of 2 months from now.",
+      "createdAt": "2026-01-18T13:46:18.835401Z",
+      "uuid": "206f0f41-7b70-45c8-b28d-b5b7147537d1",
+      "relation": "BELIEVES_TIMEFRAME_FOR_LAUNCH"
+    },
+    {
+      "fact": "Kagan advises concentrating on problems that appear daily or weekly, not those appearing monthly or yearly.",
+      "createdAt": "2026-01-18T13:46:10.520466Z",
+      "uuid": "d8d1f565-93f1-4f75-b801-b2c44f0f2c12",
+      "relation": "ADVISES_FOCUS_ON"
+    },
+    {
+      "fact": "Kagan thinks ideas should not come from just sitting around thinking.",
+      "createdAt": "2026-01-18T13:45:59.807164Z",
+      "uuid": "f0f1cd9b-9af3-4d3a-9f02-318c4ab03017",
+      "relation": "DISFAVORS_SOURCE_OF"
+    },
+    {
+      "fact": "Kagan believes ideas should derive from problems you personally face.",
+      "createdAt": "2026-01-18T13:45:59.807Z",
+      "uuid": "f0e7e516-e6b8-4d9a-a1c4-799b98ea4212",
+      "relation": "SOURCE_SHOULD_BE"
+    },
+    {
+      "fact": "Kagan thinks that ideas should originate from problems one personally faces.",
+      "createdAt": "2026-01-18T13:45:59.807Z",
+      "uuid": "19bdffb1-0f3a-45ad-bb2b-99140d612fe7",
+      "relation": "BELIEVES_SOURCE_OF"
+    },
+    {
+      "fact": "The ideal tech startup team should consist of 2-4 co-founders.",
+      "createdAt": "2026-01-18T13:45:48.557Z",
+      "uuid": "8fae2526-dc41-4e06-997c-5fe75311374a",
+      "relation": "IDEAL_COMPOSITION_REQUIRES"
+    },
+    {
+      "fact": "At least 50% of the co-founders in an ideal tech startup team should be engineers.",
+      "createdAt": "2026-01-18T13:45:48.557563Z",
+      "uuid": "5e9128c1-c090-4864-acca-5629310d4e13",
+      "relation": "IDEAL_COMPOSITION_REQUIRES"
+    },
+    {
+      "fact": "Kagan believes the ideal size for a tech startup team is 2-4 co-founders.",
+      "createdAt": "2026-01-18T13:45:48.557505Z",
+      "uuid": "28d991ab-82cd-4ce0-a8e1-ab3e298e752a",
+      "relation": "HAS_BELIEF_ABOUT"
+    },
+    {
+      "fact": "Operating profits are defined by people paying more for what is being done than the cost to create it",
+      "createdAt": "2026-01-18T13:45:37.939127Z",
+      "uuid": "8d9fdde6-bbbe-42d8-b6eb-20f293f5f6b4",
+      "relation": "DEFINITION"
+    },
+    {
+      "fact": "Having a purpose genuinely changes the world.",
+      "createdAt": "2026-01-18T13:45:20.945689Z",
+      "uuid": "864242c9-b64b-4b7f-878b-d4a4796b8821",
+      "relation": "CAUSES_CHANGE_IN"
+    },
+    {
+      "fact": "Talent is associated with good rewards.",
+      "createdAt": "2026-01-18T13:45:20.945676Z",
+      "uuid": "4946651a-3b45-49c2-8941-1d5bb906ebdc",
+      "relation": "IS_ASSOCIATED_WITH"
+    },
+    {
+      "fact": "Having a purpose attracts the very best talent.",
+      "createdAt": "2026-01-18T13:45:20.945631Z",
+      "uuid": "262b136e-ff82-4d2e-b1f7-ddca844f91b0",
+      "relation": "ATTRACTS"
+    },
+    {
+      "fact": "Utility calculation relates to the number of people it would affect",
+      "createdAt": "2026-01-18T13:45:10.611304Z",
+      "uuid": "fc3b3f86-a446-4c0d-abc0-f916ae0621d0",
+      "relation": "AFFECTS"
+    },
+    {
+      "fact": "Utility calculation seeks a delta compared to the current state of the art",
+      "createdAt": "2026-01-18T13:45:10.61126Z",
+      "uuid": "1c101790-8856-470e-9057-11bdad3a20f5",
+      "relation": "COMPARISON_TARGET"
+    },
+    {
+      "fact": "The product or service should be truly useful to customers for a company to exist",
+      "createdAt": "2026-01-18T13:44:59.538Z",
+      "uuid": "b3402fdd-f4c6-4681-bd79-927f6e13ca1e",
+      "relation": "PROVIDES_BENEFIT_TO"
+    },
+    {
+      "fact": "A company should only exist if its product or service is truly useful to customers",
+      "createdAt": "2026-01-18T13:44:59.538Z",
+      "uuid": "50059c40-c30f-498c-87a4-6214db3287c8",
+      "relation": "REQUIRES_USEFULNESS_FOR"
+    },
+    {
+      "fact": "Entrepreneurs face the challenge of distinguishing between believing in ideals and pursuing unrealistic dreams.",
+      "createdAt": "2026-01-18T13:44:48.192445Z",
+      "uuid": "ec20f673-7043-46ac-af2b-56656e2f1a36",
+      "relation": "FACING_CHALLENGE_OF"
+    },
+    {
+      "fact": "Believing in ideals is contrasted with pursuing an unrealistic dream without merit for entrepreneurs.",
+      "createdAt": "2026-01-18T13:44:48.192504Z",
+      "uuid": "a51dd055-d2e8-4a44-88f3-ad49b4628a15",
+      "relation": "CONTRASTED_WITH"
+    },
+    {
+      "fact": "Entrepreneurs face the challenge of distinguishing between ideals and pursuing an unrealistic dream without merit.",
+      "createdAt": "2026-01-18T13:44:48.192491Z",
+      "uuid": "2e0cba5f-6651-479b-a8f3-d77d34b0be15",
+      "relation": "FACING_CHALLENGE_OF"
+    },
+    {
+      "fact": "Happiness is high at the beginning stage of a company.",
+      "createdAt": "2026-01-18T13:44:35.694061Z",
+      "uuid": "bae34991-27c5-4d2f-9d4d-9a9b56ea74c2",
+      "relation": "TEMPORARY_HIGH_STATE"
+    },
+    {
+      "fact": "The steady decline of happiness leads into a world of hurt.",
+      "createdAt": "2026-01-18T13:44:35.694052Z",
+      "uuid": "80e6e8ac-62ff-4a03-8bdf-12d2d35fde88",
+      "relation": "DECLINE_LEADS_TO_STATE"
+    },
+    {
+      "fact": "Happiness declines after encountering issues.",
+      "createdAt": "2026-01-18T13:44:35.694039Z",
+      "uuid": "1201a32f-5336-4156-ad23-f2a937a5fe62",
+      "relation": "LEADS_TO"
+    },
+    {
+      "fact": "When a company is first started, happiness is high.",
+      "createdAt": "2026-01-18T13:44:35.693994Z",
+      "uuid": "9ec32244-347a-4be7-9152-07126ec4ec2f",
+      "relation": "INITIAL_STATE_HAS_HIGH_LEVEL"
+    },
+    {
+      "fact": "Starting a business requires having a high pain threshold.",
+      "createdAt": "2026-01-18T13:44:25.162002Z",
+      "uuid": "cdabe2b0-2e2f-421e-b192-4dbc13299a77",
+      "relation": "REQUIRES"
+    },
+    {
+      "fact": "A very high percentage, between 90 percent and 99 percent, of startups face a situation described as staring into the abyss.",
+      "createdAt": "2026-01-18T13:44:14.616619Z",
+      "uuid": "d02ccbba-e56a-4eb1-8946-c8ed73a64c99",
+      "relation": "HAS_FAILURE_RATE_ESTIMATE"
+    },
+    {
+      "fact": "The CEO receives a distillation of all the worst problems.",
+      "createdAt": "2026-01-18T13:44:04.274703Z",
+      "uuid": "63d0a881-87a9-47e1-936a-5bf8d0570bf1",
+      "relation": "DEALS_WITH"
+    },
+    {
+      "fact": "The CEO should not spend time on things going right.",
+      "createdAt": "2026-01-18T13:44:04.274751Z",
+      "uuid": "503f40e2-5455-4a78-8672-23ddbc3552fe",
+      "relation": "NEGATIVELY_AFFECTS"
+    },
+    {
+      "fact": "One should not focus too much on competition when making products.",
+      "createdAt": "2026-01-18T13:43:44.384785Z",
+      "uuid": "dca76241-a7b7-46c9-aeb6-633b1bce00d7",
+      "relation": "AVOID_FOCUSING_ON"
+    },
+    {
+      "fact": "The primary focus should be making the best possible products, not competition.",
+      "createdAt": "2026-01-18T13:43:44.384835Z",
+      "uuid": "d86eaecb-73c7-4884-afe5-dd107f84c9fc",
+      "relation": "SHOULD_FOCUS_ON_MAKING"
+    },
+    {
+      "fact": "If one is in a race, one should not worry about other runners.",
+      "createdAt": "2026-01-18T13:43:44.384848Z",
+      "uuid": "7e4113c4-fb39-4c4f-b06e-64c0d3f33b17",
+      "relation": "SHOULD_IGNORE_IN"
+    },
+    {
+      "fact": "Other runners should be ignored while running in a race.",
+      "createdAt": "2026-01-18T13:43:44.384Z",
+      "uuid": "0a075c3e-11ac-4851-a984-9ee49d024a01",
+      "relation": "ACTION_IN_EVENT"
+    },
+    {
+      "fact": "The computer was used to keep the website up during the day",
+      "createdAt": "2026-01-18T13:43:25.046331Z",
+      "uuid": "bd385745-83e4-467a-afb0-a58f4a194fbb",
+      "relation": "USED_FOR"
+    },
+    {
+      "fact": "Elon rented a small office",
+      "createdAt": "2026-01-18T13:43:25.046221Z",
+      "uuid": "bcbb7a4c-e631-4415-9d81-fa7b9b01cca0",
+      "relation": "RENTED"
+    },
+    {
+      "fact": "Elon's brother slept on a couch",
+      "createdAt": "2026-01-18T13:43:25.04629Z",
+      "uuid": "9b53a3d0-0e9b-4856-b946-3d3b9f48289d",
+      "relation": "SLEPT_ON"
+    },
+    {
+      "fact": "Elon and his brother shared one computer",
+      "createdAt": "2026-01-18T13:43:25.046323Z",
+      "uuid": "981918b1-fdd5-4968-bcbd-406c2eb902fb",
+      "relation": "POSSESSED"
+    },
+    {
+      "fact": "Elon's brother rented a small office",
+      "createdAt": "2026-01-18T13:43:25.046266Z",
+      "uuid": "7dcb4f9a-8454-4f24-b12e-887362b8804a",
+      "relation": "RENTED"
+    },
+    {
+      "fact": "Elon was coding at night, seven days a week",
+      "createdAt": "2026-01-18T13:43:25.04634Z",
+      "uuid": "72514a55-8262-4d2b-b44f-beaf7174a941",
+      "relation": "PERFORMED"
+    },
+    {
+      "fact": "Elon and his brother shared one computer",
+      "createdAt": "2026-01-18T13:43:25.046315Z",
+      "uuid": "6e8310b9-8f49-454a-9e3b-6059efe25bf7",
+      "relation": "POSSESSED"
+    },
+    {
+      "fact": "Elon slept on a couch",
+      "createdAt": "2026-01-18T13:43:25.04628Z",
+      "uuid": "39c13ef4-fcc0-4489-822a-12be59bcad44",
+      "relation": "SLEPT_ON"
+    },
+    {
+      "fact": "Elon showered at the YMCA",
+      "createdAt": "2026-01-18T13:43:25.046299Z",
+      "uuid": "18f0ff82-2565-45ef-b8b2-be06b4cd60fa",
+      "relation": "SHOWERED_AT"
+    },
+    {
+      "fact": "Elon's brother showered at the YMCA",
+      "createdAt": "2026-01-18T13:43:25.046307Z",
+      "uuid": "0dd85359-f785-4c6c-b845-7967eb782b6b",
+      "relation": "SHOWERED_AT"
+    },
+    {
+      "fact": "Elon's brother was coding at night, seven days a week",
+      "createdAt": "2026-01-18T13:43:25.046348Z",
+      "uuid": "0bce60e0-9f72-45ad-8de0-55a7fc870139",
+      "relation": "PERFORMED"
+    },
+    {
+      "fact": "Others work 40 hour weeks, implying that Kagan Sumer works at a different rate for comparison purposes.",
+      "createdAt": "2026-01-18T13:43:13.756271Z",
+      "uuid": "fadfb672-73e1-46ec-bc8f-e3d7f2524058",
+      "relation": "HAS_WORK_HOUR_RATE"
+    },
+    {
+      "fact": "Edison stated that inspiration constitutes one percent of a process.",
+      "createdAt": "2026-01-18T13:43:03.838876Z",
+      "uuid": "c04e9c28-54f7-423a-8371-d2cf889826c4",
+      "relation": "STATED_PROPORTION_OF_INSPIRATION"
+    },
+    {
+      "fact": "Edison suggested that super hard work (perspiration) is necessary.",
+      "createdAt": "2026-01-18T13:43:03.838941Z",
+      "uuid": "b5bfe1d4-f836-4674-8a51-0ef90dcef054",
+      "relation": "SUGGESTED_REQUIREMENT"
+    },
+    {
+      "fact": "Edison stated that perspiration constitutes ninety-nine percent of a process.",
+      "createdAt": "2026-01-18T13:43:03.838928Z",
+      "uuid": "2c7165e3-e2b8-491e-8b55-a652f4cb078c",
+      "relation": "STATED_PROPORTION_OF_PERSPIRATION"
+    },
+    {
+      "fact": "The person who scores the most goals is not necessarily the best person regarding affecting those around them.",
+      "createdAt": "2026-01-18T13:42:53.632955Z",
+      "uuid": "8fce32aa-ee7a-4a21-a6fe-840f1f8926c3",
+      "relation": "CONTRASTS_WITH"
+    },
+    {
+      "fact": "Scoring goals is a concept within sports.",
+      "createdAt": "2026-01-18T13:42:53.632903Z",
+      "uuid": "09445de4-a590-4f2d-a3ee-784afda072c9",
+      "relation": "IS_STUDIED_IN"
+    },
+    {
+      "fact": "Whether someone has a good heart is underweighted compared to talent in common hiring mistakes.",
+      "createdAt": "2026-01-18T13:42:40.763284Z",
+      "uuid": "d2c800da-79c5-4c0e-9daa-f889eae91376",
+      "relation": "IMPLICITLY_UNDEREMPHASIZED"
+    },
+    {
+      "fact": "Too much emphasis is placed on talent compared to personality during hiring.",
+      "createdAt": "2026-01-18T13:42:40.763218Z",
+      "uuid": "c6d8b92d-cec2-434a-86ab-52e9387ced1f",
+      "relation": "IMPLICITLY_OVEREMPHASIZED"
+    },
+    {
+      "fact": "The presence of a good heart is underweighted when compared to talent during hiring.",
+      "createdAt": "2026-01-18T13:42:40.763262Z",
+      "uuid": "be3c2085-c022-4d7c-8830-b626d73a7aab",
+      "relation": "IMPLICITLY_UNDEREMPHASIZED"
+    },
+    {
+      "fact": "Personality is given less weight than talent in common hiring mistakes.",
+      "createdAt": "2026-01-18T13:42:40.763274Z",
+      "uuid": "a5e75fdd-09b4-4e69-b455-ad82a069309d",
+      "relation": "IMPLICITLY_OVEREMPHASIZED"
+    },
+    {
+      "fact": "New entrepreneurs are expected to lead to a long period of quite high difficulty.",
+      "createdAt": "2026-01-18T13:42:31.101529Z",
+      "uuid": "cdbde906-5113-43f9-bdd6-17467a9d1827",
+      "relation": "EXPECTED_TO_HAVE"
+    },
+    {
+      "fact": "Customers are not signing up, which suggests issues related to the technology",
+      "createdAt": "2026-01-18T13:42:21.709019Z",
+      "uuid": "3fe9b0f1-446a-49d8-89df-7801836753a9",
+      "relation": "PERFORMING_POORLY"
+    },
+    {
+      "fact": "The technology is not working as well as the entity expected customers to be signing up",
+      "createdAt": "2026-01-18T13:42:21.709062Z",
+      "uuid": "1a4a8c1e-91ae-4b25-aa83-6ece28bd9a98",
+      "relation": "NOT_PERFORMING_AS_EXPECTED"
+    },
+    {
+      "fact": "Creating a company is comparable to staring into the abyss.",
+      "createdAt": "2026-01-18T13:42:12.765Z",
+      "uuid": "cef57226-2414-4eee-bd9a-49377580d4c8",
+      "relation": "IS_LIKE_STARING_INTO"
+    },
+    {
+      "fact": "Creating a company is comparable to eating glass.",
+      "createdAt": "2026-01-18T13:42:12.765032Z",
+      "uuid": "af2c9376-13cc-4795-b689-3a85354792bc",
+      "relation": "IS_LIKE_EATING"
+    },
+    {
+      "fact": "A concentration of talent is like a world sports team.",
+      "createdAt": "2026-01-18T13:42:02.067543Z",
+      "uuid": "572a5eb6-348b-4b43-bb64-a3cc3606231e",
+      "relation": "SIMILAR_TO"
+    },
+    {
+      "fact": "A concentration of talent is the most important factor for creating companies.",
+      "createdAt": "2026-01-18T13:42:02.067483Z",
+      "uuid": "56b4c5ee-6fc9-44a6-8627-21f1e21ec345",
+      "relation": "IMPORTANT_FOR_CREATION"
+    },
+    {
+      "fact": "A product entering an existing marketplace needs to be significantly better.",
+      "createdAt": "2026-01-18T13:41:49.384591Z",
+      "uuid": "5244ac1e-b370-4095-91d5-87032df8a83d",
+      "relation": "SHOULD_BE_BETTER_THAN"
+    },
+    {
+      "fact": "Consumers typically purchase the trusted brand unless there is a substantial difference in offering.",
+      "createdAt": "2026-01-18T13:41:49.384638Z",
+      "uuid": "233342b5-4a3b-4193-b2d0-93f1fed7927b",
+      "relation": "PREFERS"
+    },
+    {
+      "fact": "Elon spends 80 percent of his time on engineering for developing the next generation product",
+      "createdAt": "2026-01-18T13:41:29.865645Z",
+      "uuid": "fa3d8811-ea5c-4b95-90db-157afade3c7e",
+      "relation": "SPENDS_TIME_ON"
+    },
+    {
+      "fact": "Elon dedicates 80 percent of his time to engineering and design for developing the next generation product",
+      "createdAt": "2026-01-18T13:41:29.8657Z",
+      "uuid": "32c762ff-9738-4a74-be45-11705b0d8c04",
+      "relation": "DEVOTES_EFFORT_TO_DEVELOPMENT_OF"
+    },
+    {
+      "fact": "Elon spends 80 percent of his time on design for developing the next generation product",
+      "createdAt": "2026-01-18T13:41:29.865689Z",
+      "uuid": "2f363066-761d-4fcb-a26e-4a3ce3a2cb22",
+      "relation": "SPENDS_TIME_ON"
+    },
+    {
+      "fact": "Steve Jobs was responsible for creating delightful things.",
+      "createdAt": "2026-01-18T13:41:19.320022Z",
+      "uuid": "75c569d3-3604-4854-aec4-29b12ba84bdd",
+      "relation": "CREATED"
+    },
+    {
+      "fact": "Steve Jobs maintained an intense focus on products, even down to small details.",
+      "createdAt": "2026-01-18T13:41:19.319968Z",
+      "uuid": "ff365c79-a7a1-43c4-a514-318978ece59c",
+      "relation": "FOCUSED_ON"
+    },
+    {
+      "fact": "The time to take risk is now because one does not have kids yet.",
+      "createdAt": "2026-01-18T13:41:00.715149Z",
+      "uuid": "9bee2f7d-5d2a-44e2-b5b6-3d41a8dffec7",
+      "relation": "SHOULD_BE_TAKEN_NOW"
+    },
+    {
+      "fact": "Obligations increase as one gets older, implied by the absence of kids.",
+      "createdAt": "2026-01-18T13:41:00.715202Z",
+      "uuid": "68a55b16-ee4e-435b-8948-0bdad3083197",
+      "relation": "INCREASES_WITH_AGE"
+    },
+    {
+      "fact": "If failure occurs after trying hard, one can learn and establish another company.",
+      "createdAt": "2026-01-18T13:40:49.306464Z",
+      "uuid": "9dcf7316-6e35-46c9-9af3-b2c282972260",
+      "relation": "IMPACT_ON_ENTITY"
+    },
+    {
+      "fact": "In Silicon Valley, failure is not considered a major stigma.",
+      "createdAt": "2026-01-18T13:40:49.306415Z",
+      "uuid": "33fccb42-1251-4bc8-a465-c9d7723add6f",
+      "relation": "LOCATION_OF_CULTURE"
+    },
+    {
+      "fact": "Feedback should be derived from the environment",
+      "createdAt": "2026-01-18T13:40:39.514322Z",
+      "uuid": "f08189d0-7be3-430e-954a-426a30f4ac94",
+      "relation": "SHOULD_CONTAIN"
+    },
+    {
+      "fact": "PayPal initially started as an agglomeration of financial services.",
+      "createdAt": "2026-01-18T13:40:29.466409Z",
+      "uuid": "d93a10ca-99ca-49c1-9abd-4ce1543357bf",
+      "relation": "STARTED_AS"
+    },
+    {
+      "fact": "PayPal introduced email payments which became widely accepted.",
+      "createdAt": "2026-01-18T13:40:29.466456Z",
+      "uuid": "5e64577a-ceef-41cf-9ee5-573babd6f99e",
+      "relation": "INTRODUCED_FEATURE"
+    },
+    {
+      "fact": "Creating a company involves execution based on an idea that is mostly wrong initially.",
+      "createdAt": "2026-01-18T13:40:17.441538Z",
+      "uuid": "bdac2c1e-3e02-4bc3-a48d-cebc581494d4",
+      "relation": "IS_EXECUTED_THROUGH"
+    },
+    {
+      "fact": "The idea is the starting point for creating a company, which is then refined.",
+      "createdAt": "2026-01-18T13:40:17.441589Z",
+      "uuid": "8effe66d-2f64-434c-a672-745b542b188a",
+      "relation": "IS_INITIAL_STATE_OF"
+    },
+    {
+      "fact": "The assistant should take the approach that it is wrong",
+      "createdAt": "2026-01-18T13:40:07.62466Z",
+      "uuid": "105adfe2-5bef-4d7f-bd0b-45eeddc1c06c",
+      "relation": "ASSUME_INCORRECT"
+    },
+    {
+      "fact": "Your friends usually know what is wrong with your products",
+      "createdAt": "2026-01-18T13:39:58.598Z",
+      "uuid": "9b490847-9ccd-44a5-b2c8-93beb1917590",
+      "relation": "KNOWS_ABOUT_ISSUE_WITH"
+    },
+    {
+      "fact": "A well-thought-out criticism is considered as valuable as gold",
+      "createdAt": "2026-01-18T13:39:49.024931Z",
+      "uuid": "de9c5023-c4bf-4d4b-8dab-a0a80d70f8e3",
+      "relation": "IS_AS_VALUABLE_AS"
+    },
+    {
+      "fact": "Kagan Sumer is advised to really like life because it is too short.",
+      "createdAt": "2026-01-18T13:39:37.432203Z",
+      "uuid": "96d54362-930e-44e8-bc7a-4515d45eeb42",
+      "relation": "SHOULD_HAVE_POSITIVE_FEELING_TOWARDS"
+    },
+    {
+      "fact": "Software development is a low capital endeavor that does not require a lot of equipment.",
+      "createdAt": "2026-01-18T13:39:29.471692Z",
+      "uuid": "b9ad442f-bc6c-4c26-895a-1f8f2bd28c15",
+      "relation": "REQUIRES_LOW_CAPITAL"
+    },
+    {
+      "fact": "Elon Musk suggests that a working prototype is more effective than presentations made in PowerPoint.",
+      "createdAt": "2026-01-18T13:39:17.185395Z",
+      "uuid": "ad6f0c61-328a-42cb-8022-2e42536a06ff",
+      "relation": "FAVORS_OVER"
+    },
+    {
+      "fact": "Elon Musk implies that a demonstration article is much more effective than PowerPoint representations.",
+      "createdAt": "2026-01-18T13:39:17.185407Z",
+      "uuid": "48e7880d-a6ea-4409-ac05-b533be51d7bc",
+      "relation": "FAVORS_OVER"
+    },
+    {
+      "fact": "Elon Musk states that creating a working prototype is the first priority when establishing a company.",
+      "createdAt": "2026-01-18T13:39:17.185347Z",
+      "uuid": "1d8fa656-273d-4357-b514-b00f71b47498",
+      "relation": "ADVISES_ACTION_FOR"
+    },
+    {
+      "fact": "Big retail players should understand their customers better by becoming anchor investors of quick delivery services.",
+      "createdAt": "2026-01-18T13:39:05.84881Z",
+      "uuid": "4f11943c-c1f3-4ad6-a9ed-e7cb18bc9585",
+      "relation": "GOAL_IS_TO_UNDERSTAND"
+    },
+    {
+      "fact": "Big retail players should become anchor investors of quick delivery services.",
+      "createdAt": "2026-01-18T13:39:05.848765Z",
+      "uuid": "15f2bd8b-d854-4949-960b-555d041b0240",
+      "relation": "SHOULD_BECOME_INVESTOR_IN"
+    },
+    {
+      "fact": "The business model is expected to remain in the market",
+      "createdAt": "2026-01-18T13:38:53.285565Z",
+      "uuid": "c8b7f708-2c38-415a-a638-34c154b7e710",
+      "relation": "EXPECTED_TO_REMAIN_IN"
+    },
+    {
+      "fact": "The business model established by Gorillas was new in Germany",
+      "createdAt": "2026-01-18T13:38:53.285551Z",
+      "uuid": "92e693a3-de31-41f2-9106-5fa030e9839e",
+      "relation": "INFLUENCED_MARKET_IN"
+    },
+    {
+      "fact": "Gorillas established a completely new business model",
+      "createdAt": "2026-01-18T13:38:53.2855Z",
+      "uuid": "4c03852b-74a2-4cde-ba55-4df64ce9ee5e",
+      "relation": "ESTABLISHED"
+    },
+    {
+      "fact": "Gorillas being profitable at 25 warehouses serves as proof that the Gorillas business model can work",
+      "createdAt": "2026-01-18T13:38:42.139014Z",
+      "uuid": "af68c68e-a6df-40cf-8c41-3e22d861c63e",
+      "relation": "DEMONSTRATES_VIABILITY_OF"
+    },
+    {
+      "fact": "Gorillas had operations profitable at 25 warehouses",
+      "createdAt": "2026-01-18T13:38:42.138962Z",
+      "uuid": "c4148e2e-ae45-438c-8ed1-9abf56cb4779",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "The investor expressed concern that his shares could still implode.",
+      "createdAt": "2026-01-18T13:38:30.859289Z",
+      "uuid": "f80c6d9f-8838-43ce-8ca1-76e2c6837dec",
+      "relation": "EXPRESSED_CONCERN_REGARDING"
+    },
+    {
+      "fact": "The investor stated that the value of his shares is ten times the value of his investment.",
+      "createdAt": "2026-01-18T13:38:30.859236Z",
+      "uuid": "55fc2b02-0037-457f-b521-24f5466a85c9",
+      "relation": "HAS_VALUE_MULTIPLIER"
+    },
+    {
+      "fact": "Going for weeks on vacation will negatively impact winning the Olympics.",
+      "createdAt": "2026-01-18T13:38:15.783137Z",
+      "uuid": "47c8a175-dadd-4697-afe6-b60056d826e1",
+      "relation": "IMPLIES_NEGATIVE_IMPACT_ON"
+    },
+    {
+      "fact": "Kagan stated that one will not win the Olympics by taking weeks on vacation.",
+      "createdAt": "2026-01-18T13:38:15.78309Z",
+      "uuid": "3b7a52e5-f285-41d4-ac76-77915c8a2b15",
+      "relation": "STATED_OPINION_ABOUT"
+    },
+    {
+      "fact": "Kagan intended for the dinner with his girlfriend to include his friends.",
+      "createdAt": "2026-01-18T13:38:01.417559Z",
+      "uuid": "d8f9f839-bea5-4d4e-b34a-0204e9669278",
+      "relation": "INTENDED_TO_DINE_WITH"
+    },
+    {
+      "fact": "The friends Kagan wanted to invite turned out to be the C-level team.",
+      "createdAt": "2026-01-18T13:38:01.417569Z",
+      "uuid": "b18660d4-f4ed-46d4-87ae-49f6ecd740e2",
+      "relation": "TURNED_OUT_TO_BE"
+    },
+    {
+      "fact": "Kagan is constantly focused on Gorillas.",
+      "createdAt": "2026-01-18T13:38:01.417498Z",
+      "uuid": "71f5cb16-4203-45f7-9760-eeee21c3a3cf",
+      "relation": "IS_PREOCCUPIED_WITH"
+    },
+    {
+      "fact": "Kagan suggested having dinner with his girlfriend.",
+      "createdAt": "2026-01-18T13:38:01.417545Z",
+      "uuid": "0fbdd935-84ed-49f8-bee2-c48b4f58a196",
+      "relation": "PROPOSED_ACTIVITY_WITH"
+    },
+    {
+      "fact": "Kagan's shares were valued at approximately 300 million dollars at their peak.",
+      "createdAt": "2026-01-18T13:37:49.094211Z",
+      "uuid": "5bb0493c-781f-40b1-b454-5206c5bb4db0",
+      "relation": "POSSESSED_VALUE"
+    },
+    {
+      "fact": "The shares held a value roughly equivalent to 300 million dollars at their peak.",
+      "createdAt": "2026-01-18T13:37:49.094259Z",
+      "uuid": "2a66e680-cbc0-494f-9f18-caa592bd6725",
+      "relation": "HAS_VALUE"
+    },
+    {
+      "fact": "Internal documents contain information about the 760 million dollars burned through by Gorillas",
+      "createdAt": "2026-01-18T13:37:30.874747Z",
+      "uuid": "80b71477-7dfd-42d5-be6c-15269f2c69cd",
+      "relation": "REVEALED_INFORMATION_ABOUT"
+    },
+    {
+      "fact": "The period during which Gorillas burned through 760 million dollars ended by summer 2022",
+      "createdAt": "2026-01-18T13:37:30.874761Z",
+      "uuid": "74d039d6-1297-48c7-9252-cd44c319435a",
+      "relation": "FINANCIAL_ACTIVITY_ENDED_AT"
+    },
+    {
+      "fact": "Gorillas burned through 760 million dollars according to information found in internal documents",
+      "createdAt": "2026-01-18T13:37:30.8747Z",
+      "uuid": "3f4a51ed-0d64-4d0a-8681-19679997ec08",
+      "relation": "EXPENDITURE_REPORTED_IN"
+    },
+    {
+      "fact": "The Ukraine war preceded a change in the global economic climate, during which interest rates increased.",
+      "createdAt": "2026-01-18T13:37:21.684255Z",
+      "uuid": "45779802-f9e3-4c08-b420-6a1649a80681",
+      "relation": "OCCURRED_AT"
+    },
+    {
+      "fact": "Gorillas raised 1 billion in a single round, which is being compared to the total German startup investment.",
+      "createdAt": "2026-01-18T13:37:10.290952Z",
+      "uuid": "de207a79-efc2-400c-ac3f-71d4b9448105",
+      "relation": "RAISED_AMOUNT"
+    },
+    {
+      "fact": "An investor stated that the total German startup investment was 300 million.",
+      "createdAt": "2026-01-18T13:37:10.290904Z",
+      "uuid": "b1d8e5f3-65d4-4052-a7a9-973973a5deae",
+      "relation": "STATED_BY"
+    },
+    {
+      "fact": "Wildcat strikes are illegal in Germany.",
+      "createdAt": "2026-01-18T13:37:00.066769Z",
+      "uuid": "ae4f771d-7f1e-4e5b-a010-c428a66087c7",
+      "relation": "ILLEGAL_IN_LOCATION"
+    },
+    {
+      "fact": "Kagan expressed concern that paying everyone on time has not happened yet, hurting rider support.",
+      "createdAt": "2026-01-18T13:36:49.639987Z",
+      "uuid": "b26291eb-9623-42ce-955f-6e5ca5d6730a",
+      "relation": "EXPRESSED_CONCERN_OVER"
+    },
+    {
+      "fact": "Kagan admitted that rider support could be better.",
+      "createdAt": "2026-01-18T13:36:49.639939Z",
+      "uuid": "6a334b49-6ee3-472d-91e6-fb050ab18d5f",
+      "relation": "ADMITTED_ISSUE_WITH"
+    },
+    {
+      "fact": "Gorillas clearly communicated their opposition to the gig economy model from the start.",
+      "createdAt": "2026-01-18T13:36:35.334342Z",
+      "uuid": "edf1b76a-b391-4ef8-a688-ed322686806e",
+      "relation": "EXPRESSED_OPPOSITION_TO"
+    },
+    {
+      "fact": "The gig economy model is considered a 'no-go' by Gorillas.",
+      "createdAt": "2026-01-18T13:36:35.334422Z",
+      "uuid": "d91a5f07-4f6f-42fd-9a79-1ce01e877529",
+      "relation": "IS_OPPOSED_BY_ENTITY"
+    },
+    {
+      "fact": "Gorillas permanently employ riders.",
+      "createdAt": "2026-01-18T13:36:35.334391Z",
+      "uuid": "a3ac49e2-f2d1-4b14-920b-7cb380e09d50",
+      "relation": "EMPLOYMENT_POLICY"
+    },
+    {
+      "fact": "Gorillas provides riders with equipment.",
+      "createdAt": "2026-01-18T13:36:35.334413Z",
+      "uuid": "8de61bcc-49e2-4db1-8f53-84be77e33928",
+      "relation": "PROVIDES_EQUIPMENT"
+    },
+    {
+      "fact": "Gorillas provides riders with e-bikes.",
+      "createdAt": "2026-01-18T13:36:35.334403Z",
+      "uuid": "28ac5790-1a42-4193-a30d-04fd93787a9e",
+      "relation": "PROVIDES_EQUIPMENT"
+    },
+    {
+      "fact": "Layoffs included issues related to safety issues.",
+      "createdAt": "2026-01-18T13:36:18.518256Z",
+      "uuid": "ea85ddee-4f0b-4fcb-b50d-969d54ef4a08",
+      "relation": "INCLUDED_ISSUE"
+    },
+    {
+      "fact": "Layoffs included issues related to the weight of backpacks.",
+      "createdAt": "2026-01-18T13:36:18.518239Z",
+      "uuid": "e8bef729-f48e-44e9-bfba-f9a6a74aaefd",
+      "relation": "INCLUDED_ISSUE"
+    },
+    {
+      "fact": "Onboarding included issues related to shift planning.",
+      "createdAt": "2026-01-18T13:36:18.518141Z",
+      "uuid": "dec32d9b-eb2c-4124-9acf-055ee4c62e6f",
+      "relation": "INCLUDED_ISSUE"
+    },
+    {
+      "fact": "Onboarding included issues related to broken work supplies.",
+      "createdAt": "2026-01-18T13:36:18.518201Z",
+      "uuid": "c1c727c1-9a96-4c58-9558-54b811ebe052",
+      "relation": "INCLUDED_ISSUE"
+    },
+    {
+      "fact": "Layoffs included issues related to broken work supplies.",
+      "createdAt": "2026-01-18T13:36:18.518248Z",
+      "uuid": "a52d229c-03bc-4a29-81f5-b0e333792c6a",
+      "relation": "INCLUDED_ISSUE"
+    },
+    {
+      "fact": "Onboarding included issues related to layoffs.",
+      "createdAt": "2026-01-18T13:36:18.51822Z",
+      "uuid": "1ac2ebf9-098e-48b8-9017-acaa6d43bc44",
+      "relation": "INCLUDED_ISSUE"
+    },
+    {
+      "fact": "Onboarding included issues related to safety issues.",
+      "createdAt": "2026-01-18T13:36:18.518211Z",
+      "uuid": "0f3f5257-bf11-459b-a0fe-e358f48105d6",
+      "relation": "INCLUDED_ISSUE"
+    },
+    {
+      "fact": "Layoffs included issues related to shift planning.",
+      "createdAt": "2026-01-18T13:36:18.51823Z",
+      "uuid": "0ec3bf8d-c1fa-464a-a4a8-db7a07200956",
+      "relation": "INCLUDED_ISSUE"
+    },
+    {
+      "fact": "Onboarding included issues related to the weight of backpacks.",
+      "createdAt": "2026-01-18T13:36:18.518189Z",
+      "uuid": "0402b3a6-145d-4ade-8752-24f5587219ec",
+      "relation": "INCLUDED_ISSUE"
+    },
+    {
+      "fact": "Employee strikes occurred following the firing of a worker.",
+      "createdAt": "2026-01-18T13:36:07.311313Z",
+      "uuid": "d90e93f4-6e5f-45d9-9d15-d4018dda7ab3",
+      "relation": "FOLLOWED"
+    },
+    {
+      "fact": "Gorillas hired between 5000 and 6000 riders within a one-year period.",
+      "createdAt": "2026-01-18T13:35:58.524899Z",
+      "uuid": "ee4c64ca-1ec3-4706-8eb2-2f467738829d",
+      "relation": "HIRED_COUNT_OF_ENTITY_OVER_PERIOD"
+    },
+    {
+      "fact": "Gorillas experienced a 10 percent week-over-week growth in the beginning, which Kagan had never witnessed before.",
+      "createdAt": "2026-01-18T13:35:47.707365Z",
+      "uuid": "fc0bc239-fcc8-455d-9871-82dbf5c4a081",
+      "relation": "REPORTED_GROWTH"
+    },
+    {
+      "fact": "Kagan stated that he had never seen the growth rate of Gorillas (10 percent week-over-week in the beginning) before.",
+      "createdAt": "2026-01-18T13:35:47.707414Z",
+      "uuid": "8a05917b-7385-4f37-b9ef-5824a0464935",
+      "relation": "STATED_OBSERVATION"
+    },
+    {
+      "fact": "The color pink was intended to promote the brand",
+      "createdAt": "2026-01-18T13:35:35.323389Z",
+      "uuid": "c4471148-38e3-40c0-a6ed-92dc71654ec7",
+      "relation": "PROMOTION_TARGET"
+    },
+    {
+      "fact": "The color pink was proposed for dressing riders",
+      "createdAt": "2026-01-18T13:35:35.323374Z",
+      "uuid": "7324f799-8440-4025-aade-ee9ac5ba22a7",
+      "relation": "COLOR_PROPOSED_FOR"
+    },
+    {
+      "fact": "Kagan refused to dress riders in pink for promotion",
+      "createdAt": "2026-01-18T13:35:35.323302Z",
+      "uuid": "6e28609c-fb56-4a06-9436-c5bace501783",
+      "relation": "REFUSED_ACTION_CONCERNING_ENTITY"
+    },
+    {
+      "fact": "Kagan stated he does not use his riders as billboards",
+      "createdAt": "2026-01-18T13:35:35.323356Z",
+      "uuid": "6a220501-3e11-451f-832e-5d09d5b73852",
+      "relation": "REFUSED_USE_AS"
+    },
+    {
+      "fact": "The investor informed Kagan that they cannot help with marketing.",
+      "createdAt": "2026-01-18T13:35:21.149508Z",
+      "uuid": "f6059c85-f40c-47d0-83a2-ac35e5adbd41",
+      "relation": "CANNOT_ASSIST_WITH"
+    },
+    {
+      "fact": "The investor is willing to provide money to Kagan.",
+      "createdAt": "2026-01-18T13:35:21.149542Z",
+      "uuid": "d6a71255-ea64-4967-b70f-56cec175c742",
+      "relation": "OFFERED_TO_PROVIDE"
+    },
+    {
+      "fact": "The investor is willing to provide a blank check to Kagan.",
+      "createdAt": "2026-01-18T13:35:21.149555Z",
+      "uuid": "6c8d35bf-d4a8-4205-bc6d-40bbc50f937b",
+      "relation": "OFFERED_TO_PROVIDE"
+    },
+    {
+      "fact": "One investor communicated with Kagan.",
+      "createdAt": "2026-01-18T13:35:21.149564Z",
+      "uuid": "62e82d37-e2ee-4d5d-ae1c-788f6c12a0de",
+      "relation": "COMMUNICATED_TO"
+    },
+    {
+      "fact": "Gorillas received Series A funding that was approximately 44 million dollars.",
+      "createdAt": "2026-01-18T13:35:09.152182Z",
+      "uuid": "9d09d71c-250d-4b4d-a0fb-eec00624e6c4",
+      "relation": "RECEIVED_FUNDING"
+    },
+    {
+      "fact": "The Series A funding was approximately 44 million dollars.",
+      "createdAt": "2026-01-18T13:35:09.152221Z",
+      "uuid": "65eec8aa-c014-487b-a3bd-e8009f3c8b9c",
+      "relation": "HAS_VALUE"
+    },
+    {
+      "fact": "The postbox is implicitly related to the warehouse in the context of the postman's route.",
+      "createdAt": "2026-01-18T13:34:54.750242Z",
+      "uuid": "e2afc637-993a-4994-843d-cdc36c16ebe5",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "The postman goes back to the warehouse after stopping at a postbox.",
+      "createdAt": "2026-01-18T13:34:54.750224Z",
+      "uuid": "540571bf-da4c-4150-acea-0fcb36747e66",
+      "relation": "RETURNS_TO"
+    },
+    {
+      "fact": "Critics compared the Gorillas model to an analogy involving a postman.",
+      "createdAt": "2026-01-18T13:34:54.750169Z",
+      "uuid": "3897468c-0563-4638-b891-e552a9b7972b",
+      "relation": "COMPARED_TO"
+    },
+    {
+      "fact": "The postman deals with letters, implying they are transported.",
+      "createdAt": "2026-01-18T13:34:54.750233Z",
+      "uuid": "1da875c1-c50a-4193-a9d2-359a09f4fc0b",
+      "relation": "CARRIES"
+    },
+    {
+      "fact": "The postman stops at one postbox.",
+      "createdAt": "2026-01-18T13:34:54.750212Z",
+      "uuid": "0a1a5d93-e3f0-41db-be0b-361a0402b5d9",
+      "relation": "ACTS_LIKE"
+    },
+    {
+      "fact": "Delivering goods is related to the concept of grocery retail.",
+      "createdAt": "2026-01-18T13:34:40.616547Z",
+      "uuid": "e13896b1-3c7b-46be-b77e-f7997c148d42",
+      "relation": "RELATED_TO_ACTIVITY"
+    },
+    {
+      "fact": "The investor comes from a family of grocers.",
+      "createdAt": "2026-01-18T13:34:40.616499Z",
+      "uuid": "259ebc50-956a-48b7-b0ba-a9e08830d5b9",
+      "relation": "COMES_FROM_FAMILY_OF"
+    },
+    {
+      "fact": "Gorillas refrained from marketing during the first months of operation.",
+      "createdAt": "2026-01-18T13:34:29.124506Z",
+      "uuid": "c55af199-8bc6-4829-be77-92df9179181b",
+      "relation": "DID_NOT_PERFORM"
+    },
+    {
+      "fact": "The service offered by Gorillas triggered people's instincts.",
+      "createdAt": "2026-01-18T13:34:29.124552Z",
+      "uuid": "78e81cfd-621d-4fae-aa7b-52e574702d0b",
+      "relation": "TRIGGERED"
+    },
+    {
+      "fact": "Kagan had a PayPal login.",
+      "createdAt": "2026-01-18T13:34:16.569826Z",
+      "uuid": "c1277036-0b1b-400e-830f-2ab2c1a087c7",
+      "relation": "HAS_ACCOUNT_WITH"
+    },
+    {
+      "fact": "Kagan gave his PayPal login details to Ronny during a phone call.",
+      "createdAt": "2026-01-18T13:34:16.569763Z",
+      "uuid": "3aabdbbb-f8a5-4c63-af9a-877b29cc07fa",
+      "relation": "GAVE_CREDENTIALS_TO"
+    },
+    {
+      "fact": "Ronny holds the role of CTO.",
+      "createdAt": "2026-01-18T13:34:16.569812Z",
+      "uuid": "2ce7e0f9-a818-46f3-9c38-4d5b0828aa81",
+      "relation": "IS_ROLE_OF"
+    },
+    {
+      "fact": "Kagan communicated via phone call with someone who is in Lebanon.",
+      "createdAt": "2026-01-18T13:34:16.569837Z",
+      "uuid": "03102b80-f48e-43e6-8c3e-9277f32f63bf",
+      "relation": "INTERACTED_WITH_VIA_COMMUNICATION"
+    },
+    {
+      "fact": "Gorillas required decentralized warehouses to be located within the city.",
+      "createdAt": "2026-01-18T13:34:03.618575Z",
+      "uuid": "b79b5f31-ad00-4c5d-b540-fa39dc12d46d",
+      "relation": "NEEDED"
+    },
+    {
+      "fact": "Decentralized warehouses were required to be located within the city.",
+      "createdAt": "2026-01-18T13:34:03.618626Z",
+      "uuid": "9198e37e-398c-40e4-83af-5e46ff497284",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "If a warehouse is out of reach, Gorillas cannot deliver in minutes.",
+      "createdAt": "2026-01-18T13:34:03.61864Z",
+      "uuid": "8c76cc6d-1e6e-458d-b118-2f72713cb484",
+      "relation": "IMPACTING_DELIVERY_SPEED"
+    },
+    {
+      "fact": "Gorillas riders ran up to the fourth floor.",
+      "createdAt": "2026-01-18T13:33:51.393263Z",
+      "uuid": "6f036355-f90a-4199-9aed-3f31ca944789",
+      "relation": "RAN_TO"
+    },
+    {
+      "fact": "Gorillas riders ran up the stairs.",
+      "createdAt": "2026-01-18T13:33:51.393216Z",
+      "uuid": "3e4a79d0-041c-4107-823f-910932e4648a",
+      "relation": "RAN_UP"
+    },
+    {
+      "fact": "Customers looked back confused by the actions of the Gorillas riders.",
+      "createdAt": "2026-01-18T13:33:51.393277Z",
+      "uuid": "1e49b441-13e4-4820-98fc-b53aef858799",
+      "relation": "OBSERVED_ACTION"
+    },
+    {
+      "fact": "Gorillas dropped a post in a WhatsApp group when they went live.",
+      "createdAt": "2026-01-18T13:33:41.648887Z",
+      "uuid": "ac136343-ee69-4d64-a4cb-9009e40cdf8b",
+      "relation": "POSTED_IN"
+    },
+    {
+      "fact": "The early Gorillas team only had 2.5 seats available.",
+      "createdAt": "2026-01-18T13:33:30.458578Z",
+      "uuid": "b8da0e1c-462f-4667-98c3-8d90704100a7",
+      "relation": "HAS_RESOURCE_COUNT"
+    },
+    {
+      "fact": "The early Gorillas team consisted of 6 staff members.",
+      "createdAt": "2026-01-18T13:33:30.458533Z",
+      "uuid": "51a744c7-23df-4051-89b5-d455677d238b",
+      "relation": "HAS_STAFF_COUNT"
+    },
+    {
+      "fact": "One of the seats available to the early Gorillas team was missing a backrest.",
+      "createdAt": "2026-01-18T13:33:30.458591Z",
+      "uuid": "16998ab2-e3f2-4b87-9c05-ba92911606bb",
+      "relation": "LACKS_FEATURE"
+    },
+    {
+      "fact": "The first Gorillas office was situated at Danziger Strasse.",
+      "createdAt": "2026-01-18T13:33:19.494946Z",
+      "uuid": "d5b063e4-3d44-4f19-ab46-24fe04b9dc9d",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Danziger Strasse location contained approximately 100 products in the first Gorillas office.",
+      "createdAt": "2026-01-18T13:33:19.49499Z",
+      "uuid": "a1722123-7f0a-4dff-bc22-e81ae02e86c4",
+      "relation": "CONTAINED_COUNT"
+    },
+    {
+      "fact": "Gorillas claimed to offer 10 minute grocery delivery, which was unprecedented in Germany.",
+      "createdAt": "2026-01-18T13:33:09.017111Z",
+      "uuid": "ab4e154d-e76f-4a03-bd45-f294fa652411",
+      "relation": "OFFERED_SERVICE"
+    },
+    {
+      "fact": "Gorillas' claim regarding 10 minute grocery delivery was previously unheard of in Germany.",
+      "createdAt": "2026-01-18T13:33:09.017157Z",
+      "uuid": "9c907456-b168-4131-959c-8418fcac3657",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan recognized that being a public figure implies having a responsibility to investors.",
+      "createdAt": "2026-01-18T13:32:55.552459Z",
+      "uuid": "fcb4737c-19fa-4d31-91ef-c4a5595ce21b",
+      "relation": "HAS_RESPONSIBILITY_TO"
+    },
+    {
+      "fact": "Kagan recognized that being a public figure implies having a responsibility to the team.",
+      "createdAt": "2026-01-18T13:32:55.552401Z",
+      "uuid": "dd91dacf-dad6-4277-ad3e-438be28b8fd5",
+      "relation": "HAS_RESPONSIBILITY_TO"
+    },
+    {
+      "fact": "Kagan realized that being a public figure entails having consequences for every action.",
+      "createdAt": "2026-01-18T13:32:55.552478Z",
+      "uuid": "dbeeb0c1-d2e2-4bd2-9bf3-d3690dc2bb6e",
+      "relation": "INCLUDES_STATUS_OF"
+    },
+    {
+      "fact": "Kagan recognized that being a public figure implies having a responsibility to suppliers.",
+      "createdAt": "2026-01-18T13:32:55.552468Z",
+      "uuid": "499987e4-41e3-48ce-aead-952b36930017",
+      "relation": "HAS_RESPONSIBILITY_TO"
+    },
+    {
+      "fact": "Kagan recognized that being a public figure implies having a responsibility to customers.",
+      "createdAt": "2026-01-18T13:32:55.552445Z",
+      "uuid": "1a109bbb-36d6-446b-89cc-27b82d5447ee",
+      "relation": "HAS_RESPONSIBILITY_TO"
+    },
+    {
+      "fact": "Protesters once showed up with masks featuring Kagan's face",
+      "createdAt": "2026-01-18T13:32:44.501818Z",
+      "uuid": "38efd959-898b-4d4e-bc92-ec025d70da7c",
+      "relation": "PRESENTED_MASKS_OF"
+    },
+    {
+      "fact": "Market conditions include interest rates.",
+      "createdAt": "2026-01-18T13:32:31.660514Z",
+      "uuid": "a741d296-42be-4c2c-8448-274019fb01ed",
+      "relation": "INCLUDED_TOPIC"
+    },
+    {
+      "fact": "Kagan initially underestimated the power of market conditions.",
+      "createdAt": "2026-01-18T13:32:31.660468Z",
+      "uuid": "9edb645b-af91-465e-9b27-1e151c3fff9c",
+      "relation": "UNDERESTIMATED_INFLUENCE_OF"
+    },
+    {
+      "fact": "Magazines were a less powerful source of information regarding market conditions than market conditions themselves.",
+      "createdAt": "2026-01-18T13:32:31.660536Z",
+      "uuid": "541da7ac-3c96-4124-b3bd-6ee538061d40",
+      "relation": "LESS_INFLUENTIAL_THAN"
+    },
+    {
+      "fact": "Kagan initially formed beliefs about market conditions from reading magazines.",
+      "createdAt": "2026-01-18T13:32:31.660526Z",
+      "uuid": "136adb56-a656-49ff-bc39-706ebcaf5913",
+      "relation": "SOURCE_OF_BELIEF"
+    },
+    {
+      "fact": "Kagan asserts that constructing a company provides self-knowledge.",
+      "createdAt": "2026-01-18T13:32:20.207377Z",
+      "uuid": "f87e3cd9-b1b0-414e-9e94-a5c507fd78d7",
+      "relation": "STATES_THAT"
+    },
+    {
+      "fact": "Building a company teaches Kagan about himself.",
+      "createdAt": "2026-01-18T13:32:20.20745Z",
+      "uuid": "e4d1b3d3-72f7-4884-8b04-1e316d3906b1",
+      "relation": "REVEALS_ABOUT"
+    },
+    {
+      "fact": "A company reflects an individual's character.",
+      "createdAt": "2026-01-18T13:32:20.20744Z",
+      "uuid": "d549e0f6-a6e6-4306-83ea-c402bc10408e",
+      "relation": "REFLECTS"
+    },
+    {
+      "fact": "A company reflects an individual's values.",
+      "createdAt": "2026-01-18T13:32:20.207426Z",
+      "uuid": "5c37c94c-c91b-4430-9a6a-24d00e22ddcb",
+      "relation": "REFLECTS"
+    },
+    {
+      "fact": "Kagan believes that the emotional and social aspects of health habits are underexplored.",
+      "createdAt": "2026-01-18T13:32:08.768006Z",
+      "uuid": "ecbf5e3b-69f3-44d1-86d6-cb6973a58cfb",
+      "relation": "BELIEVES_ASPECTS_UNDERSCRUTINIZED"
+    },
+    {
+      "fact": "The emotional and social aspects of health habits should be considered, in contrast to just tracking reps and sets.",
+      "createdAt": "2026-01-18T13:32:08.768052Z",
+      "uuid": "2424e940-61ac-4ecc-ac0e-d08cf93bffeb",
+      "relation": "CONTRASTS_WITH"
+    },
+    {
+      "fact": "Users can see who did what exercise at their gym.",
+      "createdAt": "2026-01-18T13:31:56.445511Z",
+      "uuid": "afe1594a-3120-4c5d-8b09-bea80dbcb38d",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "The map-based social network is for tracking exercise.",
+      "createdAt": "2026-01-18T13:31:56.445497Z",
+      "uuid": "333c049a-9796-4c1f-8cb3-f8e7deee5f67",
+      "relation": "ABOUT"
+    },
+    {
+      "fact": "Sugar is building a map-based social network.",
+      "createdAt": "2026-01-18T13:31:56.445451Z",
+      "uuid": "11ea67ae-96ea-44aa-9332-dd24fa85a9aa",
+      "relation": "BUILDING"
+    },
+    {
+      "fact": "Kagan's new company is named Sugar.",
+      "createdAt": "2026-01-18T13:31:42.523404Z",
+      "uuid": "ef8d5ca1-7e69-4a4e-ae92-0abb74607f7f",
+      "relation": "HAS_NEW_COMPANY"
+    },
+    {
+      "fact": "Sugar focuses on social motivation.",
+      "createdAt": "2026-01-18T13:31:42.523469Z",
+      "uuid": "769444a9-8d9c-4cc3-811a-a96a6ea4ab73",
+      "relation": "FOCUSES_ON"
+    },
+    {
+      "fact": "Sugar is a health and lifestyle app.",
+      "createdAt": "2026-01-18T13:31:42.523Z",
+      "uuid": "7541a128-6f23-4594-a596-d08ef7fce58e",
+      "relation": "IS_A"
+    },
+    {
+      "fact": "The health and lifestyle app focuses on habits.",
+      "createdAt": "2026-01-18T13:31:42.523478Z",
+      "uuid": "4f4fa599-a072-4949-adf5-714d93ee8d36",
+      "relation": "FOCUSES_ON"
+    },
+    {
+      "fact": "Sugar focuses on habits.",
+      "createdAt": "2026-01-18T13:31:42.523459Z",
+      "uuid": "3e5b0c4c-25ed-49da-967f-aa22833bbbb0",
+      "relation": "FOCUSES_ON"
+    },
+    {
+      "fact": "The health and lifestyle app focuses on social motivation.",
+      "createdAt": "2026-01-18T13:31:42.523486Z",
+      "uuid": "2dbd8e7f-3bad-4a5d-be54-f3466d55a66a",
+      "relation": "FOCUSES_ON"
+    },
+    {
+      "fact": "Netflix is listed among the top apps, contrasting with health apps.",
+      "createdAt": "2026-01-18T13:31:26.756841Z",
+      "uuid": "e8b7a331-7f6f-4482-aff2-ee5387636462",
+      "relation": "IS_IN_TOP_APPS"
+    },
+    {
+      "fact": "WhatsApp is listed among the top apps, contrasting with health apps.",
+      "createdAt": "2026-01-18T13:31:26.75685Z",
+      "uuid": "dfb4dd18-e497-44fb-8820-a09cb4979437",
+      "relation": "IS_IN_TOP_APPS"
+    },
+    {
+      "fact": "Kagan Sumer noticed the absence of health apps in the top 100 apps.",
+      "createdAt": "2026-01-18T13:31:26.75676Z",
+      "uuid": "b5be740c-ac60-49b2-94a6-ca8b27fb6f2e",
+      "relation": "OBSERVED_LACK_OF_PRESENCE"
+    },
+    {
+      "fact": "Netflix was noted by Kagan Sumer as being among the top 100 apps.",
+      "createdAt": "2026-01-18T13:31:26.756808Z",
+      "uuid": "b25dbadf-cc06-464f-8072-46f1bfd53426",
+      "relation": "IS_AMONG_TOP_APPS_INCLUDED"
+    },
+    {
+      "fact": "WhatsApp was noted by Kagan Sumer as being among the top 100 apps.",
+      "createdAt": "2026-01-18T13:31:26.756821Z",
+      "uuid": "7534f8ac-a13f-4f14-ace6-3c44ae2222ed",
+      "relation": "IS_AMONG_TOP_APPS_INCLUDED"
+    },
+    {
+      "fact": "Health clinics only gave Kagan basic test results, not actionable personalized advice.",
+      "createdAt": "2026-01-18T13:31:13.960469Z",
+      "uuid": "fd08ad0e-4a5d-4d97-ba5a-a21ab69044c1",
+      "relation": "PROVIDED_ONLY"
+    },
+    {
+      "fact": "Health clinics did not provide Kagan with actionable personalized advice.",
+      "createdAt": "2026-01-18T13:31:13.96Z",
+      "uuid": "746da6d0-5cf1-4341-be55-b1001d1c0863",
+      "relation": "DID_NOT_RECEIVE"
+    },
+    {
+      "fact": "Kagan went to many health clinics.",
+      "createdAt": "2026-01-18T13:31:13.96Z",
+      "uuid": "3b929b08-040e-49cc-8f51-98f5b0b52c81",
+      "relation": "VISITED"
+    },
+    {
+      "fact": "Kagan has a son named Marlon.",
+      "createdAt": "2026-01-18T13:31:04.356Z",
+      "uuid": "d70ca50d-6106-4b32-abd8-b6fa0c5a6e41",
+      "relation": "HAS_SON"
+    },
+    {
+      "fact": "Kagan set a goal NOT to start a business during 2023.",
+      "createdAt": "2026-01-18T13:30:51.457751Z",
+      "uuid": "a10b0264-7428-4923-acc2-0fbf91f2ccc1",
+      "relation": "SET_GOAL_AGAINST"
+    },
+    {
+      "fact": "Kagan set a goal to be a good father during 2023.",
+      "createdAt": "2026-01-18T13:30:51.457731Z",
+      "uuid": "7fabb0c2-b82e-4205-b45a-2b331fe94c44",
+      "relation": "SET_GOAL_FOR"
+    },
+    {
+      "fact": "Kagan set a goal to handle taxes during 2023.",
+      "createdAt": "2026-01-18T13:30:51.457632Z",
+      "uuid": "3a998168-98b7-41bd-9b0e-959525d72ac4",
+      "relation": "SET_GOAL_FOR"
+    },
+    {
+      "fact": "Kagan set a goal to focus on health during 2023.",
+      "createdAt": "2026-01-18T13:30:51.457Z",
+      "uuid": "37a8c647-d3cc-41e0-a975-fc1829aa16e1",
+      "relation": "SET_GOAL_FOR"
+    },
+    {
+      "fact": "Kagan set a goal to handle legal matters during 2023.",
+      "createdAt": "2026-01-18T13:30:51.457717Z",
+      "uuid": "2ceae782-ec3a-4b63-b99a-5b31acda0b5d",
+      "relation": "SET_GOAL_FOR"
+    },
+    {
+      "fact": "Kagan writes 5 goals for the next year at a farm-like retreat every December.",
+      "createdAt": "2026-01-18T13:30:38.983971Z",
+      "uuid": "ef324a36-9597-4a27-8034-1423e7bcf477",
+      "relation": "PERFORMS_ACTIVITY_AT"
+    },
+    {
+      "fact": "Kagan writes 5 goals for the next year every December.",
+      "createdAt": "2026-01-18T13:30:38.983984Z",
+      "uuid": "d61520b7-7cf3-497c-8a90-11bb91f92f0f",
+      "relation": "DEDICATES_TIME_TO"
+    },
+    {
+      "fact": "Kagan goes to a farm-like retreat every December.",
+      "createdAt": "2026-01-18T13:30:38.983928Z",
+      "uuid": "0f009986-f7fc-41d4-afb9-4bfc57720b36",
+      "relation": "VISITS"
+    },
+    {
+      "fact": "Some trusted advisors loved the Gorillas name.",
+      "createdAt": "2026-01-18T13:30:29.674985Z",
+      "uuid": "9ba12ff3-78ed-4bff-927a-6049ff1e0873",
+      "relation": "HAD_OPINION_ON"
+    },
+    {
+      "fact": "Some trusted advisors hated the Gorillas name.",
+      "createdAt": "2026-01-18T13:30:29.674934Z",
+      "uuid": "29a93055-1123-4486-9e76-9159cacc8de0",
+      "relation": "HAD_OPINION_ON"
+    },
+    {
+      "fact": "Kagan came up with the name Gorillas",
+      "createdAt": "2026-01-18T13:30:17.52939Z",
+      "uuid": "f6e51fca-281b-4d8c-8b9d-358fe018979b",
+      "relation": "ASSOCIATED_WITH_ACTION"
+    },
+    {
+      "fact": "Kagan jumped on the table upon arriving with the name Gorillas",
+      "createdAt": "2026-01-18T13:30:17.529329Z",
+      "uuid": "bcb83214-f61a-41c9-951b-ada9ff41a84b",
+      "relation": "JUMPED_ON"
+    },
+    {
+      "fact": "Kagan shouted when he came up with the name Gorillas",
+      "createdAt": "2026-01-18T13:30:17.529375Z",
+      "uuid": "2c8d19f5-ecc6-44e3-8a6a-2153c41108c2",
+      "relation": "SHOUTED_ABOUT"
+    },
+    {
+      "fact": "The name Get Goodies describes what the business does.",
+      "createdAt": "2026-01-18T13:30:07.71075Z",
+      "uuid": "99c68171-7964-4071-90d5-ae670477c074",
+      "relation": "DESCRIBES"
+    },
+    {
+      "fact": "Kagan disliked the name Get Goodies because it was too descriptive of the business's function.",
+      "createdAt": "2026-01-18T13:30:07.710702Z",
+      "uuid": "45c7cff6-ccaa-44fe-a2b2-c699adf2aed3",
+      "relation": "DISLIKED"
+    },
+    {
+      "fact": "Gorillas has the value Change, represented by degistir",
+      "createdAt": "2026-01-18T13:29:50.695904Z",
+      "uuid": "d78e7c32-94dc-4c54-a886-9da4b0f31262",
+      "relation": "HAS_VALUE"
+    },
+    {
+      "fact": "Gorillas has the value Ride, represented by bisiklette ol",
+      "createdAt": "2026-01-18T13:29:50.69587Z",
+      "uuid": "d5911169-6761-498a-8f5c-b1cb0895d230",
+      "relation": "HAS_VALUE"
+    },
+    {
+      "fact": "Gorillas has the value Ride, which corresponds to bisiklette ol",
+      "createdAt": "2026-01-18T13:29:50.695859Z",
+      "uuid": "bed11132-b2ba-4101-97b9-3e1210504922",
+      "relation": "HAS_VALUE"
+    },
+    {
+      "fact": "Gorillas has the value Change, which corresponds to degistir",
+      "createdAt": "2026-01-18T13:29:50.695896Z",
+      "uuid": "b83d9f4c-ef81-4bc0-a45f-236c29538626",
+      "relation": "HAS_VALUE"
+    },
+    {
+      "fact": "The gorilla tattoo represents the company's symbol.",
+      "createdAt": "2026-01-18T13:29:36.83728Z",
+      "uuid": "9e404032-5a6d-48be-8b97-c96ed6e05647",
+      "relation": "REPRESENTS"
+    },
+    {
+      "fact": "Kagan carries the company's symbol on his body.",
+      "createdAt": "2026-01-18T13:29:36.83729Z",
+      "uuid": "86a5e0ed-9414-4736-9083-fb00a799a808",
+      "relation": "CARRIES_SYMBOL"
+    },
+    {
+      "fact": "Gorillas had operations in 8 countries.",
+      "createdAt": "2026-01-18T13:29:24.229341Z",
+      "uuid": "cf3cb6f3-a8a3-4427-8fc3-95d8fcc15b20",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Gorillas had operations in New York.",
+      "createdAt": "2026-01-18T13:29:24.22939Z",
+      "uuid": "4cb1078a-f86d-4e4f-af46-1e3b963dc1e0",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Gorillas was a fast-growing company encouraged for investment within Europe",
+      "createdAt": "2026-01-18T13:29:12.377297Z",
+      "uuid": "f41788b4-c2ae-4952-9ca6-63f4230e260a",
+      "relation": "INVESTMENT_TARGET"
+    },
+    {
+      "fact": "Negative interest rates were prevalent in Europe",
+      "createdAt": "2026-01-18T13:29:12.377288Z",
+      "uuid": "f0801086-a298-4719-bed8-599703ff7ac6",
+      "relation": "TARGETED_BY_POLICY"
+    },
+    {
+      "fact": "Negative interest rates were a characteristic of the economic environment in Europe",
+      "createdAt": "2026-01-18T13:29:12.377228Z",
+      "uuid": "ddb7c48d-dbf8-4275-b226-2f941d191e9b",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Banks encouraged investment in fast-growing companies like Gorillas due to negative interest rates in Europe",
+      "createdAt": "2026-01-18T13:29:12.377275Z",
+      "uuid": "6da1b1a8-b41e-45f1-b8f9-db233d7d6a40",
+      "relation": "ENCOURAGED_INVESTMENT_IN"
+    },
+    {
+      "fact": "The labor surplus helped Gorillas hire delivery riders.",
+      "createdAt": "2026-01-18T13:28:57.93688Z",
+      "uuid": "f5d94107-d304-44a1-b3ed-25af6ecbfa13",
+      "relation": "AIDED_HIRING_OF"
+    },
+    {
+      "fact": "Restaurants were affected by COVID, leading to closure.",
+      "createdAt": "2026-01-18T13:28:57.936889Z",
+      "uuid": "f427a8cd-b091-4855-8f53-17baac08082e",
+      "relation": "RELATES_TO"
+    },
+    {
+      "fact": "Cafes were affected by COVID, leading to closure.",
+      "createdAt": "2026-01-18T13:28:57.936897Z",
+      "uuid": "82e7db1b-d67b-4fb1-9b58-9ba98d335dec",
+      "relation": "RELATES_TO"
+    },
+    {
+      "fact": "The labor surplus resulted from the closure of cafes.",
+      "createdAt": "2026-01-18T13:28:57.936868Z",
+      "uuid": "4dd377a4-228d-465a-b1ca-613a67b39ac4",
+      "relation": "RESULTED_FROM_CLOSURE_AT"
+    },
+    {
+      "fact": "COVID created a labor surplus.",
+      "createdAt": "2026-01-18T13:28:57.936803Z",
+      "uuid": "49607025-a496-4e36-899d-8112828ce49d",
+      "relation": "CREATED"
+    },
+    {
+      "fact": "The labor surplus resulted from the closure of restaurants.",
+      "createdAt": "2026-01-18T13:28:57.93685Z",
+      "uuid": "2f46b6b6-852b-4f91-be8e-742340b3e4b8",
+      "relation": "RESULTED_FROM_CLOSURE_AT"
+    },
+    {
+      "fact": "If Gorillas had 100k orders this week, they were projected to have 120k orders the next week.",
+      "createdAt": "2026-01-18T13:28:45.97562Z",
+      "uuid": "47576c76-5461-43c3-967f-3092c349c2b9",
+      "relation": "PREDICTED_ORDERS"
+    },
+    {
+      "fact": "Gorillas experienced a weekly growth rate of 20% for orders at one point.",
+      "createdAt": "2026-01-18T13:28:45.975576Z",
+      "uuid": "09990bfa-5044-4b42-ad30-ac5e5c01827c",
+      "relation": "EXPERIENCED_GROWTH_RATE"
+    },
+    {
+      "fact": "Kagan received the German COVID business support money in his account within 2 to 3 days of applying.",
+      "createdAt": "2026-01-18T13:28:37.021465Z",
+      "uuid": "529af55b-8353-4549-8511-dc9f8d85ad01",
+      "relation": "RECEIVED"
+    },
+    {
+      "fact": "Kagan applied for the German COVID business support.",
+      "createdAt": "2026-01-18T13:28:37.02142Z",
+      "uuid": "486d336e-e007-4be0-a53e-f1ba58322608",
+      "relation": "APPLIED_FOR"
+    },
+    {
+      "fact": "The case won by Kagan served as a motivation push for the team.",
+      "createdAt": "2026-01-18T13:28:22.216653Z",
+      "uuid": "e08919e5-3806-4d05-91be-3854a3822158",
+      "relation": "MOTIVATED"
+    },
+    {
+      "fact": "Kagan counter-sued and won a case, which motivated the team.",
+      "createdAt": "2026-01-18T13:28:22.216595Z",
+      "uuid": "7b61dc07-911a-4f3b-ab76-5f84be40c4e2",
+      "relation": "COUNTER_SUED_AND_WON_CASE_AGAINST"
+    },
+    {
+      "fact": "Money laundering traffic was allegedly present between Lebanon and another location.",
+      "createdAt": "2026-01-18T13:28:07.402656Z",
+      "uuid": "d335d5c3-48d4-4218-975f-d00f476d1448",
+      "relation": "INVOLVES_LOCATION"
+    },
+    {
+      "fact": "Kagan was allegedly grouped with cases involving money laundering traffic.",
+      "createdAt": "2026-01-18T13:28:07.402683Z",
+      "uuid": "a7b3f8a2-4480-40c5-8b1a-e563b3855dda",
+      "relation": "GROUPED_WITH"
+    },
+    {
+      "fact": "Kagan was allegedly grouped with cases involving drug traffic.",
+      "createdAt": "2026-01-18T13:28:07.402674Z",
+      "uuid": "5b06ee33-6f44-4cf3-b2fa-bc8a1b6ccc5c",
+      "relation": "GROUPED_WITH"
+    },
+    {
+      "fact": "There was alleged traffic between Germany and Lebanon.",
+      "createdAt": "2026-01-18T13:28:07.402666Z",
+      "uuid": "52648a17-f169-49b6-8448-d18df9bda7cf",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Drug traffic was allegedly present between Germany and another location.",
+      "createdAt": "2026-01-18T13:28:07.402586Z",
+      "uuid": "5126e4a8-e3b6-42bb-949c-b6f5425efe90",
+      "relation": "INVOLVES_LOCATION"
+    },
+    {
+      "fact": "Drug traffic was allegedly present between Lebanon and another location.",
+      "createdAt": "2026-01-18T13:28:07.402631Z",
+      "uuid": "1564e43f-e405-4860-839f-906d660b76b0",
+      "relation": "INVOLVES_LOCATION"
+    },
+    {
+      "fact": "Money laundering traffic was allegedly present between Germany and another location.",
+      "createdAt": "2026-01-18T13:28:07.402645Z",
+      "uuid": "0372b8b7-9b64-4a1c-94bf-0c89666d6882",
+      "relation": "INVOLVES_LOCATION"
+    },
+    {
+      "fact": "The German letter concerned Kagan.",
+      "createdAt": "2026-01-18T13:27:53.163184Z",
+      "uuid": "c974197d-56bf-4a2f-a320-792a0466b778",
+      "relation": "ASSOCIATED_WITH"
+    },
+    {
+      "fact": "Kagan received an official German letter containing his photos.",
+      "createdAt": "2026-01-18T13:27:53.16311Z",
+      "uuid": "c9274706-3690-48df-9831-d47226b40e09",
+      "relation": "RECEIVED"
+    },
+    {
+      "fact": "Kagan was accused of money laundering for sending money to Lebanon.",
+      "createdAt": "2026-01-18T13:27:53.163173Z",
+      "uuid": "b5750deb-05e5-427e-a767-4edf4598f669",
+      "relation": "ACTION_RELATED_TO_ACCUSATION"
+    },
+    {
+      "fact": "The German letter included photos of Kagan doing deliveries.",
+      "createdAt": "2026-01-18T13:27:53.163158Z",
+      "uuid": "125705ee-1aca-45b4-9074-eb6ce084173b",
+      "relation": "CONTENT_INCLUDES"
+    },
+    {
+      "fact": "The CEO later assumed the role of CTO at Gorillas.",
+      "createdAt": "2026-01-18T13:27:39.900045Z",
+      "uuid": "fa159fcd-32be-462e-be46-211f553cf19c",
+      "relation": "TOOK_POSITION"
+    },
+    {
+      "fact": "The CEO later joined Gorillas as CTO.",
+      "createdAt": "2026-01-18T13:27:39.900026Z",
+      "uuid": "d22dc06c-75de-42ba-bc4b-6b63c594b03d",
+      "relation": "ASSUMED_ROLE_AT"
+    },
+    {
+      "fact": "The CEO previously held a position related to the Lebanon tech partner.",
+      "createdAt": "2026-01-18T13:27:39.899968Z",
+      "uuid": "3c4d3282-7ee5-4719-b36e-815f3f578c36",
+      "relation": "PREVIOUSLY_HELD_ROLE"
+    },
+    {
+      "fact": "Kagan negotiated the amount down to 16000 euros.",
+      "createdAt": "2026-01-18T13:27:27.469036Z",
+      "uuid": "c4fef960-b0b1-4445-b248-bb7b03bd6d7c",
+      "relation": "NEGOTIATED_AMOUNT"
+    },
+    {
+      "fact": "The tech partner was initially located in Lebanon.",
+      "createdAt": "2026-01-18T13:27:27.468984Z",
+      "uuid": "cc5ade75-4f26-4143-84ce-6f72b2eafb14",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan mom invested 10000 euros.",
+      "createdAt": "2026-01-18T13:27:15.074Z",
+      "uuid": "a021de98-c374-46b1-a34b-1db110c05455",
+      "relation": "INVESTED"
+    },
+    {
+      "fact": "Kagan mom used the investment to rent the first location.",
+      "createdAt": "2026-01-18T13:27:15.074951Z",
+      "uuid": "66674bdd-05c1-4185-b8b7-3d69868a145d",
+      "relation": "USED_FOR_RENTING"
+    },
+    {
+      "fact": "Kagan mom expanded the product range from 100 to 300 products using the investment.",
+      "createdAt": "2026-01-18T13:27:15.074964Z",
+      "uuid": "5447cf47-d528-47a5-80ab-c83d1bc72ea9",
+      "relation": "EXPANDED_PRODUCT_RANGE"
+    },
+    {
+      "fact": "The first external investment was valued at close to 1.2 million euros.",
+      "createdAt": "2026-01-18T13:27:04.397136Z",
+      "uuid": "3a1610f5-87a0-412f-9609-a66c24c91f47",
+      "relation": "HAS_AMOUNT"
+    },
+    {
+      "fact": "Kagan needed services from lawyers for legal matters concerning the business.",
+      "createdAt": "2026-01-18T13:26:51.889772Z",
+      "uuid": "ef3f8fb5-3001-42f8-863f-f9b3da354487",
+      "relation": "NEEDED_SERVICE_FROM"
+    },
+    {
+      "fact": "The lawyers were needed to make the business official.",
+      "createdAt": "2026-01-18T13:26:51.889782Z",
+      "uuid": "bfa5d27d-cb7f-44e3-9871-d0f5bf0b09d8",
+      "relation": "PERTAINS_TO"
+    },
+    {
+      "fact": "Kagan's mom sent support to Kagan.",
+      "createdAt": "2026-01-18T13:26:51.889759Z",
+      "uuid": "45b2b243-d594-4367-b010-02d286fbfd6c",
+      "relation": "PROVIDED_SUPPORT"
+    },
+    {
+      "fact": "Kagan called his mom requesting financial support for lawyers related to the business.",
+      "createdAt": "2026-01-18T13:26:51.889712Z",
+      "uuid": "17c8fad2-5a86-4d8e-bef4-2eea84924f19",
+      "relation": "COMMUNICATED_REQUEST"
+    },
+    {
+      "fact": "Kagan bank account had a balance of negative 8000 euros.",
+      "createdAt": "2026-01-18T13:26:39.543813Z",
+      "uuid": "b03199cc-a658-474a-af8f-2f3d290303f1",
+      "relation": "HAS_BALANCE"
+    },
+    {
+      "fact": "The balance of the Kagan bank account was increasing up to negative 10000 euros.",
+      "createdAt": "2026-01-18T13:26:39.543863Z",
+      "uuid": "37dc6a2b-fd7e-4443-aff7-4c932f22c531",
+      "relation": "INCREASED_TO"
+    },
+    {
+      "fact": "The first products were bought with a value equivalent to minus 2000 euros.",
+      "createdAt": "2026-01-18T13:26:39.543878Z",
+      "uuid": "3066c461-0675-4e12-90e4-c84ec101d997",
+      "relation": "USED_FOR_PURCHASE"
+    },
+    {
+      "fact": "The extended delivery radius of 4km applied to investor homes.",
+      "createdAt": "2026-01-18T13:26:26.162241Z",
+      "uuid": "bf3534ab-f462-45c1-af13-41e445ee02e3",
+      "relation": "APPLIES_TO"
+    },
+    {
+      "fact": "The delivery radius was extended to 4km for investor homes.",
+      "createdAt": "2026-01-18T13:26:26.162218Z",
+      "uuid": "bc2ce7e5-8594-47ff-843b-41b6ea451cb5",
+      "relation": "EXTENDED_TO"
+    },
+    {
+      "fact": "The first delivery radius was about 2.5 kilometers.",
+      "createdAt": "2026-01-18T13:26:26.162155Z",
+      "uuid": "abb188e0-d278-447e-bf3e-bb5a2c5f9033",
+      "relation": "INITIAL_SIZE"
+    },
+    {
+      "fact": "The extended delivery radius of 4km was established so investor homes could test the service.",
+      "createdAt": "2026-01-18T13:26:26.16226Z",
+      "uuid": "905a4b39-f583-495d-92eb-06bcaf535add",
+      "relation": "PURPOSE"
+    },
+    {
+      "fact": "The upstairs neighbor used WhatsApp to order toilet paper.",
+      "createdAt": "2026-01-18T13:26:14.609405Z",
+      "uuid": "e8ef9f80-9717-4298-88b5-8fdeb2387473",
+      "relation": "USED_PLATFORM"
+    },
+    {
+      "fact": "The toilet paper order was related to supporting Kagan in the early days.",
+      "createdAt": "2026-01-18T13:26:14.609427Z",
+      "uuid": "bc97e8c7-4a43-4a7d-a0de-eb19904bf089",
+      "relation": "SUPPORTED_BY_ACTION"
+    },
+    {
+      "fact": "The upstairs neighbor ordered toilet paper via WhatsApp to support Kagan in the early days.",
+      "createdAt": "2026-01-18T13:26:14.609355Z",
+      "uuid": "6382ac70-256a-4565-afab-021456fbd012",
+      "relation": "ORDERED"
+    },
+    {
+      "fact": "The upstairs neighbor provided support to Kagan during the early days.",
+      "createdAt": "2026-01-18T13:26:14.609419Z",
+      "uuid": "4cdf272e-d0a8-41d1-b461-ada6089b1b80",
+      "relation": "SUPPORTED"
+    },
+    {
+      "fact": "The first order placed by Gorillas included two units of chips.",
+      "createdAt": "2026-01-18T13:26:02.28884Z",
+      "uuid": "93213f7e-fe19-4993-b5f8-f9f9381b4765",
+      "relation": "ORDERED_ITEMS"
+    },
+    {
+      "fact": "There is a video documenting the first order placed by Gorillas.",
+      "createdAt": "2026-01-18T13:26:02.288911Z",
+      "uuid": "26a96777-ccfd-400b-9fc4-d4e4dbcac386",
+      "relation": "HAS_RECORD_IN"
+    },
+    {
+      "fact": "The first order placed by Gorillas may have included gummy bears.",
+      "createdAt": "2026-01-18T13:26:02.288901Z",
+      "uuid": "1fbba8af-c38a-42e6-9323-f9530c65a353",
+      "relation": "ORDERED_ITEMS"
+    },
+    {
+      "fact": "The initial order from Gorillas contained one non-alcoholic drink.",
+      "createdAt": "2026-01-18T13:26:02.288888Z",
+      "uuid": "0eff68fd-039b-413e-a215-fed06d8915a0",
+      "relation": "ORDERED_ITEMS"
+    },
+    {
+      "fact": "Gorillas initially started on the web.",
+      "createdAt": "2026-01-18T13:25:51.685754Z",
+      "uuid": "de6339ed-f857-4d74-9b6b-5656af62f6d4",
+      "relation": "INITIALLY_LOCATED_AT"
+    },
+    {
+      "fact": "The mobile app was not part of the initial roadmap for Gorillas.",
+      "createdAt": "2026-01-18T13:25:51.68581Z",
+      "uuid": "220ab2dd-fe1d-4dd1-baf9-1b0fddb15b14",
+      "relation": "NOT_INCLUDED_IN"
+    },
+    {
+      "fact": "The first Gorillas website utilized a template provided by a Polish friend.",
+      "createdAt": "2026-01-18T13:25:40.850524Z",
+      "uuid": "6129ac18-0c96-4268-a5f1-69799eea3dde",
+      "relation": "BASED_ON_TEMPLATE_FROM"
+    },
+    {
+      "fact": "The Polish friend was involved in a cosmetics business.",
+      "createdAt": "2026-01-18T13:25:40.850577Z",
+      "uuid": "2d60e943-94e1-44c2-b760-fe8e5296faa7",
+      "relation": "INVOLVED_IN"
+    },
+    {
+      "fact": "The 19 euro metal shelves were bought from a hardware store.",
+      "createdAt": "2026-01-18T13:25:28.68818Z",
+      "uuid": "65250a4f-fb94-4a71-9417-9139d639ccf7",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan found 5 euros.",
+      "createdAt": "2026-01-18T13:25:28.688107Z",
+      "uuid": "3e2a401f-43ec-423b-bfbc-caa48ef705fe",
+      "relation": "FOUND"
+    },
+    {
+      "fact": "Kagan bought 19 euro metal shelves from a hardware store.",
+      "createdAt": "2026-01-18T13:25:28.68817Z",
+      "uuid": "0afd4f8b-85e1-4ac9-80f2-98cb4f6d7337",
+      "relation": "BOUGHT"
+    },
+    {
+      "fact": "Kagan has a leg",
+      "createdAt": "2026-01-18T13:25:13.710014Z",
+      "uuid": "b8f2e141-8026-4453-9914-0e3237c74341",
+      "relation": "HAS_PART"
+    },
+    {
+      "fact": "The wall is at Kagan's home",
+      "createdAt": "2026-01-18T13:25:13.710022Z",
+      "uuid": "9ec6dfcd-7142-4330-ab71-6d77a5d09095",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "The 5 euro bill is framed on Kagan's wall at home",
+      "createdAt": "2026-01-18T13:25:13.710005Z",
+      "uuid": "63ceefa2-6701-486f-8e0b-1535260524cc",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan still has the 5 euro bill framed on his wall at home",
+      "createdAt": "2026-01-18T13:25:13.709991Z",
+      "uuid": "11476393-e1b0-4bee-a6ad-5f5be8ffead8",
+      "relation": "POSSESSES"
+    },
+    {
+      "fact": "Kagan's N26 account had a low amount of money in it.",
+      "createdAt": "2026-01-18T13:25:01.537849Z",
+      "uuid": "873942c0-8dc5-4dc5-8202-4f9b4c1543da",
+      "relation": "CONTAINED_FUNDS_OF"
+    },
+    {
+      "fact": "Kagan departed from his previous job.",
+      "createdAt": "2026-01-18T13:25:01.537784Z",
+      "uuid": "59cb580c-fe29-4b49-abcc-dc1cde03f9e7",
+      "relation": "LEFT_POSITION"
+    },
+    {
+      "fact": "Kagan had few personal funds remaining in his account during this time.",
+      "createdAt": "2026-01-18T13:25:01.537835Z",
+      "uuid": "0840c978-8e9d-418d-8e63-b3161a16558f",
+      "relation": "LOW_BALANCE"
+    },
+    {
+      "fact": "In Turkey, ordering cigarettes comes on a fancy tray arranged nicely.",
+      "createdAt": "2026-01-18T13:24:47.889105Z",
+      "uuid": "d648393b-e510-4ed2-9126-41cddcddc6f0",
+      "relation": "PRESENTS_OBJECT_ON_OBJECT"
+    },
+    {
+      "fact": "Gorillas are inspired by the service culture regarding ordering cigarettes.",
+      "createdAt": "2026-01-18T13:24:47.889115Z",
+      "uuid": "b3456c2d-dc1d-4799-81cf-27dc7ab0fe6a",
+      "relation": "ORDERS"
+    },
+    {
+      "fact": "The service culture in Turkey inspired Gorillas.",
+      "createdAt": "2026-01-18T13:24:47.889049Z",
+      "uuid": "39c1dbfd-e31f-4c0b-8564-0333b69e8442",
+      "relation": "INSPIRED"
+    },
+    {
+      "fact": "Kagan's movement of items occurred when the first COVID news from China came out",
+      "createdAt": "2026-01-18T13:24:34.135475Z",
+      "uuid": "a9aefd0b-99e0-4752-aeaf-5c2dca73f58d",
+      "relation": "MOVEMENT_OCCURRED_DURING"
+    },
+    {
+      "fact": "The first COVID news came from China",
+      "createdAt": "2026-01-18T13:24:34.135483Z",
+      "uuid": "3b341289-b1ab-4888-ae0b-93407b2dd9c2",
+      "relation": "SOURCE_OF"
+    },
+    {
+      "fact": "Kagan was on the train while moving items",
+      "createdAt": "2026-01-18T13:24:34.135409Z",
+      "uuid": "3822211d-22bc-481d-9c84-854d81a6cd5d",
+      "relation": "WAS_ON"
+    },
+    {
+      "fact": "Kagan was on the train while moving his first items",
+      "createdAt": "2026-01-18T13:24:34.135466Z",
+      "uuid": "0f6fadaf-8a20-4944-ac6d-94fb50c0547c",
+      "relation": "WAS_ON"
+    },
+    {
+      "fact": "Kagan was moving his first items to the warehouse",
+      "createdAt": "2026-01-18T13:24:34.135454Z",
+      "uuid": "03054d74-afaa-4e9e-af81-e066c168211c",
+      "relation": "MOVING_TO"
+    },
+    {
+      "fact": "The start of Gorillas activities occurred 2 weeks before the pandemic hit.",
+      "createdAt": "2026-01-18T13:24:24.197131Z",
+      "uuid": "36a2d92f-b75e-4b3f-9865-d4597da1f399",
+      "relation": "PRECEDED_EVENT"
+    },
+    {
+      "fact": "Kagan returned to Germany after starting his career in Turkey.",
+      "createdAt": "2026-01-18T13:24:13.335824Z",
+      "uuid": "895f1b48-26f7-4750-bd55-4237642e1457",
+      "relation": "RETURNED_TO"
+    },
+    {
+      "fact": "Kagan founded Gorillas after returning to Germany.",
+      "createdAt": "2026-01-18T13:24:13.335836Z",
+      "uuid": "4cc445cb-7da8-4227-8dcb-30717ba6597c",
+      "relation": "FOUNDED"
+    },
+    {
+      "fact": "Kagan started his career in Turkey.",
+      "createdAt": "2026-01-18T13:24:13.33578Z",
+      "uuid": "1e272648-690e-49bf-962d-ad6d535587ea",
+      "relation": "STARTED_CAREER_IN"
+    },
+    {
+      "fact": "Kagan's job search visa expired while he was in Germany.",
+      "createdAt": "2026-01-18T13:24:00.823891Z",
+      "uuid": "fc7b6ed6-1ceb-4232-b554-6b9e0ba0fac3",
+      "relation": "EXPIRED_AT_LOCATION"
+    },
+    {
+      "fact": "Kagan returned to Turkey after his job search visa expired and he couldn't find a job.",
+      "createdAt": "2026-01-18T13:24:00.82391Z",
+      "uuid": "f26c03e2-f94e-4d69-a23c-f807324bdf62",
+      "relation": "RETURNED_TO"
+    },
+    {
+      "fact": "Kagan was unable to find a job before his visa expired.",
+      "createdAt": "2026-01-18T13:24:00.8239Z",
+      "uuid": "6d376e8b-bdad-4807-973a-742a4ee5a763",
+      "relation": "FAILED_TO_SECURE"
+    },
+    {
+      "fact": "Kagan previously had a job search visa while located in Germany.",
+      "createdAt": "2026-01-18T13:24:00.823827Z",
+      "uuid": "5ab7d05b-0edb-43c0-8c34-173c647c15dd",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan possessed a job search visa.",
+      "createdAt": "2026-01-18T13:24:00.823878Z",
+      "uuid": "59ae1ec0-d807-4e44-9f3b-c2941456c0af",
+      "relation": "HELD_ITEM"
+    },
+    {
+      "fact": "Kagan completed a Masters degree.",
+      "createdAt": "2026-01-18T13:23:49.504145Z",
+      "uuid": "c3f2384a-1a73-4b12-875c-98c9307742dd",
+      "relation": "EARNED"
+    },
+    {
+      "fact": "Kagan learned the German language while in Germany.",
+      "createdAt": "2026-01-18T13:23:49.504201Z",
+      "uuid": "6ed96c73-ecbe-4bc9-aa0e-e904b732b214",
+      "relation": "ACQUIRED_SKILL_IN"
+    },
+    {
+      "fact": "Kagan pursued his Masters degree in Germany.",
+      "createdAt": "2026-01-18T13:23:49.504189Z",
+      "uuid": "3247c19a-a665-4fef-b27f-dfb16359f244",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan attended a language school before his university graduation.",
+      "createdAt": "2026-01-18T13:23:36.962304Z",
+      "uuid": "c39193bf-6f91-45b8-a22c-a0ecd396a686",
+      "relation": "STUDIED_AT"
+    },
+    {
+      "fact": "Kagan went to Germany to learn the language at a language school before university graduation.",
+      "createdAt": "2026-01-18T13:23:36.962315Z",
+      "uuid": "470d7cd7-f91f-4344-8416-059998ca6d50",
+      "relation": "STUDIED_SUBJECT"
+    },
+    {
+      "fact": "The language school offered instruction in the language.",
+      "createdAt": "2026-01-18T13:23:36.962324Z",
+      "uuid": "13575919-0162-4970-bfe8-2cbd9f3765e3",
+      "relation": "OFFERED"
+    },
+    {
+      "fact": "The language school was located in Germany.",
+      "createdAt": "2026-01-18T13:23:36.962331Z",
+      "uuid": "074cd965-0f1f-4847-97e4-154cb2c4844a",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan first traveled to Germany before his university graduation.",
+      "createdAt": "2026-01-18T13:23:36.962257Z",
+      "uuid": "0735495f-f2cc-42d3-99c4-2b50f5c8d01a",
+      "relation": "TRAVELED_TO"
+    },
+    {
+      "fact": "Kagan took the train back to Berlin.",
+      "createdAt": "2026-01-18T13:23:24.266424Z",
+      "uuid": "c486ab4e-89b2-49bb-aa0a-72ae76e29d92",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan mistakenly took his girlfriend's key.",
+      "createdAt": "2026-01-18T13:23:24.26634Z",
+      "uuid": "6e71a61b-02c3-4faa-8cce-5b431f5f97bc",
+      "relation": "MISTAKENLY_TOOK"
+    },
+    {
+      "fact": "Kagan took the train back from OMR.",
+      "createdAt": "2026-01-18T13:23:24.2664Z",
+      "uuid": "2db4135c-c7af-429d-b11e-18e7acf14316",
+      "relation": "TRAVELED_FROM"
+    },
+    {
+      "fact": "Kagan took the train.",
+      "createdAt": "2026-01-18T13:23:24.266445Z",
+      "uuid": "0f5acfba-fae5-41bc-b165-655b55f88bc8",
+      "relation": "USED_TRANSPORTATION"
+    },
+    {
+      "fact": "Kagan wife told Kagan Sumer to go grocery shopping.",
+      "createdAt": "2026-01-18T13:23:13.529405Z",
+      "uuid": "ec402a38-805d-4a39-8686-25144dd4a079",
+      "relation": "REQUESTED_ACTION"
+    },
+    {
+      "fact": "Kagan Sumer used Gorillas for grocery shopping because he was very busy.",
+      "createdAt": "2026-01-18T13:23:13.529456Z",
+      "uuid": "27b08c8f-729f-440d-adea-d31e900a45a1",
+      "relation": "USED_SERVICE"
+    },
+    {
+      "fact": "Gorillas considers its brand one of its three core assets.",
+      "createdAt": "2026-01-18T13:23:02.513502Z",
+      "uuid": "dc104856-ad10-421b-85c3-78075cf929f6",
+      "relation": "HAS_CORE_ASSET"
+    },
+    {
+      "fact": "Gorillas considers customers one of its three core assets.",
+      "createdAt": "2026-01-18T13:23:02.513458Z",
+      "uuid": "76e8048b-5c9b-44b3-a42b-cdec0f50d071",
+      "relation": "HAS_CORE_ASSET"
+    },
+    {
+      "fact": "Gorillas considers technology one of its three core assets.",
+      "createdAt": "2026-01-18T13:23:02.513517Z",
+      "uuid": "0b746908-3535-4aa1-9647-5ba97ca5ff27",
+      "relation": "HAS_CORE_ASSET"
+    },
+    {
+      "fact": "Identifying values precedes determining the name in the Kagan brand building process.",
+      "createdAt": "2026-01-18T13:22:48.262226Z",
+      "uuid": "e8d28582-0a69-463b-a933-0c32c3450616",
+      "relation": "PRECEDES"
+    },
+    {
+      "fact": "The name follows the identification of values in the Kagan brand building process.",
+      "createdAt": "2026-01-18T13:22:48.262257Z",
+      "uuid": "de472188-985a-48de-8d85-d104eaee7360",
+      "relation": "FOLLOWS"
+    },
+    {
+      "fact": "Identifying values precedes establishing colors in the Kagan brand building process.",
+      "createdAt": "2026-01-18T13:22:48.262239Z",
+      "uuid": "bbe87ee8-8622-47cb-8a12-3285313fc715",
+      "relation": "PRECEDES"
+    },
+    {
+      "fact": "Visuals follow the identification of values in the Kagan brand building process.",
+      "createdAt": "2026-01-18T13:22:48.262273Z",
+      "uuid": "a76585a7-8de5-4037-b24d-8c4bf916f0b5",
+      "relation": "FOLLOWS"
+    },
+    {
+      "fact": "Colors follow the identification of values in the Kagan brand building process.",
+      "createdAt": "2026-01-18T13:22:48.262264Z",
+      "uuid": "93c2d078-42c1-4ae4-9257-8925460f7ea3",
+      "relation": "FOLLOWS"
+    },
+    {
+      "fact": "Identifying values precedes defining visuals in the Kagan brand building process.",
+      "createdAt": "2026-01-18T13:22:48.262248Z",
+      "uuid": "58fee35f-1a5e-4183-aed7-1807dfa6d1af",
+      "relation": "PRECEDES"
+    },
+    {
+      "fact": "The Kagan brand building process begins with identifying values.",
+      "createdAt": "2026-01-18T13:22:48.262178Z",
+      "uuid": "2145844f-8e79-4df4-b839-44a1bef68da1",
+      "relation": "STARTS_WITH"
+    },
+    {
+      "fact": "Kagan values constantly riding.",
+      "createdAt": "2026-01-18T13:22:33.600319Z",
+      "uuid": "a4fe8551-da27-49f1-be52-9e64ad702419",
+      "relation": "VALUES"
+    },
+    {
+      "fact": "Kagan values changing things.",
+      "createdAt": "2026-01-18T13:22:33.6Z",
+      "uuid": "7a048dba-b6c2-41e8-a4c4-c6dfbcb1ab5e",
+      "relation": "VALUES"
+    },
+    {
+      "fact": "Kagan values being bold.",
+      "createdAt": "2026-01-18T13:22:33.600235Z",
+      "uuid": "6415aba3-e6b5-4218-8ab7-2a2bbb57b69d",
+      "relation": "VALUES"
+    },
+    {
+      "fact": "Kagan values being authentic.",
+      "createdAt": "2026-01-18T13:22:33.6Z",
+      "uuid": "3a029548-1a97-460b-a50a-c9093da5a732",
+      "relation": "VALUES"
+    },
+    {
+      "fact": "Kagan predicts the survival of one or two prominent players within 12 to 24 months.",
+      "createdAt": "2026-01-18T13:22:23.875393Z",
+      "uuid": "8b1ffb29-f779-4bb2-b7de-4251e2cf7fa7",
+      "relation": "PREDICTS_OUTCOME"
+    },
+    {
+      "fact": "Kagan believes that the quick commerce market will have multiple entities owning different parts of the product.",
+      "createdAt": "2026-01-18T13:22:13.845139Z",
+      "uuid": "cbb310b0-b1e3-4cdb-84d3-fb4a6c362441",
+      "relation": "BELIEVES_FUTURE_MARKET_STRUCTURE"
+    },
+    {
+      "fact": "The quick commerce market is expected to have multiple players owning different parts of the product.",
+      "createdAt": "2026-01-18T13:22:13.845186Z",
+      "uuid": "aebcb1bf-792a-4d27-bab3-ef55c6501c45",
+      "relation": "OWNS_PART_OF"
+    },
+    {
+      "fact": "Kagan states that Gorillas caused a change in him as a person.",
+      "createdAt": "2026-01-18T13:22:02.521475Z",
+      "uuid": "eec81872-9e44-4584-b043-584efb1e4d62",
+      "relation": "ATTRIBUTES_CHANGE_TO"
+    },
+    {
+      "fact": "Kagan possesses a gorilla tattoo on his neck.",
+      "createdAt": "2026-01-18T13:22:02.521Z",
+      "uuid": "d9a2998e-9aee-46f8-977e-0a16c5b3e5a7",
+      "relation": "HAS_BODY_ART"
+    },
+    {
+      "fact": "The hypnosis session focused on motivation.",
+      "createdAt": "2026-01-18T13:21:50.408454Z",
+      "uuid": "de5ac55b-568a-4ead-8811-3112c91c771e",
+      "relation": "FOCUSED_ON"
+    },
+    {
+      "fact": "Relationships was identified as the answer or focus related to motivation.",
+      "createdAt": "2026-01-18T13:21:50.408468Z",
+      "uuid": "712d0d4d-6ed3-4a5a-a89a-985c04eb6275",
+      "relation": "WAS_ANSWER_FOR_TOPIC"
+    },
+    {
+      "fact": "Kagan participated in a hypnosis session about motivation.",
+      "createdAt": "2026-01-18T13:21:50.408411Z",
+      "uuid": "24537eff-1119-49cc-bc70-8ae4d7f5c190",
+      "relation": "PARTICIPATED_IN"
+    },
+    {
+      "fact": "Gorillas was operating in two metropoles.",
+      "createdAt": "2026-01-18T13:21:39.277081Z",
+      "uuid": "e9877274-afe4-4d64-8045-42f543c54c5a",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Gorillas generated operating profits in two metropoles.",
+      "createdAt": "2026-01-18T13:21:39.277025Z",
+      "uuid": "3b6d35ab-8210-473d-a190-47940efe2fee",
+      "relation": "GENERATED"
+    },
+    {
+      "fact": "Kagan took an action regarding Gorillas 9 months before the market crash occurred.",
+      "createdAt": "2026-01-18T13:21:28.29726Z",
+      "uuid": "cb7b7018-48f3-4bba-bec1-cf14af6fb9ec",
+      "relation": "INITIATED_ACTION_ON"
+    },
+    {
+      "fact": "Gorillas' status was altered 9 months before the market crash.",
+      "createdAt": "2026-01-18T13:21:28.297272Z",
+      "uuid": "b8587cb3-fce3-4349-969b-7088d0d61801",
+      "relation": "AFFECTED_ENTITY"
+    },
+    {
+      "fact": "Kagan moved Gorillas to efficiency mode 9 months before the market crash.",
+      "createdAt": "2026-01-18T13:21:28.297219Z",
+      "uuid": "a1851609-5691-45a1-808b-001d9141f0f5",
+      "relation": "MOVED_TO_MODE_BEFORE_EVENT"
+    },
+    {
+      "fact": "Gorillas is 60 percent bigger than the second player in European quick commerce, based on size metrics available as of the current time.",
+      "createdAt": "2026-01-18T13:21:19.15706Z",
+      "uuid": "452e0581-7cea-4ce9-901f-999c00ae5f24",
+      "relation": "LARGER_THAN_IN_MARKET_SHARE"
+    },
+    {
+      "fact": "Gorillas achieved an 800 million dollars revenue run rate.",
+      "createdAt": "2026-01-18T13:21:10.231228Z",
+      "uuid": "7445886a-c960-4991-8428-26172a3c14c7",
+      "relation": "ACHIEVED_METRIC"
+    },
+    {
+      "fact": "Gorillas should have focused on values instead of competition, according to Kagan's admission.",
+      "createdAt": "2026-01-18T13:21:00.019Z",
+      "uuid": "607b784d-39eb-4ca0-8049-1e4610755405",
+      "relation": "SHOULD_HAVE_FOCUSED_ON"
+    },
+    {
+      "fact": "Gorillas talked too much about competition, which was identified as a mistake by Kagan.",
+      "createdAt": "2026-01-18T13:21:00.019Z",
+      "uuid": "503ae0f1-799b-4f3b-ac95-214bf7180c05",
+      "relation": "FOCUSED_ON_INCORRECTLY"
+    },
+    {
+      "fact": "Kagan admitted that Gorillas made a mistake by focusing too much on competition.",
+      "createdAt": "2026-01-18T13:21:00.019Z",
+      "uuid": "20e1fd52-c82a-4e11-b0ed-38f1b2df7546",
+      "relation": "ADMITTED_ERROR_REGARDING"
+    },
+    {
+      "fact": "Gorillas initiated a skydiving campaign in the UK.",
+      "createdAt": "2026-01-18T13:20:47.450706Z",
+      "uuid": "9b352a0c-4f87-4fba-81f2-99e62a9d4a9c",
+      "relation": "LAUNCHED_IN"
+    },
+    {
+      "fact": "The skydiving campaign resulted in the lowest ROI.",
+      "createdAt": "2026-01-18T13:20:47.450779Z",
+      "uuid": "6667b5d1-d971-4167-a0e1-240fa5d2331a",
+      "relation": "HAD_METRIC"
+    },
+    {
+      "fact": "The skydiving campaign represented the values of Gorillas.",
+      "createdAt": "2026-01-18T13:20:47.450787Z",
+      "uuid": "5d34e606-62d3-4fc9-af95-0a7291719ef0",
+      "relation": "REPRESENTED"
+    },
+    {
+      "fact": "The skydiving campaign occurred in the UK.",
+      "createdAt": "2026-01-18T13:20:47.450769Z",
+      "uuid": "495dd43d-9136-46f7-8b65-456db573b62f",
+      "relation": "OCCURRED_AT"
+    },
+    {
+      "fact": "Gorillas launched a skydiving campaign.",
+      "createdAt": "2026-01-18T13:20:47.450755Z",
+      "uuid": "0ffdfaef-1b33-4b51-9fb7-2245b8dcefb9",
+      "relation": "INVOLVED_EVENT"
+    },
+    {
+      "fact": "Kagan stated that Istanbul is the most beautiful city on earth.",
+      "createdAt": "2026-01-18T13:20:37.090606Z",
+      "uuid": "01b9dc8a-0908-41b2-833e-c5f9e3f0f91e",
+      "relation": "EXPRESSED_OPINION_ABOUT"
+    },
+    {
+      "fact": "Gorillas contributed almost 1 billion in yearly salaries back into the German economy.",
+      "createdAt": "2026-01-18T13:20:28.453475Z",
+      "uuid": "e7fcd8b8-5132-45cd-8779-6d3d1b0c9572",
+      "relation": "CONTRIBUTES_TO_ECONOMY"
+    },
+    {
+      "fact": "Every second immigrant entrepreneur in Germany faces similar challenges.",
+      "createdAt": "2026-01-18T13:20:17.52805Z",
+      "uuid": "95973705-0fb1-48e3-8b8c-36637bfc3164",
+      "relation": "FACING_CHALLENGES_IN"
+    },
+    {
+      "fact": "The challenges faced by immigrant entrepreneurs in Germany are reported in the Spiegel article.",
+      "createdAt": "2026-01-18T13:20:17.528095Z",
+      "uuid": "3af31df6-0e1f-4372-be2c-78e718cb6cd3",
+      "relation": "SOURCE_OF_INFORMATION"
+    },
+    {
+      "fact": "Immigrants have no alternative plan other than their A plan.",
+      "createdAt": "2026-01-18T13:20:05.585941Z",
+      "uuid": "d1a391d5-3f24-456a-ae45-20af03e28e80",
+      "relation": "LACKS_ALTERNATIVE"
+    },
+    {
+      "fact": "Kagan says that immigrants do not have a B plan.",
+      "createdAt": "2026-01-18T13:20:05.585869Z",
+      "uuid": "b3908d04-2dd7-4918-a6aa-5a889be9e07d",
+      "relation": "EXPRESSED_OPINION"
+    },
+    {
+      "fact": "The A plan for immigrants is to survive and make the best of the situation.",
+      "createdAt": "2026-01-18T13:20:05.585931Z",
+      "uuid": "99fbe1e3-22ca-46b9-80e0-da406047dfc6",
+      "relation": "HAS_GOAL"
+    },
+    {
+      "fact": "Kagan says that immigrants only have an A plan.",
+      "createdAt": "2026-01-18T13:20:05.585918Z",
+      "uuid": "48590d94-af58-41e2-a01c-c794afd4ac10",
+      "relation": "EXPRESSED_OPINION"
+    },
+    {
+      "fact": "Kagan's visa process was cancelled.",
+      "createdAt": "2026-01-18T13:19:53.954768Z",
+      "uuid": "f0f0ac78-f9a5-40d4-88c3-ca59ad7ed4d5",
+      "relation": "CAUSED_CANCELLATION_OF"
+    },
+    {
+      "fact": "The bank advised to go to the police.",
+      "createdAt": "2026-01-18T13:19:53.954827Z",
+      "uuid": "af5f612a-31ef-4a5b-a8da-c99cdc68684f",
+      "relation": "ADVISED_ACTION"
+    },
+    {
+      "fact": "The bank advised Kagan to close operations.",
+      "createdAt": "2026-01-18T13:19:53.954812Z",
+      "uuid": "7b3c1afd-727b-478b-900f-02fa79a1a7bf",
+      "relation": "ADVISED_ACTION"
+    },
+    {
+      "fact": "Robert was an employee at Gorillas.",
+      "createdAt": "2026-01-18T13:19:42.459794Z",
+      "uuid": "95aaa9ab-4727-4e4b-a1aa-0d6c51f44e2d",
+      "relation": "EMPLOYEE_AT"
+    },
+    {
+      "fact": "Robert was the first employee of Kagan.",
+      "createdAt": "2026-01-18T13:19:42.459723Z",
+      "uuid": "222e1c95-1539-4e3d-b0b3-e63f89d0010a",
+      "relation": "FIRST_EMPLOYEE_OF"
+    },
+    {
+      "fact": "Kagan was sending 1000 euros monthly.",
+      "createdAt": "2026-01-18T13:19:29.636352Z",
+      "uuid": "f505c554-4f61-4710-9b42-71eea48490c2",
+      "relation": "TRANSFER_AMOUNT"
+    },
+    {
+      "fact": "The bank accused Kagan of drug dealing.",
+      "createdAt": "2026-01-18T13:19:29.636288Z",
+      "uuid": "f24baeff-9de2-4978-a9c9-283d8a2aa54e",
+      "relation": "ACCUSED"
+    },
+    {
+      "fact": "Kagan was sending money monthly to Lebanon.",
+      "createdAt": "2026-01-18T13:19:29.636363Z",
+      "uuid": "dfbdab7d-eb6c-43e3-a928-89a71269b598",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan was accused of drug dealing by the bank.",
+      "createdAt": "2026-01-18T13:19:29.636337Z",
+      "uuid": "8c789a70-b318-4b4f-9f79-d13052e799d7",
+      "relation": "INVOLVED_IN"
+    },
+    {
+      "fact": "The 1000 euros were being sent to Lebanon.",
+      "createdAt": "2026-01-18T13:19:29.636372Z",
+      "uuid": "078600d0-de26-430d-b919-dc18a55f3dc3",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan's tech partner caused a bank investigation.",
+      "createdAt": "2026-01-18T13:19:16.637612Z",
+      "uuid": "e1cfaf99-8cf9-4782-bf6b-29e4b8b5a977",
+      "relation": "CAUSED_INVESTIGATION_INVOLVING"
+    },
+    {
+      "fact": "Kagan has a tech partner from Lebanon.",
+      "createdAt": "2026-01-18T13:19:16.637544Z",
+      "uuid": "83a57e6d-a6e6-40e3-8161-e7e96cecbb7b",
+      "relation": "TECH_PARTNER_OF"
+    },
+    {
+      "fact": "Kagan's tech partner is accused of money laundering involving a bank investigation.",
+      "createdAt": "2026-01-18T13:19:16.637598Z",
+      "uuid": "6612b6c0-eb2e-4abb-b611-cf5aa189b6b2",
+      "relation": "ACCUSED_OF"
+    },
+    {
+      "fact": "Kagan is associated with Lebanon through their tech partner.",
+      "createdAt": "2026-01-18T13:19:16.637622Z",
+      "uuid": "2b9babbb-dbe7-4bf9-add5-44595a3d2c59",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan's visa status was linked to Rocket Internet, which initially prevented him from being an entrepreneur.",
+      "createdAt": "2026-01-18T13:19:05.811Z",
+      "uuid": "44cdfbf4-ed08-4548-ac6e-bd174305bf00",
+      "relation": "RESTRICTION_APPLIED_BY"
+    },
+    {
+      "fact": "Rocket Internet's association prevented Kagan from being an entrepreneur initially.",
+      "createdAt": "2026-01-18T13:19:05.811191Z",
+      "uuid": "204cf5ed-21d9-449f-bb6e-e20d820f277b",
+      "relation": "PREVENTS_STATUS"
+    },
+    {
+      "fact": "Kagan aunt is located in Turkey.",
+      "createdAt": "2026-01-18T13:18:55.991653Z",
+      "uuid": "814249af-6d99-4f27-90f8-4cd92a5ce5db",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan aunt has a background in the German school of thought.",
+      "createdAt": "2026-01-18T13:18:55.991706Z",
+      "uuid": "29dd3f9b-dfd1-4d76-8986-02f657198d00",
+      "relation": "HAS_BACKGROUND"
+    },
+    {
+      "fact": "Siemens had an operation or establishment located in Istanbul.",
+      "createdAt": "2026-01-18T13:18:45.771767Z",
+      "uuid": "e4375e8b-b899-4129-b28f-a897488e79a3",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan's grandfather was the first employee of Siemens.",
+      "createdAt": "2026-01-18T13:18:45.771723Z",
+      "uuid": "509b29ae-7324-42bf-af04-bdac8a750864",
+      "relation": "FIRST_EMPLOYEE_OF"
+    },
+    {
+      "fact": "Nico promised Kagan to always keep a tight connection.",
+      "createdAt": "2026-01-18T13:18:33.447453Z",
+      "uuid": "c5921075-3708-4fa5-a7c7-b9085bf46f36",
+      "relation": "PROMISED_TO_MAINTAIN_CONNECTION"
+    },
+    {
+      "fact": "Kagan promised Nico to always keep a tight connection.",
+      "createdAt": "2026-01-18T13:18:33.447444Z",
+      "uuid": "8e12a73d-8b7f-4044-871f-7e6130588514",
+      "relation": "PROMISED_TO_MAINTAIN_CONNECTION"
+    },
+    {
+      "fact": "Nico promised Kagan to never lose their goodwill.",
+      "createdAt": "2026-01-18T13:18:33.447431Z",
+      "uuid": "7712dba9-5a14-4336-815d-b8eaf6118df0",
+      "relation": "PROMISED_TO_MAINTAIN_GOODWILL"
+    },
+    {
+      "fact": "Kagan promised Nico to never lose their goodwill.",
+      "createdAt": "2026-01-18T13:18:33.447388Z",
+      "uuid": "1c0aed2a-2ef2-4195-8c18-4aee10ee2d5a",
+      "relation": "PROMISED_TO_MAINTAIN_GOODWILL"
+    },
+    {
+      "fact": "Nico became an entrepreneur.",
+      "createdAt": "2026-01-18T13:18:20.966882Z",
+      "uuid": "aeb5f66b-d1ef-4ca6-b93c-c3c94ccb0eba",
+      "relation": "BECAME"
+    },
+    {
+      "fact": "Nico was associated with Gorillas.",
+      "createdAt": "2026-01-18T13:18:20.966865Z",
+      "uuid": "4ba3e048-0225-429a-9496-e44f3682f065",
+      "relation": "AFFILIATED_WITH"
+    },
+    {
+      "fact": "Nico was the head of riders for Gorillas.",
+      "createdAt": "2026-01-18T13:18:20.966816Z",
+      "uuid": "4176266a-d541-4fdd-9207-e6a3d9b81eba",
+      "relation": "HELD_POSITION"
+    },
+    {
+      "fact": "Kagan cried for 40 minutes during an all-hands meeting.",
+      "createdAt": "2026-01-18T13:18:10.573496Z",
+      "uuid": "a9a4edc0-33ce-46b6-894b-5c72682e08c9",
+      "relation": "EXPRESSED_EMOTION_AT_EVENT"
+    },
+    {
+      "fact": "The all-hands meeting announced the big funding round.",
+      "createdAt": "2026-01-18T13:18:10.573541Z",
+      "uuid": "8e63c325-82e5-41b8-bea6-28a4241c8d2a",
+      "relation": "OCCURRED_AT"
+    },
+    {
+      "fact": "Kagan announced giving riders a 1 million bonus as one of his most emotional highlights.",
+      "createdAt": "2026-01-18T13:17:58.493955Z",
+      "uuid": "cb18e057-0753-4dcb-ad0e-f887e5ed16f0",
+      "relation": "AWARDED"
+    },
+    {
+      "fact": "Kagan announced the achievement of unicorn status as one of his most emotional highlights.",
+      "createdAt": "2026-01-18T13:17:58.493906Z",
+      "uuid": "37997dba-e52c-43ff-8c8b-5fea809c67ea",
+      "relation": "ANNOUNCED"
+    },
+    {
+      "fact": "Gorillas scaled to 15,000 employees within the 24 months leading up to the current time.",
+      "createdAt": "2026-01-18T13:17:46.166Z",
+      "uuid": "bc61127d-e41e-453f-85a9-8b6818c70cfe",
+      "relation": "GREW_TO_COUNT"
+    },
+    {
+      "fact": "Gorillas reached 230 stores in the 24 months leading up to the current time.",
+      "createdAt": "2026-01-18T13:17:46.16663Z",
+      "uuid": "92ff9cae-2077-41e5-baa9-5663e5ba7959",
+      "relation": "GREW_TO_COUNT"
+    },
+    {
+      "fact": "Gorillas expanded to cover 60 cities in the 24 months leading up to the current time.",
+      "createdAt": "2026-01-18T13:17:46.166675Z",
+      "uuid": "8acbcbde-550f-4e06-aa58-b0fbb24f17f9",
+      "relation": "GREW_TO_COUNT"
+    },
+    {
+      "fact": "Gorillas' expansion, resulting in 60 cities, occurred over a 24-month period ending at the current time.",
+      "createdAt": "2026-01-18T13:17:46.166699Z",
+      "uuid": "2f50af4d-12e4-4023-8907-76cb652e516f",
+      "relation": "RELATES_TO"
+    },
+    {
+      "fact": "Kagan believes that data supports story.",
+      "createdAt": "2026-01-18T13:17:33.763387Z",
+      "uuid": "e787c933-765d-4faf-b829-25459b996a7a",
+      "relation": "HOLDS_BELIEF"
+    },
+    {
+      "fact": "Story is at the heart, upon which data builds.",
+      "createdAt": "2026-01-18T13:17:33.763402Z",
+      "uuid": "39a52ea3-150f-442c-8416-fd3de93f6ed4",
+      "relation": "IS_FUNDAMENTAL_TO"
+    },
+    {
+      "fact": "Kagan believes that story is central to understanding.",
+      "createdAt": "2026-01-18T13:17:33.763342Z",
+      "uuid": "35736f46-1955-4e59-a901-1d2715e59964",
+      "relation": "HOLDS_BELIEF"
+    },
+    {
+      "fact": "Kagan performed deliveries at a rate of 5 per hour while physically present in Berlin.",
+      "createdAt": "2026-01-18T13:17:23.779108Z",
+      "uuid": "28aadd1d-5e0e-48d5-b71e-ab6716a3f36b",
+      "relation": "PERFORMED_WORK_IN_LOCATION"
+    },
+    {
+      "fact": "The first Gorillas warehouse was located at Pankstrasse.",
+      "createdAt": "2026-01-18T13:17:12.342362Z",
+      "uuid": "d041584b-b9b1-43f2-8953-151411ff323b",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "The first Gorillas warehouse was located in Berlin.",
+      "createdAt": "2026-01-18T13:17:12.342419Z",
+      "uuid": "b8a959df-5b9d-4d73-a9b7-05b6bc89d988",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Pankstrasse is located in Berlin.",
+      "createdAt": "2026-01-18T13:17:12.342406Z",
+      "uuid": "57204a2a-64e5-45f4-91f9-92625c7b1107",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan called Pankstrasse heaven.",
+      "createdAt": "2026-01-18T13:17:12.342428Z",
+      "uuid": "2e8eb83c-d084-4e44-930c-4e4c0f8e14b7",
+      "relation": "EXPRESSED_SENTIMENT_ABOUT"
+    },
+    {
+      "fact": "Kagan always invested in his life.",
+      "createdAt": "2026-01-18T13:17:02.74726Z",
+      "uuid": "ddf5b657-739c-4b1b-abac-29537b545126",
+      "relation": "ALWAYS_INVESTED_IN"
+    },
+    {
+      "fact": "Kagan believes that being in a well-paid job does not result in the creation of financial value for personal funds.",
+      "createdAt": "2026-01-18T13:16:51.3127Z",
+      "uuid": "f21d6b2f-90c6-4360-ae39-75c57bcf85c1",
+      "relation": "BELIEVES_REGARDING_VALUE_CREATION"
+    },
+    {
+      "fact": "A well-paid job is believed by Kagan to not create financial value for personal funds.",
+      "createdAt": "2026-01-18T13:16:51.312748Z",
+      "uuid": "bfbb7282-8e78-4634-af59-a3d412d506e2",
+      "relation": "CONDITIONAL_FOR_VALUE_CREATION"
+    },
+    {
+      "fact": "A well-paid job does not contribute to financial value for personal funds, according to Kagan's belief.",
+      "createdAt": "2026-01-18T13:16:51.312763Z",
+      "uuid": "33b4e000-eda1-450c-a3a7-29e42022ff88",
+      "relation": "AFFECTS"
+    },
+    {
+      "fact": "Kagan emptied their living room.",
+      "createdAt": "2026-01-18T13:16:39.502Z",
+      "uuid": "d3689bce-5527-4780-9957-487cba257f78",
+      "relation": "ACTION_ON_ENTITY"
+    },
+    {
+      "fact": "Kagan's wife thought Kagan was crazy concerning his actions.",
+      "createdAt": "2026-01-18T13:16:39.502Z",
+      "uuid": "98a1d0c0-d27a-4ce0-ae4f-8834a66d06e9",
+      "relation": "BELIEVED_ENTITY_TO_BE"
+    },
+    {
+      "fact": "Kagan emptied the living room in order to build shelves.",
+      "createdAt": "2026-01-18T13:16:39.502Z",
+      "uuid": "43b0bb67-1f07-41de-a813-0c1f77d8ef64",
+      "relation": "ACTION_FOR_PURPOSE_OF"
+    },
+    {
+      "fact": "Amsterdam possesses very narrow steep stairs.",
+      "createdAt": "2026-01-18T13:16:26.520842Z",
+      "uuid": "ac14654c-0c76-48c8-865e-668f59e46b78",
+      "relation": "HAS_FEATURE"
+    },
+    {
+      "fact": "The narrow steep stairs are located in Amsterdam.",
+      "createdAt": "2026-01-18T13:16:26.520831Z",
+      "uuid": "9c66abc6-0459-4e29-becf-754a12a822d7",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan noticed that Amsterdam has very narrow steep stairs.",
+      "createdAt": "2026-01-18T13:16:26.520785Z",
+      "uuid": "9b471167-1248-477a-bcbd-59ecb4287da9",
+      "relation": "NOTICED"
+    },
+    {
+      "fact": "The narrow steep stairs provide extra value for delivery.",
+      "createdAt": "2026-01-18T13:16:26.520852Z",
+      "uuid": "88246853-c041-4596-9252-f6b96d1d175c",
+      "relation": "INCREASES_VALUE_FOR"
+    },
+    {
+      "fact": "Amsterdam is a location Kagan chooses for business.",
+      "createdAt": "2026-01-18T13:16:14.639468Z",
+      "uuid": "8ce4657c-e4e7-4fce-b14b-874e448db1da",
+      "relation": "RELATES_TO"
+    },
+    {
+      "fact": "Kagan prefers doing business in Amsterdam because he loves the location.",
+      "createdAt": "2026-01-18T13:16:14.639418Z",
+      "uuid": "1db68aec-3f48-47a0-808b-af9c7e0ee8cd",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Investors laughed while listening to Kagan's pitches, reacting to the rejections.",
+      "createdAt": "2026-01-18T13:16:04.533606Z",
+      "uuid": "a85a2eb1-f584-424c-b151-10e4367b3787",
+      "relation": "EXPRESSED_REACTION_TO"
+    },
+    {
+      "fact": "Kagan received 10 to 20 rejections per day when pitching.",
+      "createdAt": "2026-01-18T13:16:04.53356Z",
+      "uuid": "128472a5-1000-4e95-80c6-124c40d7bb09",
+      "relation": "RECEIVED"
+    },
+    {
+      "fact": "Christopher Meyer was the first angel investor who believed in Gorillas.",
+      "createdAt": "2026-01-18T13:15:56.646791Z",
+      "uuid": "09c33892-f196-4208-accb-a5494cd8bfc9",
+      "relation": "FIRST_ANGEL_INVESTOR_IN"
+    },
+    {
+      "fact": "Gorillas aims to cover essential needs with 5% of typical supermarket SKUs",
+      "createdAt": "2026-01-18T13:15:46.859443Z",
+      "uuid": "2b575f6f-a4bf-4c36-89ec-3570598fb979",
+      "relation": "COVERS_WITH"
+    },
+    {
+      "fact": "Gorillas aims to cover essential needs",
+      "createdAt": "2026-01-18T13:15:46.859397Z",
+      "uuid": "10d0518c-74d2-481c-b290-32fd136ff67f",
+      "relation": "AIMS_TO_COVER"
+    },
+    {
+      "fact": "The average person buys 220 different products per year.",
+      "createdAt": "2026-01-18T13:15:32.904568Z",
+      "uuid": "bffc1fd9-c3e1-416c-950c-fcfc2205446a",
+      "relation": "BUYS_PER_YEAR"
+    },
+    {
+      "fact": "Supermarkets have 60,000 SKUs in stock.",
+      "createdAt": "2026-01-18T13:15:32.904Z",
+      "uuid": "b61e1840-e673-4349-b90e-9af8f61ffc32",
+      "relation": "HAS_STOCK_OF"
+    },
+    {
+      "fact": "Products are bought from supermarkets by the average person on a yearly basis.",
+      "createdAt": "2026-01-18T13:15:32.904616Z",
+      "uuid": "990eb4f4-17e1-41c9-8adb-51ca00113576",
+      "relation": "RELATES_TO"
+    },
+    {
+      "fact": "Gorillas is considered similar to ghost kitchens from the beginning.",
+      "createdAt": "2026-01-18T13:15:21.938829Z",
+      "uuid": "ca605c2a-1d7e-4503-9629-502a6117afbe",
+      "relation": "COMPARED_TO"
+    },
+    {
+      "fact": "Gorillas' inventory is not picked from supermarkets.",
+      "createdAt": "2026-01-18T13:15:21.938888Z",
+      "uuid": "4009925f-f37e-4703-9eef-fd693f73e25f",
+      "relation": "OBTAINS_FROM"
+    },
+    {
+      "fact": "Gorillas owns inventory instead of obtaining it from supermarkets.",
+      "createdAt": "2026-01-18T13:15:21.938874Z",
+      "uuid": "1fb8cb58-3968-436b-9cbe-a768520e93d0",
+      "relation": "OWNS"
+    },
+    {
+      "fact": "The Gorillas model is more efficient than the food delivery model",
+      "createdAt": "2026-01-18T13:15:08.739085Z",
+      "uuid": "e3b44b07-a0ed-4587-881a-532a56501e52",
+      "relation": "MORE_EFFICIENT_THAN"
+    },
+    {
+      "fact": "The Gorillas model results in less peak hour issues compared to food delivery",
+      "createdAt": "2026-01-18T13:15:08.739159Z",
+      "uuid": "be45c3a4-3407-4d55-8cdf-fae7078bebdf",
+      "relation": "RESULTS_IN_LESS_OF"
+    },
+    {
+      "fact": "The Gorillas model results in more rides per hour compared to food delivery",
+      "createdAt": "2026-01-18T13:15:08.739149Z",
+      "uuid": "a92c121e-4740-4381-bffd-4fe30954d7a1",
+      "relation": "RESULTS_IN"
+    },
+    {
+      "fact": "The Gorillas model results in a higher order value compared to food delivery",
+      "createdAt": "2026-01-18T13:15:08.739132Z",
+      "uuid": "48069373-75e9-4bb0-a102-8a92e6d8c172",
+      "relation": "RESULTS_IN"
+    },
+    {
+      "fact": "No caveman ever stated they would wait until Saturday for bulk hunting.",
+      "createdAt": "2026-01-18T13:14:57.020326Z",
+      "uuid": "6f3efc39-2e45-4077-b472-727a2dc81206",
+      "relation": "ASSERTED_LACK_OF_STATEMENT_REGARDING"
+    },
+    {
+      "fact": "Kagan used the caveman analogy.",
+      "createdAt": "2026-01-18T13:14:57.020278Z",
+      "uuid": "6aa57259-4d8f-49f3-bb58-e62384d3deab",
+      "relation": "USED_ANALOGY"
+    },
+    {
+      "fact": "Kagan believes that grocery addresses two-thirds of the underserved market.",
+      "createdAt": "2026-01-18T13:14:44.639125Z",
+      "uuid": "de8dc5dd-e7f5-4295-87f6-e3502faf1d5b",
+      "relation": "BELIEVES"
+    },
+    {
+      "fact": "Grocery includes the segment of replenishments as part of what it solves.",
+      "createdAt": "2026-01-18T13:14:44.639198Z",
+      "uuid": "cc8df45b-6cb2-4798-b5c5-da2c6a8a807c",
+      "relation": "INCLUDES_SEGMENT"
+    },
+    {
+      "fact": "Grocery solves two-thirds of the underserved market according to Kagan.",
+      "createdAt": "2026-01-18T13:14:44.639173Z",
+      "uuid": "c9563c03-8d19-4fc2-aa09-e5ea5695659b",
+      "relation": "ADDRESSES_TWO_THIRDS_OF"
+    },
+    {
+      "fact": "Grocery includes the segment of emergency purchases as part of what it solves.",
+      "createdAt": "2026-01-18T13:14:44.639187Z",
+      "uuid": "826eb2ca-0853-4729-a147-8e23040a24a8",
+      "relation": "INCLUDES_SEGMENT"
+    },
+    {
+      "fact": "Emergency purchases constitute a part of the underserved market addressed by grocery.",
+      "createdAt": "2026-01-18T13:14:44.639208Z",
+      "uuid": "3d5b119d-40af-4bf2-8942-399a5cd51607",
+      "relation": "CONSTITUTES_PART_OF_UNDERSERVED_MARKET"
+    },
+    {
+      "fact": "Replenishments constitute a part of the underserved market addressed by grocery.",
+      "createdAt": "2026-01-18T13:14:44.639217Z",
+      "uuid": "3cd77788-2621-47e5-97f8-110b1b3f9f9c",
+      "relation": "CONSTITUTES_PART_OF_UNDERSERVED_MARKET"
+    },
+    {
+      "fact": "Kagan takes Airbnbs and orders groceries to understand the market conditions",
+      "createdAt": "2026-01-18T13:14:31.437308Z",
+      "uuid": "a9f9775f-5dcc-4a0e-9031-3c6991b83b1d",
+      "relation": "FOR_PURPOSE_OF_UNDERSTANDING"
+    },
+    {
+      "fact": "Kagan takes Airbnbs in specific districts",
+      "createdAt": "2026-01-18T13:14:31.437238Z",
+      "uuid": "6182726f-c611-43e6-a303-e4760fbce2b2",
+      "relation": "OCCUPIES"
+    },
+    {
+      "fact": "Kagan orders groceries",
+      "createdAt": "2026-01-18T13:14:31.437298Z",
+      "uuid": "5fc28477-71a3-4472-85fa-85237d97c3cb",
+      "relation": "ORDERS"
+    },
+    {
+      "fact": "Airbnbs taken by Kagan are located in certain districts",
+      "createdAt": "2026-01-18T13:14:31.437285Z",
+      "uuid": "5c31c8f9-f064-416c-b852-15617752a969",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan personally bikes to new cities to scout locations.",
+      "createdAt": "2026-01-18T13:14:21.294569Z",
+      "uuid": "c198761e-2fee-4812-b388-9722127d9593",
+      "relation": "TRAVELS_TO"
+    },
+    {
+      "fact": "Gorillas is about the value keep riding",
+      "createdAt": "2026-01-18T13:14:09.835775Z",
+      "uuid": "dcd8b23d-77a8-4e0d-a265-a4de4e58a7eb",
+      "relation": "HAS_VALUE"
+    },
+    {
+      "fact": "Gorillas is about the value owning the change",
+      "createdAt": "2026-01-18T13:14:09.835766Z",
+      "uuid": "690d2d85-fe42-4b1b-abfc-d2205c94a012",
+      "relation": "HAS_VALUE"
+    },
+    {
+      "fact": "Gorillas is about the value authentic",
+      "createdAt": "2026-01-18T13:14:09.835Z",
+      "uuid": "1493dae9-e0ab-4d1c-bdc6-c6f4392bac33",
+      "relation": "HAS_VALUE"
+    },
+    {
+      "fact": "Gorillas is about the value bold",
+      "createdAt": "2026-01-18T13:14:09.835Z",
+      "uuid": "036fd379-8399-41a9-8422-10d5d8bee976",
+      "relation": "HAS_VALUE"
+    },
+    {
+      "fact": "The name Gorillas was chosen to express a desire to be bold and authentic, unlike generic grocery branding.",
+      "createdAt": "2026-01-18T13:13:59.118Z",
+      "uuid": "cd50ebcd-0010-41c9-b6e2-5220690f9424",
+      "relation": "MOTIVATION_FOR_NAME"
+    },
+    {
+      "fact": "Kagan told his mom he needed money to pay lawyers.",
+      "createdAt": "2026-01-18T13:13:48.169Z",
+      "uuid": "7af9bf17-4c4e-4a6e-bbb5-9225c543c8ab",
+      "relation": "STATED_TO_BE_FOR"
+    },
+    {
+      "fact": "Kagan borrowed 4000 euros from his mom.",
+      "createdAt": "2026-01-18T13:13:48.168953Z",
+      "uuid": "2b339b73-a029-4860-bd81-99a0a036596c",
+      "relation": "BORROWED_FROM"
+    },
+    {
+      "fact": "Kagan borrowed 4000 euros from his mom.",
+      "createdAt": "2026-01-18T13:13:48.168996Z",
+      "uuid": "1e216592-a376-4999-9392-b15e34bfd810",
+      "relation": "BORROWED_AMOUNT"
+    },
+    {
+      "fact": "Kagan paid an initial amount of 500 euros to Ronnie.",
+      "createdAt": "2026-01-18T13:13:36.819504Z",
+      "uuid": "953866dd-9c8a-4458-bbab-7668e9879829",
+      "relation": "AMOUNT_INVOLVED"
+    },
+    {
+      "fact": "Kagan initially paid Ronnie 500 euros.",
+      "createdAt": "2026-01-18T13:13:36.819456Z",
+      "uuid": "727919db-848f-4adb-a410-cf8ff73ef894",
+      "relation": "PAID"
+    },
+    {
+      "fact": "Kagan's N26 account balance was at minus 5,000 (implied euros) at the time of the initial payment.",
+      "createdAt": "2026-01-18T13:13:36.819Z",
+      "uuid": "6ab2ce12-0691-44d8-aeda-998ed849b777",
+      "relation": "ACCOUNT_BALANCE_AT"
+    },
+    {
+      "fact": "Kagan called Ronnie daily at 6 PM for a duration of 90 days with the goal of convincing Ronnie to join.",
+      "createdAt": "2026-01-18T13:13:27.60951Z",
+      "uuid": "ac1b2a07-5e0d-4af2-b7a5-895cb0b2e402",
+      "relation": "ATTEMPTED_TO_CONVINCE"
+    },
+    {
+      "fact": "Kagan found Ronnie Shibley",
+      "createdAt": "2026-01-18T13:13:16.7684Z",
+      "uuid": "f11171c8-51ca-48fe-8f11-5976fd1b1ec8",
+      "relation": "FOUND"
+    },
+    {
+      "fact": "Ronnie Shibley was in Lebanon",
+      "createdAt": "2026-01-18T13:13:16.768469Z",
+      "uuid": "ae20c05a-17d4-4e4e-bdf7-764dbba55c37",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Ronnie Shibley was building the business Knock Knock",
+      "createdAt": "2026-01-18T13:13:16.768454Z",
+      "uuid": "998bb038-5fa2-4f66-a191-d4cea2c3181f",
+      "relation": "BUILDING"
+    },
+    {
+      "fact": "The business Knock Knock was being built in Lebanon",
+      "createdAt": "2026-01-18T13:13:16.768481Z",
+      "uuid": "1d872825-147f-4646-a972-e667b8f4ef4c",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan's market research targeted people from the street.",
+      "createdAt": "2026-01-18T13:13:05.191935Z",
+      "uuid": "f4ffd615-9414-4a77-812a-0630def444dc",
+      "relation": "TARGETED_GROUP_AT"
+    },
+    {
+      "fact": "Kagan conducted market research via WhatsApp groups.",
+      "createdAt": "2026-01-18T13:13:05.19187Z",
+      "uuid": "95eecb24-5e22-4260-8b61-4a26c1366b00",
+      "relation": "CONDUCTED_RESEARCH_VIA"
+    },
+    {
+      "fact": "WhatsApp groups involved people from the street.",
+      "createdAt": "2026-01-18T13:13:05.191921Z",
+      "uuid": "4371afc1-7738-4cae-b9cb-49497c38546d",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan achieved a 10% conversion rate regarding his initial customers.",
+      "createdAt": "2026-01-18T13:12:54.138025Z",
+      "uuid": "6c554872-c8e7-4e21-9f74-ca7e73e9fdba",
+      "relation": "CONVERSION_RATE"
+    },
+    {
+      "fact": "Kagan used cut-up flyers as part of his customer acquisition method.",
+      "createdAt": "2026-01-18T13:12:54.138005Z",
+      "uuid": "3dac9e87-3801-42c7-be87-c922e9cc5247",
+      "relation": "USED_FOR"
+    },
+    {
+      "fact": "Kagan put flyers into mailboxes.",
+      "createdAt": "2026-01-18T13:12:54.138017Z",
+      "uuid": "1c494493-8857-40a3-8d02-6c879a8190bf",
+      "relation": "PLACED_IN"
+    },
+    {
+      "fact": "Kagan acquired his initial customers through a marketing effort.",
+      "createdAt": "2026-01-18T13:12:54.137954Z",
+      "uuid": "7f21de0f-9a65-43da-a5dd-05b5610a0099",
+      "relation": "OBTAINED"
+    },
+    {
+      "fact": "Get Goodies was a cloned marketplace from a Polish friend.",
+      "createdAt": "2026-01-18T13:12:44.480322Z",
+      "uuid": "6f1b33be-6449-4599-92ff-1f1d9d51b2a9",
+      "relation": "IS_CLONE_OF"
+    },
+    {
+      "fact": "The first Gorillas website was named Get Goodies.",
+      "createdAt": "2026-01-18T13:12:44.480273Z",
+      "uuid": "4d9c16c0-c178-42aa-98dd-705aa726a57f",
+      "relation": "WAS_NAMED"
+    },
+    {
+      "fact": "The first Gorillas warehouse was located in Kagan's living room apartment.",
+      "createdAt": "2026-01-18T13:12:33.67239Z",
+      "uuid": "9e383632-41ae-4d67-bb43-c943e111f5c8",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan constructed the first Gorillas warehouse in his living room apartment.",
+      "createdAt": "2026-01-18T13:12:33.672344Z",
+      "uuid": "0705cac3-c552-403c-9bc7-28033ec03cda",
+      "relation": "BUILT"
+    },
+    {
+      "fact": "Kagan found a 5 euro bill stuck to his leg while walking.",
+      "createdAt": "2026-01-18T13:12:23.528Z",
+      "uuid": "a76db9ef-c832-4aec-a763-dcfc3ea2eee7",
+      "relation": "FOUND_ENTITY"
+    },
+    {
+      "fact": "Kagan took finding the 5 euro bill as a sign to start Gorillas.",
+      "createdAt": "2026-01-18T13:12:23.528084Z",
+      "uuid": "637a1bf9-33fb-4267-bf44-41a3345ea563",
+      "relation": "INSPIRED_START_OF"
+    },
+    {
+      "fact": "Kagan mom would shout out the window to order groceries",
+      "createdAt": "2026-01-18T13:12:12.74441Z",
+      "uuid": "8938e5df-abe7-41b4-8d46-fcbd1324cf47",
+      "relation": "REQUESTED_ENTITY"
+    },
+    {
+      "fact": "Groceries would be delivered by basket",
+      "createdAt": "2026-01-18T13:12:12.744423Z",
+      "uuid": "4deee3c2-ec22-4753-9370-6e056f0cf585",
+      "relation": "DELIVERED_VIA"
+    },
+    {
+      "fact": "Kagan mom was located in Turkey",
+      "createdAt": "2026-01-18T13:12:12.74437Z",
+      "uuid": "3994534b-88dd-49bf-b4c7-9791e2fd29e9",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan likes service culture.",
+      "createdAt": "2026-01-18T13:12:02.937489Z",
+      "uuid": "7befbd3a-c309-4bd4-bd4c-423b97c66e89",
+      "relation": "LIKES"
+    },
+    {
+      "fact": "Service culture is characterized as the Turkish way of going above and beyond for customers.",
+      "createdAt": "2026-01-18T13:12:02.937Z",
+      "uuid": "25a15883-4975-488b-bd6a-7934b11d6c0f",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan relocated to Berlin two years before founding Gorillas.",
+      "createdAt": "2026-01-18T13:11:53.878879Z",
+      "uuid": "43c6249d-a6d5-4000-999f-7565934b3beb",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan describes himself as someone who cannot be politically correct due to the environment.",
+      "createdAt": "2026-01-18T13:11:44.480706Z",
+      "uuid": "0ad6f5f2-3ffe-4288-bbd3-b786f6aa47bd",
+      "relation": "CANNOT_ADHERE_TO"
+    },
+    {
+      "fact": "Kagan built a loyalty program involving Turkish Airlines.",
+      "createdAt": "2026-01-18T13:11:33.279879Z",
+      "uuid": "ccd98399-0a2f-4448-bbda-25d537a626e3",
+      "relation": "ESTABLISHED_RELATIONSHIP"
+    },
+    {
+      "fact": "A Turkish bank was involved in a loyalty program with Turkish Airlines, built by Kagan.",
+      "createdAt": "2026-01-18T13:11:33.279892Z",
+      "uuid": "8f822d4b-716d-4d5e-a947-dace7fc30691",
+      "relation": "INVOLVED_IN_PROGRAM"
+    },
+    {
+      "fact": "Kagan built a loyalty program involving a Turkish bank.",
+      "createdAt": "2026-01-18T13:11:33.279862Z",
+      "uuid": "6fadb5dc-26a8-4180-8095-00533b9a9f1d",
+      "relation": "ESTABLISHED_RELATIONSHIP"
+    },
+    {
+      "fact": "Kagan built a loyalty program while at Bain & Company.",
+      "createdAt": "2026-01-18T13:11:33.279815Z",
+      "uuid": "2873857f-b690-47ff-9983-2e8027d4b29a",
+      "relation": "BUILT_PROGRAM_AT"
+    },
+    {
+      "fact": "Kagan was involved in implementation projects while working at Bain & Company.",
+      "createdAt": "2026-01-18T13:11:21.46372Z",
+      "uuid": "75e9661e-cac4-4b67-87f4-d16d3abbadad",
+      "relation": "PERFORMED_WORK_TYPE"
+    },
+    {
+      "fact": "Kagan was employed at Bain & Company for a period of 3 years.",
+      "createdAt": "2026-01-18T13:11:21.463672Z",
+      "uuid": "2d7f4cfa-6bcf-4719-8949-09b118a99daa",
+      "relation": "WORKED_AT"
+    },
+    {
+      "fact": "The bike cost 88 euros",
+      "createdAt": "2026-01-18T13:11:11.025996Z",
+      "uuid": "a23b35ec-8b8d-463d-a52b-92f31a08e301",
+      "relation": "COST"
+    },
+    {
+      "fact": "Kagan arrived in Germany",
+      "createdAt": "2026-01-18T13:11:11.025927Z",
+      "uuid": "66a0a4d1-e9a4-4829-84a4-3c82772f5df6",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan purchased a bike",
+      "createdAt": "2026-01-18T13:11:11.025979Z",
+      "uuid": "0ff4281c-b32b-485c-8d78-1b84ec02fad0",
+      "relation": "ACQUIRED_ITEM"
+    },
+    {
+      "fact": "Kagan's journey started in Istanbul.",
+      "createdAt": "2026-01-18T13:10:58.297118Z",
+      "uuid": "e1042961-6b24-4b51-89ad-360b2bac820b",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan's journey ended in China.",
+      "createdAt": "2026-01-18T13:10:58.297133Z",
+      "uuid": "c1455bb4-e8ff-40d4-bddc-3e115e321f9d",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan used his bike for travel.",
+      "createdAt": "2026-01-18T13:10:58.297Z",
+      "uuid": "47e59476-75a8-4755-914b-0bd614ba7f6d",
+      "relation": "USED_TRANSPORT_MEDIUM"
+    },
+    {
+      "fact": "Istanbul is geographically distant from China, which is the destination of Kagan's trip.",
+      "createdAt": "2026-01-18T13:10:58.297144Z",
+      "uuid": "47ccd218-d5a0-4338-b55a-566354b32a05",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan has intense feelings of love for bikes.",
+      "createdAt": "2026-01-18T13:10:47.756852Z",
+      "uuid": "bf0432ca-1322-415b-9edf-43f88dd50843",
+      "relation": "FEELS_STRONG_EMOTION_TOWARDS"
+    },
+    {
+      "fact": "Kagan possesses a tattoo of a bike.",
+      "createdAt": "2026-01-18T13:10:47.756Z",
+      "uuid": "14587aa4-8a5c-421f-9555-1e8c60874db2",
+      "relation": "HAS_BODY_ART_OF"
+    },
+    {
+      "fact": "Kagan served as the captain of the Turkish national water polo team.",
+      "createdAt": "2026-01-18T13:10:37.370352Z",
+      "uuid": "f2e899d5-44c4-445e-a60c-2ff9d4562661",
+      "relation": "CAPTAIN_OF"
+    },
+    {
+      "fact": "Kagan was a member of the Turkish national water polo team.",
+      "createdAt": "2026-01-18T13:10:37.3704Z",
+      "uuid": "d57c26e0-8eea-4116-a9bb-a873512549b1",
+      "relation": "PLAYS_ON_TEAM"
+    },
+    {
+      "fact": "The Turkish national water polo team is associated with the sport of water polo.",
+      "createdAt": "2026-01-18T13:10:37.370413Z",
+      "uuid": "5c30812f-21e1-4d51-ac7c-65cc4fe56f2a",
+      "relation": "TEAM_SPORT"
+    },
+    {
+      "fact": "Kagan studied mechatronics engineering.",
+      "createdAt": "2026-01-18T13:10:28.054216Z",
+      "uuid": "00f54a53-226c-49a8-b02b-998632e3cb3a",
+      "relation": "STUDIED"
+    },
+    {
+      "fact": "Kagan applied to Rocket Internet six times within a single month before receiving a reply.",
+      "createdAt": "2026-01-18T13:10:19.798459Z",
+      "uuid": "d7a09f70-728d-4e90-96d0-f52978774dc4",
+      "relation": "APPLIED_TO_ORGANIZATION"
+    },
+    {
+      "fact": "Kagan's aunt was a professor.",
+      "createdAt": "2026-01-18T13:10:09.48938Z",
+      "uuid": "d1037ccb-56d8-45be-a3bf-bc82b9da408d",
+      "relation": "WAS_A"
+    },
+    {
+      "fact": "Kagan first visited Germany when he was 10 years old.",
+      "createdAt": "2026-01-18T13:10:09.489306Z",
+      "uuid": "b281032b-0dfc-4875-a598-9f37f923a896",
+      "relation": "VISITED"
+    },
+    {
+      "fact": "Kagan first visited Germany at age 10 to see his aunt.",
+      "createdAt": "2026-01-18T13:10:09.489362Z",
+      "uuid": "22814fb6-1cf1-4628-bc87-38db1e88f4ec",
+      "relation": "VISITED_TO_SEE"
+    },
+    {
+      "fact": "Istanbul is located in Turkey.",
+      "createdAt": "2026-01-18T13:09:58.619659Z",
+      "uuid": "bb64ad60-4cb0-444b-9ce8-eaa709da8b73",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan has an origin in Istanbul.",
+      "createdAt": "2026-01-18T13:09:58.619594Z",
+      "uuid": "a439dccd-251b-4d2a-afe1-4b408181a424",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan values honest feedback.",
+      "createdAt": "2026-01-18T12:22:10.957977Z",
+      "uuid": "ffb24da5-c89b-479f-b10e-f0051bb097a4",
+      "relation": "VALUES"
+    },
+    {
+      "fact": "Kagan values direct communication.",
+      "createdAt": "2026-01-18T12:22:10.957941Z",
+      "uuid": "5fd3f411-495e-40c9-9fe3-976bebdf42d5",
+      "relation": "VALUES"
+    },
+    {
+      "fact": "Kagan holds the belief that brand building is underrated.",
+      "createdAt": "2026-01-18T12:22:02.937885Z",
+      "uuid": "f9536d89-f649-4e7c-b9b6-1ce4080c82f6",
+      "relation": "BELIEVES_IMPORTANCE_OF"
+    },
+    {
+      "fact": "Brand building is relevant to tech startups.",
+      "createdAt": "2026-01-18T12:22:02.937939Z",
+      "uuid": "b7173123-3498-4bba-b258-f1a7d797de42",
+      "relation": "APPLIES_TO"
+    },
+    {
+      "fact": "Kagan experienced the challenges associated with market conditions.",
+      "createdAt": "2026-01-18T12:21:52.669Z",
+      "uuid": "e71afb71-35a1-4b37-97d6-233fcda1a10a",
+      "relation": "EXPERIENCED"
+    },
+    {
+      "fact": "Kagan experienced the positive aspects of hypergrowth.",
+      "createdAt": "2026-01-18T12:21:52.668983Z",
+      "uuid": "947cd638-ea0c-4e05-8d5c-b63e23429d17",
+      "relation": "EXPERIENCED"
+    },
+    {
+      "fact": "Rapid growth eventually requires strong unit economics.",
+      "createdAt": "2026-01-18T12:21:42.374062Z",
+      "uuid": "6426add4-91fc-40ec-abd2-b50d6df2a4c9",
+      "relation": "REQUIRES"
+    },
+    {
+      "fact": "Kagan learned that rapid growth eventually requires strong unit economics.",
+      "createdAt": "2026-01-18T12:21:42.374016Z",
+      "uuid": "3c3ca163-f394-4f32-b9b6-592474126e95",
+      "relation": "UNDERSTANDS_REQUIREMENT"
+    },
+    {
+      "fact": "Kagan advises on methods for quickly validating product-market fit.",
+      "createdAt": "2026-01-18T12:21:34.139707Z",
+      "uuid": "e5ad8444-5947-4edf-800e-018f0e550168",
+      "relation": "ADVISES_ON"
+    },
+    {
+      "fact": "Kagan can provide assistance to founders regarding fundraising strategy.",
+      "createdAt": "2026-01-18T12:21:23.308355Z",
+      "uuid": "c7f9cbea-1309-4c6c-8283-675d771af18e",
+      "relation": "PROVIDES_SUPPORT_FOR"
+    },
+    {
+      "fact": "Kagan can provide assistance to founders regarding investor outreach.",
+      "createdAt": "2026-01-18T12:21:23.308341Z",
+      "uuid": "3894f42c-e72b-4634-b899-73aa79fedff0",
+      "relation": "PROVIDES_SUPPORT_FOR"
+    },
+    {
+      "fact": "Kagan can assist founders with support services.",
+      "createdAt": "2026-01-18T12:21:23.308294Z",
+      "uuid": "22364412-3287-436a-85e2-6776b0946862",
+      "relation": "ASSISTS_WITH"
+    },
+    {
+      "fact": "Kagan can help founders craft their pitch decks.",
+      "createdAt": "2026-01-18T12:21:12.443959Z",
+      "uuid": "94eb328d-5bea-4779-87e7-387cc33394d7",
+      "relation": "HELPS_CRAFT"
+    },
+    {
+      "fact": "Kagan has the capability to assist founders.",
+      "createdAt": "2026-01-18T12:21:12.443913Z",
+      "uuid": "4b2dc527-36db-4c11-a964-044c41e39c63",
+      "relation": "CAN_ASSIST"
+    },
+    {
+      "fact": "Kagan can help founders build compelling demos.",
+      "createdAt": "2026-01-18T12:21:02.976035Z",
+      "uuid": "85b77691-f69e-43de-8d83-5af423387bee",
+      "relation": "ASSISTS_WITH"
+    },
+    {
+      "fact": "Kagan can help founders build compelling MVPs.",
+      "createdAt": "2026-01-18T12:21:02.976047Z",
+      "uuid": "3829beed-e55e-4941-bbac-659b507f9127",
+      "relation": "ASSISTS_WITH"
+    },
+    {
+      "fact": "Kagan can assist founders in building compelling demos and MVPs.",
+      "createdAt": "2026-01-18T12:21:02.975989Z",
+      "uuid": "654b22ed-0ecf-444c-885a-b14ddfa966c2",
+      "relation": "HELPS_BUILD"
+    },
+    {
+      "fact": "Kagan can assist founders with obtaining their first customers.",
+      "createdAt": "2026-01-18T12:20:52.500039Z",
+      "uuid": "d2adc842-4a0b-4f86-9204-d8c1b9b3b9d1",
+      "relation": "ASSISTS_WITH"
+    },
+    {
+      "fact": "Kagan can help founders in getting their first customers.",
+      "createdAt": "2026-01-18T12:20:52.500085Z",
+      "uuid": "a1a0c7c4-dcca-4ea8-959b-31c115a5bb18",
+      "relation": "HELPS_ACQUIRE"
+    },
+    {
+      "fact": "Founders are seeking to acquire their first customers.",
+      "createdAt": "2026-01-18T12:20:52.500113Z",
+      "uuid": "40033bb6-33ea-470d-8d5b-b7ae09fe7cd1",
+      "relation": "TARGETS_ENTITY"
+    },
+    {
+      "fact": "Kagan is interested in the intersection of consumer products.",
+      "createdAt": "2026-01-18T12:20:42.220595Z",
+      "uuid": "b141d71a-be04-4650-b028-01fb65b5370a",
+      "relation": "HAS_INTEREST_IN"
+    },
+    {
+      "fact": "AI intersects with consumer products, which interests Kagan.",
+      "createdAt": "2026-01-18T12:20:42.220608Z",
+      "uuid": "366fcac9-8f9a-40ef-9ca1-9e30a8a9ab48",
+      "relation": "INTERSECTS_WITH"
+    },
+    {
+      "fact": "Kagan builds things using Next.js.",
+      "createdAt": "2026-01-18T12:20:32.895256Z",
+      "uuid": "63add173-db5e-420b-ac2f-541aa9ba4081",
+      "relation": "BUILDS_WITH"
+    },
+    {
+      "fact": "Kagan builds things using modern web technologies.",
+      "createdAt": "2026-01-18T12:20:32.895306Z",
+      "uuid": "27a229fc-aba2-43ec-8bb2-5715c9579938",
+      "relation": "BUILDS_WITH"
+    },
+    {
+      "fact": "Kagan performs AI video generation.",
+      "createdAt": "2026-01-18T12:20:22.850794Z",
+      "uuid": "f72cbb57-fd01-48bf-b0c5-26ce7b595780",
+      "relation": "PERFORMS"
+    },
+    {
+      "fact": "Kagan uses FAL for video generation tasks.",
+      "createdAt": "2026-01-18T12:20:22.850695Z",
+      "uuid": "9ba7108e-0e6b-42d0-a9d7-590344c6307c",
+      "relation": "USES"
+    },
+    {
+      "fact": "FAL is used for AI video generation.",
+      "createdAt": "2026-01-18T12:20:22.850779Z",
+      "uuid": "416e0b8b-2dc8-4a47-b309-b7f7a679e42f",
+      "relation": "APPLIES_TO"
+    },
+    {
+      "fact": "ElevenLabs provides voice AI services.",
+      "createdAt": "2026-01-18T12:20:12.879287Z",
+      "uuid": "b601f54c-8127-44c4-af7e-ba8704a66421",
+      "relation": "PROVIDES_SERVICE"
+    },
+    {
+      "fact": "Kagan utilizes ElevenLabs for voice AI technology.",
+      "createdAt": "2026-01-18T12:20:12.87924Z",
+      "uuid": "1d46efb4-d22e-4974-b89a-37f72eae320e",
+      "relation": "USES_SERVICE"
+    },
+    {
+      "fact": "Kagan uses Claude as his primary AI assistant",
+      "createdAt": "2026-01-18T12:20:03.784781Z",
+      "uuid": "151233cf-9e23-4ea0-b002-e4faa87785f2",
+      "relation": "USES_AI_ASSISTANT"
+    },
+    {
+      "fact": "Kagan is currently interested in AI.",
+      "createdAt": "2026-01-18T12:19:53.395Z",
+      "uuid": "d23c4bdd-1a28-43d1-9489-a928e693f5c1",
+      "relation": "CURRENTLY_INTERESTED_IN"
+    },
+    {
+      "fact": "Kagan is currently interested in building AI-powered products.",
+      "createdAt": "2026-01-18T12:19:53.395062Z",
+      "uuid": "ad78fa0c-253d-4102-9cf3-c54afd30c26c",
+      "relation": "CURRENTLY_INTERESTED_IN"
+    },
+    {
+      "fact": "Kagan learned that market conditions are crucial for startup success.",
+      "createdAt": "2026-01-18T12:19:39.963Z",
+      "uuid": "fc2a026f-e28a-419f-93be-baad3ae83ef9",
+      "relation": "LEARNED_ABOUT_IMPORTANCE"
+    },
+    {
+      "fact": "Market conditions are crucial for startup success.",
+      "createdAt": "2026-01-18T12:19:39.963Z",
+      "uuid": "5844f2d1-8cec-4045-acdc-834848d3db09",
+      "relation": "IS_CRUCIAL_FOR"
+    },
+    {
+      "fact": "Kagan learned that timing is crucial for startup success.",
+      "createdAt": "2026-01-18T12:19:39.963709Z",
+      "uuid": "079106dc-be06-43fa-b42f-78e2216d1805",
+      "relation": "LEARNED_ABOUT_IMPORTANCE"
+    },
+    {
+      "fact": "Timing is crucial for startup success.",
+      "createdAt": "2026-01-18T12:19:39.963796Z",
+      "uuid": "063842fd-d1f9-4616-903f-97cd10e618af",
+      "relation": "IS_CRUCIAL_FOR"
+    },
+    {
+      "fact": "Kagan believes in hiring great people",
+      "createdAt": "2026-01-18T12:19:27.625656Z",
+      "uuid": "af487153-8d4c-4711-a10c-6f50abb51477",
+      "relation": "BELIEVES_IN_HIRING"
+    },
+    {
+      "fact": "Kagan believes in empowering great people",
+      "createdAt": "2026-01-18T12:19:27.625712Z",
+      "uuid": "824a3545-1d8a-4b64-96a0-52f9271764af",
+      "relation": "BELIEVES_IN_EMPOWERING"
+    },
+    {
+      "fact": "Kagan places a higher value on execution than on perfect planning.",
+      "createdAt": "2026-01-18T12:19:17.886308Z",
+      "uuid": "d7ffdb94-9af8-487b-85a4-3eb072aa7c82",
+      "relation": "VALUES"
+    },
+    {
+      "fact": "Kagan values execution over perfect planning.",
+      "createdAt": "2026-01-18T12:19:17.886357Z",
+      "uuid": "3c5172f0-8819-4b75-945c-f2b05dfda78b",
+      "relation": "PREFERS_OVER"
+    },
+    {
+      "fact": "Kagan emphasizes the importance of customer obsession.",
+      "createdAt": "2026-01-18T12:19:08.01981Z",
+      "uuid": "a7eb2995-dad1-4e61-ba0b-f2df55d676ce",
+      "relation": "EMPHASIZES"
+    },
+    {
+      "fact": "Kagan possesses experience related to on-demand delivery.",
+      "createdAt": "2026-01-18T12:18:49.894012Z",
+      "uuid": "fff81309-968c-492b-af35-b7e697b070c6",
+      "relation": "HAS_EXPERIENCE_IN"
+    },
+    {
+      "fact": "Kagan possesses experience related to logistics.",
+      "createdAt": "2026-01-18T12:18:49.894075Z",
+      "uuid": "342b7f19-f7a2-47c3-8d14-db8d3aa0d713",
+      "relation": "HAS_EXPERIENCE_IN"
+    },
+    {
+      "fact": "Kagan Sumer understands the difficulties associated with building consumer-facing products.",
+      "createdAt": "2026-01-18T12:18:41.54741Z",
+      "uuid": "55e66a93-51c1-401a-807d-697fb7929612",
+      "relation": "UNDERSTANDS_CHALLENGES_OF"
+    },
+    {
+      "fact": "Operations involve scaling across multiple countries.",
+      "createdAt": "2026-01-18T12:18:31.9802Z",
+      "uuid": "b270edf2-fb41-4ffc-b8be-83c567cf1436",
+      "relation": "HAS_SCOPE"
+    },
+    {
+      "fact": "Kagan has experience in the rapid scaling of operations across multiple countries.",
+      "createdAt": "2026-01-18T12:18:31.980154Z",
+      "uuid": "595957ab-d49c-4dfe-8660-7142bbf1a8ee",
+      "relation": "HAS_EXPERIENCE_SCALING"
+    },
+    {
+      "fact": "Kagan built Gorillas from inception to a billion-dollar valuation in under 2 years.",
+      "createdAt": "2026-01-18T12:18:23.728942Z",
+      "uuid": "c7948743-218e-4a6d-8385-026477e55896",
+      "relation": "BUILT_UP"
+    },
+    {
+      "fact": "Kagan has extensive experience in fundraising.",
+      "createdAt": "2026-01-18T12:18:13.675179Z",
+      "uuid": "72f1c310-7453-400b-9c42-431e61cb7f44",
+      "relation": "HAS_EXPERIENCE_IN"
+    },
+    {
+      "fact": "Kagan has extensive experience in pitching to investors.",
+      "createdAt": "2026-01-18T12:18:13.675Z",
+      "uuid": "502c569a-9aa9-4f5d-83d5-9092183e6f2a",
+      "relation": "HAS_EXPERIENCE_IN"
+    },
+    {
+      "fact": "Kagan is based in Germany.",
+      "createdAt": "2026-01-18T12:18:04.275517Z",
+      "uuid": "8bd199d5-bb62-4cb5-92d8-d3bea3fe5bef",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan is based in Berlin.",
+      "createdAt": "2026-01-18T12:18:04.275474Z",
+      "uuid": "6894d190-f2b7-4bf8-9f86-c5ce8cd42929",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Berlin is located in Germany.",
+      "createdAt": "2026-01-18T12:18:04.275531Z",
+      "uuid": "1c8d7bf9-11e3-4151-8bd7-da3f9d52b5b2",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan is originally from Turkey",
+      "createdAt": "2026-01-18T12:17:55.67Z",
+      "uuid": "73f20e9e-742b-4a3a-80c9-1788e20aa038",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Gorillas was acquired by Getir in 2022.",
+      "createdAt": "2026-01-18T12:17:46.844326Z",
+      "uuid": "15a0fa62-0aca-4fcf-aef7-0676ff407018",
+      "relation": "ACQUIRED_BY"
+    },
+    {
+      "fact": "Gorillas secured over $1 billion in funding.",
+      "createdAt": "2026-01-18T12:17:37.816719Z",
+      "uuid": "4dcff8f5-63bf-4984-bead-e524f15e26f4",
+      "relation": "RAISED_FUNDING"
+    },
+    {
+      "fact": "Gorillas was established in Berlin.",
+      "createdAt": "2026-01-18T12:17:29.53782Z",
+      "uuid": "a8967367-bf17-4e42-9f72-4a010a865270",
+      "relation": "LOCATED_AT"
+    },
+    {
+      "fact": "Kagan Sumer established the rapid grocery delivery company Gorillas.",
+      "createdAt": "2026-01-18T12:17:21.737671Z",
+      "uuid": "5ebbf549-879b-424d-94c5-a5f24f2ac060",
+      "relation": "FOUNDED"
+    }
+  ]
+}

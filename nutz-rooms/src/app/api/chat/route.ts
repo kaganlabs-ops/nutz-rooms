@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureUser, createThread, addMessages, getThreadMessages, searchGraph, addToGraph } from "@/lib/zep";
 import { anthropic, KAGAN_SYSTEM_PROMPT } from "@/lib/openai";
 import { parseArtifact } from "@/lib/artifacts";
+import { searchGif } from "@/lib/giphy";
 
 export async function POST(req: NextRequest) {
   try {
@@ -70,7 +71,17 @@ export async function POST(req: NextRequest) {
     const rawResponse = textBlock?.type === "text" ? textBlock.text : "";
 
     // Parse artifacts from response
-    const { text: responseText, artifact } = parseArtifact(rawResponse);
+    const { text: textWithGifMarkers, artifact } = parseArtifact(rawResponse);
+
+    // Process GIF markers [GIF: search term] -> actual gif URLs
+    let responseText = textWithGifMarkers;
+    const gifMatch = textWithGifMarkers.match(/\[GIF:\s*([^\]]+)\]/i);
+    let gifUrl: string | null = null;
+    if (gifMatch) {
+      const searchTerm = gifMatch[1].trim();
+      gifUrl = await searchGif(searchTerm);
+      responseText = textWithGifMarkers.replace(gifMatch[0], '').trim();
+    }
 
     // Add AI response to Zep thread
     await addMessages(threadId, [
@@ -86,6 +97,7 @@ export async function POST(req: NextRequest) {
       response: responseText,
       threadId,
       artifact,
+      gifUrl,
     });
   } catch (error) {
     console.error("Chat error:", error);
