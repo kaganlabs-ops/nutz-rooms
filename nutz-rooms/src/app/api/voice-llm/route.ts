@@ -94,75 +94,85 @@ export async function POST(req: NextRequest) {
     const lastUserMessage = chatMessages.filter(m => m.role === "user").pop();
     const userMessage = lastUserMessage?.content || "";
 
-    // Search for relevant memories
+    // Simple messages that don't need memory lookup (for faster voice responses)
+    const simpleMessages = ['hey', 'hi', 'hello', 'yo', 'sup', 'whats up', "what's up", 'how are you', 'good morning', 'good evening'];
+    const isSimpleMessage = simpleMessages.some(s => userMessage.toLowerCase().trim() === s || userMessage.toLowerCase().trim().startsWith(s + ' '));
+
+    // Search for relevant memories (skip for simple greetings)
     let memories: string[] = [];
-    try {
-      const searchResults = await searchGraph(userId, userMessage);
-      if (searchResults?.edges) {
-        memories = searchResults.edges
-          .map((edge: { fact?: string }) => edge.fact)
-          .filter((f): f is string => Boolean(f))
-          .slice(0, 5);
-      }
-    } catch (e) {
-      console.error("Zep search error:", e);
-    }
-
-    // ============================================
-    // ORCHESTRATOR LOGIC (same as text chat)
-    // ============================================
-
-    // Get current mode state
-    let modeState = await getModeState(userId);
-
-    // Check for stale mode state (older than 7 days)
-    if (modeState && isModeStateStale(modeState)) {
-      await clearModeState(userId, modeState.mode);
-      modeState = null;
-    }
-
-    // Check for explicit mode switch or exit
-    const explicitMode = detectExplicitModeSwitch(userMessage);
-    if (explicitMode) {
-      if (explicitMode === 'thought-partner') {
-        // User wants to exit current mode
-        if (modeState) {
-          await clearModeState(userId, modeState.mode);
-          modeState = null;
+    if (!isSimpleMessage) {
+      try {
+        const searchResults = await searchGraph(userId, userMessage);
+        if (searchResults?.edges) {
+          memories = searchResults.edges
+            .map((edge: { fact?: string }) => edge.fact)
+            .filter((f): f is string => Boolean(f))
+            .slice(0, 5);
         }
-      } else if (explicitMode !== modeState?.mode) {
-        modeState = initModeState(explicitMode);
-        await saveModeState(userId, modeState);
+      } catch (e) {
+        console.error("Zep search error:", e);
       }
     }
 
-    // If no active mode, detect from message
-    if (!modeState && !explicitMode) {
-      const detectedMode = detectMode(userMessage, memories);
-      if (detectedMode !== 'thought-partner') {
-        modeState = initModeState(detectedMode);
-        await saveModeState(userId, modeState);
-        console.log("Mode detected:", detectedMode);
-      }
-    }
+    // ============================================
+    // ORCHESTRATOR LOGIC (skip for simple messages)
+    // ============================================
 
-    // Build context-aware system prompt
-    let systemPrompt: string;
-    if (modeState) {
-      systemPrompt = buildModePrompt(modeState);
-      const mode = getMode(modeState.mode);
-      const stage = mode.stages.find(s => s.id === modeState.currentStage);
-      if (stage) {
-        systemPrompt = `[ACTIVE MODE: ${mode.name} - Stage: ${stage.name}]\n\n` + systemPrompt;
-      }
-      console.log("Using mode prompt:", modeState.mode, "stage:", modeState.currentStage);
-    } else {
-      systemPrompt = KAGAN_SYSTEM_PROMPT;
-    }
+    let modeState: ModeState | null = null;
+    let systemPrompt: string = KAGAN_SYSTEM_PROMPT;
 
-    // Add memory context
-    if (memories.length > 0) {
-      systemPrompt += `\n\n## Context from memory:\n${memories.join('\n')}`;
+    // Skip mode detection for simple greetings (faster response)
+    if (!isSimpleMessage) {
+      // Get current mode state
+      modeState = await getModeState(userId);
+
+      // Check for stale mode state (older than 7 days)
+      if (modeState && isModeStateStale(modeState)) {
+        await clearModeState(userId, modeState.mode);
+        modeState = null;
+      }
+
+      // Check for explicit mode switch or exit
+      const explicitMode = detectExplicitModeSwitch(userMessage);
+      if (explicitMode) {
+        if (explicitMode === 'thought-partner') {
+          // User wants to exit current mode
+          if (modeState) {
+            await clearModeState(userId, modeState.mode);
+            modeState = null;
+          }
+        } else if (explicitMode !== modeState?.mode) {
+          modeState = initModeState(explicitMode);
+          await saveModeState(userId, modeState);
+        }
+      }
+
+      // If no active mode, detect from message
+      if (!modeState && !explicitMode) {
+        const detectedMode = detectMode(userMessage, memories);
+        if (detectedMode !== 'thought-partner') {
+          modeState = initModeState(detectedMode);
+          await saveModeState(userId, modeState);
+          console.log("Mode detected:", detectedMode);
+        }
+      }
+
+      // Build context-aware system prompt
+      if (modeState) {
+        systemPrompt = buildModePrompt(modeState);
+        const mode = getMode(modeState.mode);
+        const currentStage = modeState.currentStage;
+        const stage = mode.stages.find(s => s.id === currentStage);
+        if (stage) {
+          systemPrompt = `[ACTIVE MODE: ${mode.name} - Stage: ${stage.name}]\n\n` + systemPrompt;
+        }
+        console.log("Using mode prompt:", modeState.mode, "stage:", currentStage);
+      }
+
+      // Add memory context
+      if (memories.length > 0) {
+        systemPrompt += `\n\n## Context from memory:\n${memories.join('\n')}`;
+      }
     }
 
     console.log("Stream mode:", stream, "Mode:", modeState?.mode || "thought-partner");

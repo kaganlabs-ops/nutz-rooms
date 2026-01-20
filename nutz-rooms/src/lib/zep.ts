@@ -74,29 +74,37 @@ export async function getUserContext(threadId: string) {
 
 // Search the knowledge graph
 export async function searchGraph(userId: string, query: string) {
+  console.log(`[ZEP] searchGraph called - userId: ${userId}, query: "${query.slice(0, 50)}..."`);
   try {
     const results = await zep.graph.search({
       userId,
       query,
       limit: 10,
     });
+    console.log(`[ZEP] searchGraph results:`, {
+      edgeCount: results?.edges?.length || 0,
+      facts: results?.edges?.slice(0, 3).map(e => e.fact?.slice(0, 50)) || []
+    });
     return results;
-  } catch {
+  } catch (e) {
+    console.error(`[ZEP] searchGraph ERROR:`, e);
     return null;
   }
 }
 
 // Add data to the knowledge graph
 export async function addToGraph(userId: string, data: string, type: "text" | "json" = "text") {
+  console.log(`[ZEP] addToGraph called - userId: ${userId}, type: ${type}, data: "${data.slice(0, 100)}..."`);
   try {
     await zep.graph.add({
       userId,
       type,
       data,
     });
+    console.log(`[ZEP] addToGraph SUCCESS`);
     return true;
   } catch (e) {
-    console.error("Failed to add to graph:", e);
+    console.error("[ZEP] addToGraph FAILED:", e);
     return false;
   }
 }

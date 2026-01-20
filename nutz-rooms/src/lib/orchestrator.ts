@@ -18,19 +18,51 @@ interface OrchestratorResponse {
 }
 
 export class Orchestrator {
+  // Simple messages that don't need memory lookup (for faster responses)
+  private simpleMessages = ['hey', 'hi', 'hello', 'yo', 'sup', 'whats up', "what's up", 'how are you', 'good morning', 'good evening'];
+
+  private isSimpleMessage(message: string): boolean {
+    const normalized = message.toLowerCase().trim();
+    return this.simpleMessages.some(s => normalized === s || normalized.startsWith(s + ' '));
+  }
+
   async process(ctx: ConversationContext): Promise<OrchestratorResponse> {
     const { userId, message, messageHistory = [] } = ctx;
+    const startTime = Date.now();
+    const isSimple = this.isSimpleMessage(message);
+    console.log(`\n=== ORCHESTRATOR START ===`);
+    console.log(`userId: ${userId}, message: "${message.slice(0, 50)}...", simple: ${isSimple}`);
 
-    // 1. Recall relevant memory
-    const memoryResults = await searchGraph(userId, message);
-    const memories = memoryResults?.edges
-      ?.map((e: { fact?: string }) => e.fact)
-      .filter((f): f is string => Boolean(f)) || [];
-
-    // 2. Get current mode state
-    let modeState = await getModeState(userId);
+    let memories: string[] = [];
+    let modeState: ModeState | null = null;
     let modeChanged = false;
     let stageAdvanced = false;
+
+    // Skip heavy processing for simple greetings
+    if (isSimple) {
+      // Fast path: just use base prompt, no memory/mode lookup
+      const systemPrompt = KAGAN_SYSTEM_PROMPT;
+      console.log(`[ORCH] Fast path - skipping memory/mode`);
+
+      const llmStartTime = Date.now();
+      const response = await this.callLLM(message, messageHistory, systemPrompt);
+      console.log(`[ORCH] LLM call took ${Date.now() - llmStartTime}ms`);
+      console.log(`[ORCH] Response: "${response.slice(0, 100)}..."`);
+      console.log(`[ORCH] Total time: ${Date.now() - startTime}ms`);
+
+      return { response, modeState: null, modeChanged: false, stageAdvanced: false };
+    }
+
+    // 1. Recall relevant memory
+    const memoryStartTime = Date.now();
+    const memoryResults = await searchGraph(userId, message);
+    memories = memoryResults?.edges
+      ?.map((e: { fact?: string }) => e.fact)
+      .filter((f): f is string => Boolean(f)) || [];
+    console.log(`[ORCH] Memory recall took ${Date.now() - memoryStartTime}ms, found ${memories.length} memories`);
+
+    // 2. Get current mode state
+    modeState = await getModeState(userId);
 
     // 3. Check for stale mode state (older than 7 days)
     if (modeState && isModeStateStale(modeState)) {
@@ -66,9 +98,14 @@ export class Orchestrator {
 
     // 6. Build context-aware system prompt
     const systemPrompt = this.buildSystemPrompt(modeState, memories);
+    console.log(`[ORCH] System prompt length: ${systemPrompt.length}, memories injected: ${memories.length}`);
 
-    // 7. Call Claude
+    // 7. Call LLM
+    const llmStartTime = Date.now();
     const response = await this.callLLM(message, messageHistory, systemPrompt);
+    console.log(`[ORCH] LLM call took ${Date.now() - llmStartTime}ms`);
+    console.log(`[ORCH] Response: "${response.slice(0, 100)}..."`);
+    console.log(`[ORCH] Total time: ${Date.now() - startTime}ms`);
 
     // 8. Check stage completion and advance (skip for modes with no stages)
     if (modeState && modeState.currentStage) {
