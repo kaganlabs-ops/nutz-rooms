@@ -36,8 +36,8 @@ export async function POST(req: NextRequest) {
       // 1. Kagan's brain - instant from cache
       Promise.resolve(getKaganBrain()),
 
-      // 2. User's memory from Zep
-      getUserMemory(userId, message, 5),
+      // 2. User's memory from Zep (fetch 10 to get more context across sessions)
+      getUserMemory(userId, message, 10),
 
       // 3. Setup: ensure user exists + get/create thread
       (async () => {
@@ -64,10 +64,11 @@ export async function POST(req: NextRequest) {
     const messageHistory: Array<{ role: "user" | "assistant"; content: string }> = [];
     const recentMessages = threadMessages.slice(-10);
     for (const msg of recentMessages) {
-      if (msg.role === "user" || msg.role === "assistant") {
+      // Only include messages with actual content (Claude API requires non-empty content)
+      if ((msg.role === "user" || msg.role === "assistant") && msg.content && msg.content.trim()) {
         messageHistory.push({
           role: msg.role,
-          content: msg.content || "",
+          content: msg.content,
         });
       }
     }
@@ -122,27 +123,37 @@ export async function POST(req: NextRequest) {
     if (gifMatch) {
       const searchTerm = gifMatch[1].trim();
       gifUrl = await searchGif(searchTerm);
-      responseText = textWithGifMarkers.replace(gifMatch[0], '').trim();
+      // Remove the GIF marker from text, but keep some text if it becomes empty
+      const textWithoutGif = textWithGifMarkers.replace(gifMatch[0], '').trim();
+      responseText = textWithoutGif || ""; // Allow empty text when there's a GIF
     }
 
     // ============================================
-    // STEP 3: BACKGROUND SAVE (user doesn't wait)
+    // STEP 3: SAVE TO MEMORY (quick, ~100ms)
     // - Save AI response to thread
     // - Extract and save user facts to USER memory only
     // ============================================
 
-    // Fire and forget - user doesn't wait for these
-    Promise.all([
-      // Save AI response to thread
-      addMessages(threadId, [
-        { role: "assistant", content: responseText, name: "Kagan" },
-      ]),
+    const saveTasks: Promise<unknown>[] = [];
 
-      // Extract and save facts to USER's memory (not Kagan's brain)
-      extractAndSaveUserFacts(userId, message, responseText),
-    ]).catch(err => {
-      console.error('[CHAT] Background save failed:', err);
-    });
+    // Save AI response to thread (only if there's actual text content)
+    if (responseText && responseText.trim()) {
+      saveTasks.push(
+        addMessages(threadId, [
+          { role: "assistant", content: responseText, name: "Kagan" },
+        ])
+      );
+    }
+
+    // Extract and save facts to USER's memory (not Kagan's brain)
+    saveTasks.push(extractAndSaveUserFacts(userId, message, responseText));
+
+    // Wait for saves (must await or serverless kills it)
+    try {
+      await Promise.all(saveTasks);
+    } catch (err) {
+      console.error('[CHAT] Save failed:', err);
+    }
 
     const totalTime = Date.now() - startTime;
     console.log(`[CHAT] Total request time: ${totalTime}ms`);
@@ -155,8 +166,9 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("Chat error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to process chat" },
+      { error: `Failed to process chat: ${errorMessage}` },
       { status: 500 }
     );
   }
@@ -164,37 +176,47 @@ export async function POST(req: NextRequest) {
 
 // Extract facts from user message and AI response, save to USER's memory only
 async function extractAndSaveUserFacts(userId: string, userMessage: string, aiResponse: string): Promise<void> {
+  console.log(`[EXTRACT] Starting extraction for user ${userId}, message: "${userMessage.slice(0, 50)}..."`);
   const factsToSave: string[] = [];
 
   // Patterns to extract from user message
+  // Note: i(?:'m|m| am) handles "i'm", "im", "i am"
   const userPatterns = [
-    { pattern: /i(?:'m| am) building (.+)/i, template: "User is building: $1" },
-    { pattern: /my (?:startup|company|project) is (?:called )?(.+)/i, template: "User's project: $1" },
+    { pattern: /i(?:'m|m| am) building (.+)/i, template: "User is building: $1" },
+    { pattern: /my (?:startup|company|project|app) is (?:called )?(.+)/i, template: "User's project: $1" },
     { pattern: /i work (?:on|at|for) (.+)/i, template: "User works at/on: $1" },
     { pattern: /my name is (.+)/i, template: "User's name: $1" },
-    { pattern: /i(?:'m| am) a (.+?)(?:\.|,|$)/i, template: "User is a: $1" },
+    { pattern: /i(?:'m|m| am) a (.+?)(?:\.|,|$)/i, template: "User is a: $1" },
     { pattern: /i founded (.+)/i, template: "User founded: $1" },
     { pattern: /i have (\d+) (?:users|customers)/i, template: "User has $1 users/customers" },
     { pattern: /we(?:'ve| have) raised (.+)/i, template: "User raised: $1" },
-    { pattern: /i(?:'m| am) (?:feeling |)(?:stuck|overwhelmed|lost|stressed)/i, template: "User mentioned feeling stuck/overwhelmed" },
+    { pattern: /i(?:'m|m| am) (?:feeling |)(?:stuck|overwhelmed|lost|stressed)/i, template: "User mentioned feeling stuck/overwhelmed" },
     { pattern: /my (?:biggest |main )?(?:problem|challenge|issue) is (.+)/i, template: "User's main challenge: $1" },
+    { pattern: /(?:building|working on|making) (?:a |an )?(.+? (?:app|platform|tool|startup|company|product|saas|service))/i, template: "User is building: $1" },
   ];
 
   for (const { pattern, template } of userPatterns) {
     const match = userMessage.match(pattern);
     if (match) {
       const fact = template.replace('$1', match[1]?.trim() || match[0]);
+      console.log(`[EXTRACT] Pattern matched: ${pattern} -> "${fact}"`);
       factsToSave.push(fact);
     }
   }
 
+  console.log(`[EXTRACT] Total facts found: ${factsToSave.length}`);
+
   // Save extracted facts (max 3 per message to avoid noise)
   const factsToActuallySave = factsToSave.slice(0, 3);
   for (const fact of factsToActuallySave) {
-    await saveUserMemory(userId, fact);
+    console.log(`[EXTRACT] Saving fact to Zep: "${fact}"`);
+    const success = await saveUserMemory(userId, fact);
+    console.log(`[EXTRACT] Save result: ${success}`);
   }
 
   if (factsToActuallySave.length > 0) {
     console.log(`[CHAT] Saved ${factsToActuallySave.length} facts to user memory: ${factsToActuallySave.join(', ')}`);
+  } else {
+    console.log(`[EXTRACT] No facts to save for this message`);
   }
 }

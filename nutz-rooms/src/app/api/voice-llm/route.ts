@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { openai, KAGAN_VOICE_PROMPT } from "@/lib/openai";
-import { searchGraph, KAGAN_USER_ID } from "@/lib/zep";
+import { getUserMemory, formatUserMemoryContext, KAGAN_USER_ID } from "@/lib/zep";
+import { findRelevantFacts, formatBrainContext, getKaganBrain } from "@/lib/brain";
 
 // CORS headers for ElevenLabs
 const corsHeaders = {
@@ -73,23 +74,33 @@ export async function POST(req: NextRequest) {
     // Build system prompt
     let systemPrompt = KAGAN_VOICE_PROMPT;
 
-    // Search for relevant memories (skip for simple greetings)
-    if (!isSimpleMessage) {
-      try {
-        const searchResults = await searchGraph(userId, userMessage);
-        if (searchResults?.edges) {
-          const memories = searchResults.edges
-            .map((edge: { fact?: string }) => edge.fact)
-            .filter((f): f is string => Boolean(f))
-            .slice(0, 5);
+    // For simple greetings, just use cached brain (instant)
+    // For real questions, fetch user memory in parallel with brain
+    if (isSimpleMessage) {
+      // Just preload cache (instant)
+      getKaganBrain();
+      console.log(`[VOICE] Simple greeting - skipping memory lookup`);
+    } else {
+      // Parallel fetch: brain cache (instant) + user memory (async)
+      const [_brainPreload, userMemories] = await Promise.all([
+        Promise.resolve(getKaganBrain()),
+        getUserMemory(userId, userMessage, 10),
+      ]);
 
-          if (memories.length > 0) {
-            systemPrompt += `\n\n## Context from memory:\n${memories.join('\n')}`;
-          }
-        }
-      } catch (e) {
-        console.error("Zep search error:", e);
+      // Get relevant brain facts based on user's message
+      const relevantBrainFacts = findRelevantFacts(userMessage, 5);
+
+      // Add Kagan's brain context (shared knowledge)
+      if (relevantBrainFacts.length > 0) {
+        systemPrompt += `\n\n${formatBrainContext(relevantBrainFacts)}`;
       }
+
+      // Add user's personal memory
+      if (userMemories.length > 0) {
+        systemPrompt += `\n\n${formatUserMemoryContext(userMemories)}`;
+      }
+
+      console.log(`[VOICE] Context: ${relevantBrainFacts.length} brain facts, ${userMemories.length} user memories`);
     }
 
     console.log(`[VOICE] Stream mode: ${stream}, prompt length: ${systemPrompt.length}`);
