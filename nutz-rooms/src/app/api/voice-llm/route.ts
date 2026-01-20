@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { openai, KAGAN_SYSTEM_PROMPT } from "@/lib/openai";
+import { openai, KAGAN_VOICE_PROMPT } from "@/lib/openai";
 import { searchGraph, KAGAN_USER_ID } from "@/lib/zep";
 
 // CORS headers for ElevenLabs
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     const isSimpleMessage = simpleMessages.some(s => userMessage.toLowerCase().trim() === s || userMessage.toLowerCase().trim().startsWith(s + ' '));
 
     // Build system prompt
-    let systemPrompt = KAGAN_SYSTEM_PROMPT;
+    let systemPrompt = KAGAN_VOICE_PROMPT;
 
     // Search for relevant memories (skip for simple greetings)
     if (!isSimpleMessage) {
