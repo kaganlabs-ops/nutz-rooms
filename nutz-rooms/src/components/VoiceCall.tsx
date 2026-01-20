@@ -16,7 +16,25 @@ export default function VoiceCall({ agentId, characterName, onClose }: VoiceCall
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [transcript, setTranscript] = useState<Array<{ role: string; text: string }>>([]);
   const [error, setError] = useState<string | null>(null);
+  const [pinnedAction, setPinnedAction] = useState<string | null>(null);
   const hasStarted = useRef(false);
+
+  // Extract ONE THING from voice transcript (spoken as "ONE THING:" or "so ONE THING:")
+  const extractOneThing = (text: string): string | null => {
+    // Match "ONE THING:" and capture everything after it to end of string
+    const patterns = [
+      /(?:ok so |so )?ONE THING[:\s]+(.+)$/i,
+    ];
+
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match) {
+        // Clean up the captured text - remove trailing periods
+        return match[1].trim().replace(/\.+$/, '');
+      }
+    }
+    return null;
+  };
 
   const startCall = useCallback(async () => {
     if (hasStarted.current) return;
@@ -62,10 +80,20 @@ export default function VoiceCall({ agentId, characterName, onClose }: VoiceCall
           if (message.message) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const source = (message as any).source || (message as any).source_type;
+            const role = source === "user" ? "user" : "assistant";
+
+            // Check for ONE THING in assistant messages
+            if (role === "assistant") {
+              const oneThing = extractOneThing(message.message);
+              if (oneThing) {
+                setPinnedAction(oneThing);
+              }
+            }
+
             setTranscript((prev) => [
               ...prev,
               {
-                role: source === "user" ? "user" : "assistant",
+                role,
                 text: message.message,
               },
             ]);
@@ -164,6 +192,26 @@ export default function VoiceCall({ agentId, characterName, onClose }: VoiceCall
         <div className="text-white font-medium">Voice Call with {characterName}</div>
         <div className="w-10" />
       </div>
+
+      {/* Pinned ONE THING Banner */}
+      {pinnedAction && (
+        <div className="mx-4 mb-2 bg-gradient-to-r from-amber-900/60 to-orange-900/60 border border-amber-500/40 rounded-xl px-4 py-3 flex items-center gap-2">
+          <span className="text-lg">📌</span>
+          <div className="flex-1 min-w-0">
+            <span className="text-xs text-amber-400/80 uppercase tracking-wide font-medium">ONE THING</span>
+            <p className="text-sm text-white/90">{pinnedAction}</p>
+          </div>
+          <button
+            onClick={() => setPinnedAction(null)}
+            className="text-white/40 hover:text-white/70 transition-colors p-1"
+            aria-label="Dismiss"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Status indicator */}
       <div className="flex-1 flex flex-col items-center justify-center gap-8">

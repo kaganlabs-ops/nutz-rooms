@@ -10,6 +10,7 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   artifact?: Artifact | null;
+  gifUrl?: string | null;
 }
 
 interface Character {
@@ -64,7 +65,29 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [pinnedAction, setPinnedAction] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Extract ONE THING from message and return cleaned content
+  const extractOneThing = (content: string): { cleanContent: string; oneThing: string | null } => {
+    // Match "📌 ONE THING: [action]" pattern (with or without emoji)
+    const patterns = [
+      /📌\s*ONE THING:\s*(.+?)(?:\n|$)/i,
+      /ONE THING:\s*(.+?)(?:\n|$)/i,
+    ];
+
+    for (const pattern of patterns) {
+      const match = content.match(pattern);
+      if (match) {
+        const oneThing = match[1].trim();
+        // Remove the ONE THING line from content
+        const cleanContent = content.replace(match[0], '').trim();
+        return { cleanContent, oneThing };
+      }
+    }
+
+    return { cleanContent: content, oneThing: null };
+  };
 
   // Initialize or retrieve user ID from localStorage
   useEffect(() => {
@@ -114,9 +137,16 @@ export default function ChatPage() {
       }
 
       setThreadId(data.threadId);
+
+      // Extract ONE THING if present
+      const { cleanContent, oneThing } = extractOneThing(data.response);
+      if (oneThing) {
+        setPinnedAction(oneThing);
+      }
+
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: data.response, artifact: data.artifact },
+        { role: "assistant", content: cleanContent, artifact: data.artifact, gifUrl: data.gifUrl },
       ]);
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -157,6 +187,26 @@ export default function ChatPage() {
           )}
         </div>
       </header>
+
+      {/* Pinned ONE THING Banner */}
+      {pinnedAction && (
+        <div className="bg-gradient-to-r from-amber-900/40 to-orange-900/40 border-b border-amber-500/30 px-4 py-3 flex items-center gap-2">
+          <span className="text-lg">📌</span>
+          <div className="flex-1 min-w-0">
+            <span className="text-xs text-amber-400/70 uppercase tracking-wide font-medium">ONE THING</span>
+            <p className="text-sm text-white/90 truncate">{pinnedAction}</p>
+          </div>
+          <button
+            onClick={() => setPinnedAction(null)}
+            className="text-white/40 hover:text-white/70 transition-colors p-1"
+            aria-label="Dismiss"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Messages */}
       <main className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -202,6 +252,16 @@ export default function ChatPage() {
               >
                 <p className="whitespace-pre-wrap text-sm">{message.content}</p>
               </div>
+              {message.gifUrl && (
+                <div className="mt-2 rounded-xl overflow-hidden max-w-[280px]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={message.gifUrl}
+                    alt="GIF"
+                    className="w-full h-auto"
+                  />
+                </div>
+              )}
               {message.artifact && <ArtifactCard artifact={message.artifact} />}
             </div>
           </div>
