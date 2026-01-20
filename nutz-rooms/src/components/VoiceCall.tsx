@@ -23,6 +23,7 @@ export default function VoiceCall({ agentId, characterName, onClose }: VoiceCall
     hasStarted.current = true;
 
     try {
+      // Mic permission already granted from room page
       setStatus("connecting");
       setError(null);
 
@@ -40,9 +41,6 @@ export default function VoiceCall({ agentId, characterName, onClose }: VoiceCall
       } catch (e) {
         console.error("Failed to fetch Zep context:", e);
       }
-
-      // Request microphone access
-      await navigator.mediaDevices.getUserMedia({ audio: true });
 
       const conv = await Conversation.startSession({
         agentId,
@@ -91,16 +89,9 @@ export default function VoiceCall({ agentId, characterName, onClose }: VoiceCall
       setConversation(conv);
     } catch (err) {
       console.error("Failed to start call:", err);
-      // Check if it's a security/HTTPS issue
-      const isSecure = typeof window !== "undefined" && (window.location.protocol === "https:" || window.location.hostname === "localhost");
-      if (!isSecure) {
-        setError("Microphone requires HTTPS. Please use the secure site.");
-      } else if (err instanceof DOMException && err.name === "NotAllowedError") {
-        setError("Microphone access denied. Please allow microphone in your browser settings.");
-      } else {
-        setError("Failed to access microphone. Please check your browser settings.");
-      }
+      setError("Connection failed. Please try again.");
       setStatus("idle");
+      hasStarted.current = false;
     }
   }, [agentId, characterName]);
 
@@ -137,7 +128,7 @@ export default function VoiceCall({ agentId, characterName, onClose }: VoiceCall
       case "listening":
         return "Listening...";
       default:
-        return "Ready to call";
+        return "Tap to call";
     }
   };
 

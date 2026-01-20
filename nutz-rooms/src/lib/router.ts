@@ -23,6 +23,26 @@ const ROUTER_RULES: RouterRule[] = [
     priority: 3
   },
   {
+    mode: 'vision-to-values',
+    keywords: ['values', 'vision', 'purpose', 'unmoored', 'lost', 'what matters', 'priorities', 'meaning', 'why am i doing this'],
+    priority: 4
+  },
+  {
+    mode: 'team-alignment',
+    keywords: ['team', 'alignment', 'cofounder', 'co-founder', 'partner', 'conflict', 'disagreement', 'roles', 'working together', 'team dynamics'],
+    priority: 5
+  },
+  {
+    mode: 'rhythm',
+    keywords: ['rhythm', 'routine', 'schedule', 'cadence', 'burnout', 'sustainable', 'energy', 'weekly', 'daily routine', 'work-life'],
+    priority: 6
+  },
+  {
+    mode: 'deep-dive',
+    keywords: ['deep dive', 'think through', 'explore', 'analyze', 'understand', 'first principles', 'assumption', 'figure out'],
+    priority: 7
+  },
+  {
     mode: 'thought-partner',
     keywords: [], // Default fallback
     priority: 99
@@ -63,6 +83,18 @@ export function detectExplicitModeSwitch(message: string): ToolkitMode | null {
   }
   if (lower.includes('1-pager') || lower.includes('one-pager') || lower.includes('help me explain')) {
     return '1-pager';
+  }
+  if (lower.includes('vision to values') || lower.includes('connect my vision') || lower.includes('what are my values')) {
+    return 'vision-to-values';
+  }
+  if (lower.includes('team alignment') || lower.includes('align with my') || lower.includes('cofounder issues')) {
+    return 'team-alignment';
+  }
+  if (lower.includes('build a rhythm') || lower.includes('sustainable rhythm') || lower.includes('work rhythm')) {
+    return 'rhythm';
+  }
+  if (lower.includes('deep dive') || lower.includes('think deeply') || lower.includes('explore this')) {
+    return 'deep-dive';
   }
 
   return null;

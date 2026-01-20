@@ -60,16 +60,8 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
-  const [userId] = useState(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("chat-user-id");
-      if (stored) return stored;
-      const newId = `user-${Math.random().toString(36).slice(2)}`;
-      localStorage.setItem("chat-user-id", newId);
-      return newId;
-    }
-    return `user-${Math.random().toString(36).slice(2)}`;
-  });
+  // Use consistent userId across voice and text for shared mode state
+  const userId = "kagan-sumer";
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {

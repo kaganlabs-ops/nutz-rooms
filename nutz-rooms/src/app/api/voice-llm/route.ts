@@ -1,6 +1,9 @@
 import { NextRequest } from "next/server";
 import { anthropic, KAGAN_SYSTEM_PROMPT } from "@/lib/openai";
-import { searchGraph, KAGAN_USER_ID } from "@/lib/zep";
+import { searchGraph, KAGAN_USER_ID, getModeState, saveModeState, clearModeState, isModeStateStale } from "@/lib/zep";
+import { detectMode, detectExplicitModeSwitch } from "@/lib/router";
+import { getMode, buildModePrompt } from "@/lib/modes";
+import type { ModeState, ToolkitMode } from "@/lib/modes/types";
 
 // CORS headers for ElevenLabs
 const corsHeaders = {
@@ -28,19 +31,51 @@ interface ChatCompletionRequest {
   stream?: boolean;
 }
 
+// Helper to initialize mode state
+function initModeState(mode: ToolkitMode): ModeState {
+  const modeConfig = getMode(mode);
+  return {
+    mode,
+    currentStage: modeConfig.stages[0]?.id || '',
+    stageData: {},
+    startedAt: new Date().toISOString()
+  };
+}
+
+// Helper to check if stage should advance
+function shouldAdvanceStage(response: string, userMessage: string, state: ModeState): boolean {
+  const mode = getMode(state.mode);
+  const stage = mode.stages.find(s => s.id === state.currentStage);
+  if (!stage || !stage.completionSignals.length) return false;
+
+  const combined = (response + ' ' + userMessage).toLowerCase();
+  return stage.completionSignals.some(signal => combined.includes(signal.toLowerCase()));
+}
+
+// Helper to advance stage
+async function advanceStage(userId: string, state: ModeState): Promise<boolean> {
+  const mode = getMode(state.mode);
+  const currentStageIndex = mode.stages.findIndex(s => s.id === state.currentStage);
+  const nextStage = mode.stages[currentStageIndex + 1];
+
+  if (nextStage) {
+    state.currentStage = nextStage.id;
+    await saveModeState(userId, state);
+    return true;
+  }
+  return false; // Mode complete
+}
+
 export async function POST(req: NextRequest) {
   console.log("=== Voice LLM Request Started ===");
-  console.log("Request URL:", req.url);
-  console.log("Request headers:", JSON.stringify(Object.fromEntries(req.headers.entries())));
 
   try {
     const bodyText = await req.text();
-    console.log("Raw request body:", bodyText.slice(0, 500));
-
     const body: ChatCompletionRequest = JSON.parse(bodyText);
     const { messages, stream = true } = body;
 
-    console.log("Parsed request - stream:", stream, "messages:", messages.length);
+    // Use KAGAN_USER_ID for voice calls (shared state with text chat)
+    const userId = KAGAN_USER_ID;
 
     // Filter to just user/assistant messages for Claude
     let chatMessages = messages
@@ -52,52 +87,87 @@ export async function POST(req: NextRequest) {
 
     // If no user messages, create a placeholder to prevent empty array error
     if (chatMessages.length === 0) {
-      console.log("No user messages found, using placeholder");
       chatMessages = [{ role: "user" as const, content: "Hello" }];
     }
 
-    console.log("Filtered chat messages:", chatMessages.length);
+    // Get the last user message
+    const lastUserMessage = chatMessages.filter(m => m.role === "user").pop();
+    const userMessage = lastUserMessage?.content || "";
 
-    // Try to get context from Zep knowledge graph by searching
-    let context = "";
+    // Search for relevant memories
+    let memories: string[] = [];
     try {
-      // Get the last user message to search for relevant context
-      const lastUserMessage = chatMessages.filter(m => m.role === "user").pop();
-      console.log("Last user message:", lastUserMessage?.content?.slice(0, 100));
-
-      if (lastUserMessage) {
-        // Search Kagan's knowledge graph for relevant facts
-        console.log("Searching Zep for:", lastUserMessage.content);
-        const searchResults = await searchGraph(KAGAN_USER_ID, lastUserMessage.content);
-        console.log("Zep search results:", searchResults ? "found" : "null", searchResults?.edges?.length || 0, "edges");
-
-        if (searchResults && searchResults.edges && searchResults.edges.length > 0) {
-          // Extract facts from search results
-          const facts = searchResults.edges
-            .map((edge: { fact?: string }) => edge.fact)
-            .filter(Boolean)
-            .slice(0, 10); // Limit to top 10 most relevant facts
-          if (facts.length > 0) {
-            context = facts.join("\n");
-            console.log("Context found:", facts.length, "facts");
-          }
-        }
+      const searchResults = await searchGraph(userId, userMessage);
+      if (searchResults?.edges) {
+        memories = searchResults.edges
+          .map((edge: { fact?: string }) => edge.fact)
+          .filter((f): f is string => Boolean(f))
+          .slice(0, 5);
       }
     } catch (e) {
       console.error("Zep search error:", e);
-      // Continue without context if Zep fails
     }
 
-    // Build system prompt with Zep context
-    const systemPrompt = context
-      ? `${KAGAN_SYSTEM_PROMPT}\n\nRelevant context from memory:\n${context}`
-      : KAGAN_SYSTEM_PROMPT;
+    // ============================================
+    // ORCHESTRATOR LOGIC (same as text chat)
+    // ============================================
 
-    console.log("Stream mode:", stream);
-    console.log("Chat messages to send:", chatMessages.length);
+    // Get current mode state
+    let modeState = await getModeState(userId);
+
+    // Check for stale mode state (older than 7 days)
+    if (modeState && isModeStateStale(modeState)) {
+      await clearModeState(userId, modeState.mode);
+      modeState = null;
+    }
+
+    // Check for explicit mode switch or exit
+    const explicitMode = detectExplicitModeSwitch(userMessage);
+    if (explicitMode) {
+      if (explicitMode === 'thought-partner') {
+        // User wants to exit current mode
+        if (modeState) {
+          await clearModeState(userId, modeState.mode);
+          modeState = null;
+        }
+      } else if (explicitMode !== modeState?.mode) {
+        modeState = initModeState(explicitMode);
+        await saveModeState(userId, modeState);
+      }
+    }
+
+    // If no active mode, detect from message
+    if (!modeState && !explicitMode) {
+      const detectedMode = detectMode(userMessage, memories);
+      if (detectedMode !== 'thought-partner') {
+        modeState = initModeState(detectedMode);
+        await saveModeState(userId, modeState);
+        console.log("Mode detected:", detectedMode);
+      }
+    }
+
+    // Build context-aware system prompt
+    let systemPrompt: string;
+    if (modeState) {
+      systemPrompt = buildModePrompt(modeState);
+      const mode = getMode(modeState.mode);
+      const stage = mode.stages.find(s => s.id === modeState.currentStage);
+      if (stage) {
+        systemPrompt = `[ACTIVE MODE: ${mode.name} - Stage: ${stage.name}]\n\n` + systemPrompt;
+      }
+      console.log("Using mode prompt:", modeState.mode, "stage:", modeState.currentStage);
+    } else {
+      systemPrompt = KAGAN_SYSTEM_PROMPT;
+    }
+
+    // Add memory context
+    if (memories.length > 0) {
+      systemPrompt += `\n\n## Context from memory:\n${memories.join('\n')}`;
+    }
+
+    console.log("Stream mode:", stream, "Mode:", modeState?.mode || "thought-partner");
 
     if (stream) {
-      console.log("Starting streaming response...");
       // Streaming response for ElevenLabs
       const response = await anthropic.messages.create({
         model: "claude-sonnet-4-20250514",
@@ -107,19 +177,18 @@ export async function POST(req: NextRequest) {
         stream: true,
       });
 
-      console.log("Claude stream created, sending chunks...");
-
       // Create a streaming response in OpenAI format
       const encoder = new TextEncoder();
+      let fullResponse = ""; // Collect full response for stage advancement check
+
       const readable = new ReadableStream({
         async start(controller) {
           const id = `chatcmpl-${Date.now()}`;
-          let chunkCount = 0;
 
           try {
             for await (const event of response) {
               if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-                chunkCount++;
+                fullResponse += event.delta.text;
                 const chunk = {
                   id,
                   object: "chat.completion.chunk",
@@ -135,7 +204,18 @@ export async function POST(req: NextRequest) {
               }
             }
 
-            console.log("Streaming complete, sent", chunkCount, "chunks");
+            // Check stage completion and advance (after streaming is done)
+            if (modeState && modeState.currentStage) {
+              const shouldAdvance = shouldAdvanceStage(fullResponse, userMessage, modeState);
+              if (shouldAdvance) {
+                const advanced = await advanceStage(userId, modeState);
+                if (!advanced) {
+                  // Mode complete
+                  await clearModeState(userId, modeState.mode);
+                }
+                console.log("Stage advanced:", advanced);
+              }
+            }
 
             // Send final chunk
             const finalChunk = {
@@ -178,6 +258,17 @@ export async function POST(req: NextRequest) {
 
       const textBlock = response.content.find(block => block.type === "text");
       const content = textBlock?.type === "text" ? textBlock.text : "";
+
+      // Check stage completion and advance
+      if (modeState && modeState.currentStage) {
+        const shouldAdvance = shouldAdvanceStage(content, userMessage, modeState);
+        if (shouldAdvance) {
+          const advanced = await advanceStage(userId, modeState);
+          if (!advanced) {
+            await clearModeState(userId, modeState.mode);
+          }
+        }
+      }
 
       return Response.json({
         id: `chatcmpl-${Date.now()}`,

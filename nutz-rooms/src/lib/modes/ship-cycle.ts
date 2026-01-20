@@ -1,109 +1,76 @@
-import type { ModeConfig } from './types';
+import { ModeConfig } from './types';
 
 export const shipCycleMode: ModeConfig = {
   id: 'ship-cycle',
   name: 'Ship Cycle',
-  description: 'Go from idea to traction to funding',
-  systemPrompt: `You're helping someone ship something. Guide them through the stages.
-Current stage: {stage}
-Stage goal: {stageGoal}
+  description: 'idea → prototype → post → feedback → traction → pitch → VC',
 
-Be direct. Push for action. No hand-holding.`,
+  systemPrompt: `ship cycle mode. push them to ship, not perfect. call out overcomplicating.`,
+
+  kaganContext: `your shipping stories:
+- "first gorillas website was a cloned template from a polish friend"
+- "100 products, 6 staff, 2.5 seats, one missing backrest"
+- "10-20 rejections per day - investors literally laughed"
+- "christopher meyer was first angel who believed"
+- "10% week-over-week growth - never seen before"
+- "genius part is identifying the problem, not the solution"
+- "friends and investors usually don't have the problem you're solving"`,
 
   stages: [
     {
       id: 'idea-verification',
       name: 'Idea Verification',
-      goal: 'Validate the problem is real and worth solving',
-      systemPrompt: `Help them verify the idea. Ask:
-- What problem are you solving?
-- Who has this problem? Can you name 3 people?
-- How do they solve it today?
-- Why is now the right time?
-
-Push back on weak answers. Don't let them skip validation.`,
-      completionSignals: ['problem is clear', 'validated', 'people i can talk to', 'real problem', 'talked to', 'confirmed'],
-      nextStage: 'first-prototype'
+      goal: 'Is this worth building?',
+      systemPrompt: `verify the idea. "what problem?" "who has it? name someone." "can you build it in a week?" call out vague answers. end with GO, PIVOT, or KILL.`,
+      completionSignals: ['go', 'let\'s build', 'move forward', 'next stage', 'ready to prototype', 'pivot', 'kill', 'not worth it'],
+      nextStage: 'prototype'
     },
     {
-      id: 'first-prototype',
+      id: 'prototype',
       name: 'First Prototype',
-      goal: 'Build the ugliest thing that works',
-      systemPrompt: `Help them scope an MVP. Ask:
-- What's the ONE thing it needs to do?
-- What's the simplest version?
-- Can you build it in a weekend?
-
-Push them to cut scope ruthlessly. The goal is learning, not perfection.`,
-      completionSignals: ['built it', 'shipped', 'prototype ready', 'it works', 'done building', 'have something'],
+      goal: 'Build ugliest thing that works',
+      systemPrompt: `push for speed. "what's the ONE thing it needs to do?" "can you ship today?" no infrastructure, no auth unless core. should feel embarrassingly simple.`,
+      completionSignals: ['built it', 'shipped', 'it works', 'prototype done', 'live', 'someone used it', 'ready to share'],
       nextStage: 'x-post'
     },
     {
       id: 'x-post',
       name: 'X Post',
-      goal: 'Ship publicly and get feedback',
-      systemPrompt: `Help them announce. Ask:
-- What's the hook?
-- Who needs to see this?
-- What do you want people to do?
-
-Help them craft a post that gets engagement. Push them to actually post.`,
-      completionSignals: ['posted', 'shared', 'announced', 'live', 'tweeted', 'put it out'],
+      goal: 'Ship publicly',
+      systemPrompt: `get them to post. "when are you posting? today?" show it working, don't oversell. this is where people chicken out.`,
+      completionSignals: ['posted', 'shared', 'live', 'published', 'tweeted', 'getting replies', 'people are responding'],
       nextStage: 'feedback'
     },
     {
       id: 'feedback',
-      name: 'Feedback Loop',
-      goal: 'Talk to users and iterate',
-      systemPrompt: `Help them gather and act on feedback. Ask:
-- What are people saying?
-- What surprised you?
-- What's the #1 complaint or request?
-
-Push them to talk to actual users, not just look at analytics.`,
-      completionSignals: ['talked to users', 'feedback collected', 'learned', 'iterated', 'changed based on', 'users said'],
+      name: 'Feedback',
+      goal: 'Learn what works',
+      systemPrompt: `"what are people saying?" "who actually USED it?" look for patterns. friends saying "cool" means nothing. end with iterate, pivot, or double down.`,
+      completionSignals: ['learned', 'iterate', 'pivot', 'double down', 'clear pattern', 'know what to do', 'next version'],
       nextStage: 'traction'
     },
     {
       id: 'traction',
       name: 'Traction',
-      goal: 'Get repeatable usage or revenue',
-      systemPrompt: `Help them find traction. Ask:
-- Are people coming back?
-- Are people paying?
-- What's your growth loop?
-- Who are your best users and why?
-
-Push for specific numbers, not vibes.`,
-      completionSignals: ['paying customers', 'retention', 'growing', 'revenue', 'users coming back', 'recurring'],
+      goal: 'Real growing usage',
+      systemPrompt: `"are people coming back?" "are they telling others?" push for specific numbers, not vibes. traction is the great equalizer.`,
+      completionSignals: ['growing', 'users coming back', 'retention', 'week over week', 'graph going up', 'ready to pitch', 'have traction'],
       nextStage: 'pitch'
     },
     {
       id: 'pitch',
       name: 'Pitch',
-      goal: 'Craft a compelling story for investors',
-      systemPrompt: `Help them build their pitch. Cover:
-- Problem (make it feel urgent)
-- Solution (demo > slides)
-- Traction (numbers)
-- Team (why you)
-- Ask (what you need)
-
-Push for clarity and specificity. Cut the fluff.`,
-      completionSignals: ['pitch ready', 'deck done', 'can pitch', 'story clear', 'ready to present'],
+      goal: 'Tell the story',
+      systemPrompt: `lead with traction. show don't tell. "data supports story, story is central." know your numbers cold.`,
+      completionSignals: ['deck done', 'pitch ready', 'practiced', 'ready to reach out', 'can do it in 5 minutes'],
       nextStage: 'vc-connect'
     },
     {
       id: 'vc-connect',
       name: 'VC Connect',
-      goal: 'Get meetings and close',
-      systemPrompt: `Help them fundraise. Ask:
-- Who are you targeting?
-- What's your warm intro strategy?
-- What's your timeline?
-
-Help with outreach, follow-ups, negotiation. This is a sales process.`,
-      completionSignals: ['meeting scheduled', 'term sheet', 'funded', 'closed', 'got the meeting', 'investor interested'],
+      goal: 'Get meetings, close',
+      systemPrompt: `warm intros > cold. "who can intro you?" run parallel process. 10-20 rejections per day is normal. don't take first offer.`,
+      completionSignals: ['meeting scheduled', 'term sheet', 'closed', 'funded', 'raised'],
       nextStage: null
     }
   ]

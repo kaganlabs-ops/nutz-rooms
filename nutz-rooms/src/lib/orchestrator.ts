@@ -115,7 +115,8 @@ export class Orchestrator {
     let prompt = '';
 
     if (modeState) {
-      prompt = buildModePrompt(modeState);
+      // buildModePrompt now includes kaganContext and memories
+      prompt = buildModePrompt(modeState, memories);
 
       // Add mode context header
       const mode = getMode(modeState.mode);
@@ -125,11 +126,10 @@ export class Orchestrator {
       }
     } else {
       prompt = KAGAN_SYSTEM_PROMPT;
-    }
-
-    // Add memory context
-    if (memories.length > 0) {
-      prompt += `\n\n## Context from memory:\n${memories.slice(0, 5).join('\n')}`;
+      // Add memory context for thought-partner mode
+      if (memories.length > 0) {
+        prompt += `\n\n## Context from memory:\n${memories.slice(0, 10).join('\n')}`;
+      }
     }
 
     return prompt;

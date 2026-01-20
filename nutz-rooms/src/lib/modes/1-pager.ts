@@ -1,99 +1,66 @@
-import type { ModeConfig } from './types';
+import { ModeConfig } from './types';
 
 export const onePagerMode: ModeConfig = {
   id: '1-pager',
-  name: '1-Pager',
-  description: 'Crystallize what you\'re doing into a clear one-page document',
-  systemPrompt: `You're helping the user create a 1-pager - a one-page document that crystallizes what they're doing, why, for who, and how.
+  name: '1-Pager Memo',
+  description: 'Crystallize what you\'re doing, why, for who, and how',
 
-Your style: Direct, clarifying. Keep responses SHORT. Push for specificity over vagueness.
+  systemPrompt: `1-pager mode. if you can't fit it on one page, you don't understand it yet. call out jargon.`,
 
-Current stage: {stage}
-Stage goal: {stageGoal}`,
+  kaganContext: `your 1-pager stories:
+- "genius part is identifying the problem, not the solution"
+- "first website was 'get goodies' - hated it. gorillas expressed WHO we are"
+- "people said 'postman who stops at one postbox?' they didn't get it"
+- "10-minute delivery unprecedented. people thought crazy."
+- "'everyone is the customer' is a mistake"`,
 
   stages: [
     {
       id: 'problem',
       name: 'The Problem',
-      goal: 'Nail the pain you\'re solving',
-      systemPrompt: `Help them articulate the problem. Ask:
-- What problem are you solving?
-- Who has this problem?
-- How do they currently deal with it?
-- What's broken about current solutions?
-
-Don't move on until they can state the problem in one sentence that makes someone go "oh yeah, that sucks."`,
-      completionSignals: ['problem is', 'the pain is', 'they struggle with', 'that\'s the problem'],
+      goal: 'Nail the pain in 2-3 sentences',
+      systemPrompt: `"what problem? in plain english." call out jargon. don't move on until it would make a stranger nod.`,
+      completionSignals: ['that\'s the problem', 'clear', 'got it', 'makes sense', 'nailed it'],
       nextStage: 'solution'
     },
     {
       id: 'solution',
       name: 'The Solution',
-      goal: 'Crystallize what you\'re building',
-      systemPrompt: `Help them explain the solution. Ask:
-- What's your solution in one sentence?
-- What's the core insight or approach?
-- Why will this work when others haven't?
-- What's the simplest version that solves the problem?
-
-No jargon. No buzzwords.`,
-      completionSignals: ['solution is', 'we solve this by', 'the approach is', 'it works by'],
+      goal: 'One sentence, no jargon',
+      systemPrompt: `"solution in one sentence." plain language. call out "AI-powered" without meaning.`,
+      completionSignals: ['that\'s the solution', 'clear', 'simple', 'got it'],
       nextStage: 'for-who'
     },
     {
       id: 'for-who',
       name: 'For Who',
-      goal: 'Define the specific person this is for',
-      systemPrompt: `Help them define their user. Ask:
-- Who is your ideal first user? Be specific.
-- Why are they perfect for this?
-- Where do they hang out?
-- What would make them tell a friend?
-
-They should be able to describe someone specific enough to find them today.`,
-      completionSignals: ['the user is', 'it\'s for', 'target is', 'ideal customer'],
-      nextStage: 'why-you'
+      goal: 'Specific person you can find',
+      systemPrompt: `"who specifically? name someone." call out "everyone" or "millennials". should be able to find them today.`,
+      completionSignals: ['that\'s who', 'specific', 'can find them', 'know exactly'],
+      nextStage: 'why-us'
     },
     {
-      id: 'why-you',
-      name: 'Why You',
-      goal: 'Establish credibility and unique angle',
-      systemPrompt: `Help them articulate why they're the ones to build this. Ask:
-- Why are you the one to build this?
-- What do you know that others don't?
-- What's your unfair advantage?
-- What's the story of how you got here?
-
-No "passionate about the space." Real differentiation.`,
-      completionSignals: ['because i', 'my advantage is', 'i know this because', 'my background'],
+      id: 'why-us',
+      name: 'Why Us',
+      goal: 'Credibility and unique angle',
+      systemPrompt: `"why YOU?" call out generic passion. should make someone think "of course they're building this."`,
+      completionSignals: ['that\'s why', 'makes sense', 'credible', 'unique'],
       nextStage: 'how-it-works'
     },
     {
       id: 'how-it-works',
       name: 'How It Works',
-      goal: 'Make the solution tangible',
-      systemPrompt: `Help them describe the experience. Ask:
-- Walk me through the user experience
-- What does day 1 look like for a user?
-- What's the "aha moment"?
-- How do they know it's working?
-
-Make it concrete and visual.`,
-      completionSignals: ['user does', 'the flow is', 'it works like', 'they experience'],
+      goal: '3-5 steps, not features',
+      systemPrompt: `"walk me through it." 3-5 steps. user journey, not feature list.`,
+      completionSignals: ['got it', 'clear flow', 'makes sense', 'simple'],
       nextStage: 'whats-next'
     },
     {
       id: 'whats-next',
       name: 'What\'s Next',
-      goal: 'Define immediate action',
-      systemPrompt: `Help them define next steps. Ask:
-- What's the one thing you need to prove first?
-- What does success look like in 30 days?
-- What are you NOT doing right now?
-- What do you need to make this happen?
-
-Get a clear, concrete next step.`,
-      completionSignals: ['next is', 'going to', 'first step', 'in 30 days'],
+      goal: '30-day milestone',
+      systemPrompt: `"what's the ONE thing to prove first?" "30-day milestone?" end with: does this make you want to build it?`,
+      completionSignals: ['got it', 'clear', '30 days', 'next step', 'ready'],
       nextStage: null
     }
   ]

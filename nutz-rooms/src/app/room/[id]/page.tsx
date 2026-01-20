@@ -100,6 +100,7 @@ export default function RoomPage() {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [videoState] = useState<VideoState>("idle");
   const [showVoiceCall, setShowVoiceCall] = useState(false);
+  const [micError, setMicError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Info panel expanded state
@@ -204,6 +205,40 @@ export default function RoomPage() {
   const handleSendMessage = () => {
     // Navigate to chat page for this character
     router.push(`/chat/${selectedCharacter?.id || "kagan"}`);
+  };
+
+  const handleCallClick = async () => {
+    setMicError(null);
+
+    // Check if getUserMedia is available
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setMicError("Your browser doesn't support microphone access");
+      return;
+    }
+
+    try {
+      // Request mic permission - this should show native browser popup
+      console.log("Requesting mic permission...");
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log("Mic permission granted!", stream);
+      // Stop the stream immediately - we just needed permission
+      stream.getTracks().forEach(track => track.stop());
+      // Permission granted, now show voice call
+      setShowVoiceCall(true);
+    } catch (err) {
+      console.error("Mic error:", err);
+      if (err instanceof DOMException) {
+        if (err.name === "NotAllowedError") {
+          setMicError("Mic access denied. Check browser settings.");
+        } else if (err.name === "NotFoundError") {
+          setMicError("No microphone found on this device");
+        } else {
+          setMicError(`Mic error: ${err.name}`);
+        }
+      } else {
+        setMicError("Could not access microphone");
+      }
+    }
   };
 
   useEffect(() => {
@@ -408,13 +443,18 @@ export default function RoomPage() {
         </button>
         {selectedCharacter.agentId && (
           <button
-            onClick={() => setShowVoiceCall(true)}
+            onClick={handleCallClick}
             className="w-11 h-11 rounded-full flex items-center justify-center transition-all bg-green-500/80 backdrop-blur-sm border border-green-400/30 text-white hover:bg-green-500"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" />
             </svg>
           </button>
+        )}
+        {micError && (
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-red-500/90 text-white text-sm px-3 py-1.5 rounded-lg whitespace-nowrap">
+            {micError}
+          </div>
         )}
       </div>
 
