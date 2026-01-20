@@ -29,7 +29,10 @@ interface ChatCompletionRequest {
 }
 
 export async function POST(req: NextRequest) {
-  console.log("=== Voice LLM Request Started ===");
+  const timestamp = new Date().toISOString();
+  console.log(`\n========================================`);
+  console.log(`[VOICE] ${timestamp} - Request Started`);
+  console.log(`========================================`);
 
   try {
     const bodyText = await req.text();
@@ -38,6 +41,12 @@ export async function POST(req: NextRequest) {
 
     // Use KAGAN_USER_ID for voice calls (shared state with text chat)
     const userId = KAGAN_USER_ID;
+
+    // Log incoming messages (transcript)
+    console.log(`[VOICE] Conversation history:`);
+    messages.forEach((m, i) => {
+      console.log(`  [${i}] ${m.role}: "${m.content}"`);
+    });
 
     // Filter to just user/assistant messages
     let chatMessages = messages
@@ -55,6 +64,7 @@ export async function POST(req: NextRequest) {
     // Get the last user message
     const lastUserMessage = chatMessages.filter(m => m.role === "user").pop();
     const userMessage = lastUserMessage?.content || "";
+    console.log(`[VOICE] User said: "${userMessage}"`);
 
     // Simple messages that don't need memory lookup (faster voice responses)
     const simpleMessages = ['hey', 'hi', 'hello', 'yo', 'sup', 'whats up', "what's up", 'how are you', 'good morning', 'good evening'];
@@ -82,8 +92,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    console.log("Stream mode:", stream);
-    console.log("System prompt length:", systemPrompt.length);
+    console.log(`[VOICE] Stream mode: ${stream}, prompt length: ${systemPrompt.length}`);
 
     if (stream) {
       // Streaming response for ElevenLabs using GPT-4o-mini
@@ -125,7 +134,8 @@ export async function POST(req: NextRequest) {
               }
             }
 
-            console.log("Full response:", fullResponse);
+            console.log(`[VOICE] Kagan said: "${fullResponse}"`);
+            console.log(`[VOICE] --- End of turn ---\n`);
 
             // Send final chunk
             const finalChunk = {
