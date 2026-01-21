@@ -19,6 +19,7 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
   const [error, setError] = useState<string | null>(null);
   const [pinnedAction, setPinnedAction] = useState<string | null>(null);
   const hasStarted = useRef(false);
+  const hasSaved = useRef(false);
 
   // Extract ONE THING from voice transcript (spoken as "ONE THING:" or "so ONE THING:")
   const extractOneThing = (text: string): string | null => {
@@ -162,8 +163,9 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
       setConversation(null);
     }
 
-    // Save transcript to Zep for memory persistence
-    if (transcript.length > 0) {
+    // Save transcript to Zep for memory persistence (only once)
+    if (transcript.length > 0 && !hasSaved.current) {
+      hasSaved.current = true;
       try {
         console.log("[VOICE] Saving transcript to Zep for userId:", userId);
         console.log("[VOICE] Message count:", transcript.length);

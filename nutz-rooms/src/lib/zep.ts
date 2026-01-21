@@ -270,19 +270,6 @@ Only ask "what are u working on" if theres literally nothing in memory.
 Weave memory in naturally. Dont say "I remember you said..." - just reference it like u naturally recall.`;
 }
 
-// Format thread messages as "last session" context
-export function formatLastSessionMessages(messages: Array<{ role?: string; content?: string }>): string {
-  if (!messages || messages.length === 0) return "";
-
-  const formatted = messages
-    .filter(m => m.role === 'user' || m.role === 'assistant')
-    .map(m => `${m.role === 'user' ? 'User' : 'Kagan'}: ${m.content}`)
-    .join('\n');
-
-  return `## LAST SESSION RECAP:
-${formatted}`;
-}
-
 // Check if context has real content (not just template text)
 export function hasRealMemory(context: string | null): boolean {
   if (!context || context.length < 50) return false;
