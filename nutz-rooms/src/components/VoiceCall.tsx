@@ -7,8 +7,179 @@ import {
   updateSessionAfterMessage,
   incrementSessionCount,
   buildSessionContext,
+  getTimeSinceLastSession,
   type SessionMetadata,
 } from "@/lib/sessionStorage";
+
+// Helper to pick random item from array
+const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+
+// Clean ONE THING for follow-up (remove time refs like "by friday", "this week")
+const cleanOneThingForFollowUp = (oneThing: string): string => {
+  return oneThing
+    .toLowerCase()
+    .replace(/\s*(by|before|until|this|next)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|week|month|today|tomorrow|eod|eow)/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+// Extract user interests from memory for personalized openers
+const extractInterests = (userMemory: string | null): string[] => {
+  if (!userMemory) return [];
+  const interests: string[] = [];
+  const memoryLower = userMemory.toLowerCase();
+
+  // Sport/fitness
+  if (memoryLower.includes('rugby')) interests.push('rugby');
+  if (memoryLower.includes('pilates')) interests.push('pilates');
+  if (memoryLower.includes('gym') || memoryLower.includes('workout')) interests.push('fitness');
+  if (memoryLower.includes('yoga')) interests.push('yoga');
+  if (memoryLower.includes('running') || memoryLower.includes('marathon')) interests.push('running');
+
+  // Work/projects
+  if (memoryLower.includes('startup') || memoryLower.includes('founder')) interests.push('startup');
+  if (memoryLower.includes('building') || memoryLower.includes('shipping')) interests.push('building');
+
+  return interests;
+};
+
+// Generate personalized opening message based on context
+function getOpeningMessage(
+  metadata: SessionMetadata | null,
+  userMemory: string | null
+): string {
+  const timeSince = getTimeSinceLastSession(metadata);
+  const sessionCount = metadata?.sessionCount || 0;
+  const interests = extractInterests(userMemory);
+
+  // Priority 1: Has action item (ONE THING) to follow up
+  if (metadata?.lastOneThing) {
+    const cleanedAction = cleanOneThingForFollowUp(metadata.lastOneThing);
+    return pick([
+      `yo! so did u ${cleanedAction}`,
+      `alright lets hear it. did u ${cleanedAction}`,
+      `first things first. did u ${cleanedAction}`,
+    ]);
+  }
+
+  // Priority 2: Back within minutes — cheeky
+  if (timeSince === 'minutes') {
+    return pick([
+      "already missed me? thats cute",
+      "cant stay away huh",
+      "back so fast? alright whats going on",
+      "wow that was quick. u good?",
+    ]);
+  }
+
+  // Priority 3: Same day return
+  if (timeSince === 'same_day') {
+    return pick([
+      "twice in one day. im flattered",
+      "round two! whats going on",
+      "oh look whos back",
+      "hey again. whats up",
+    ]);
+  }
+
+  // Priority 4: Few days gap with interests
+  if (timeSince === 'few_days' && interests.length > 0) {
+    if (interests.includes('rugby')) {
+      return pick([
+        "hows the rugby king doing",
+        "still tackling people?",
+        "yo! hows rugby going",
+      ]);
+    }
+    if (interests.includes('pilates')) {
+      return pick([
+        "hows the pilates going",
+        "core still strong?",
+      ]);
+    }
+    if (interests.includes('startup') || interests.includes('building')) {
+      return pick([
+        "ship anything yet?",
+        "hows the project going",
+        "yo! whats the status",
+      ]);
+    }
+  }
+
+  // Priority 5: Week+ gap with interests
+  if (timeSince === 'week_plus' && interests.length > 0) {
+    if (interests.includes('rugby')) {
+      return pick([
+        "hows the rugby king doing",
+        "still tackling people?",
+      ]);
+    }
+    if (interests.includes('pilates')) {
+      return pick([
+        "hows the pilates master",
+        "core still strong?",
+      ]);
+    }
+    if (interests.includes('startup') || interests.includes('building')) {
+      return pick([
+        "been a minute. ship anything?",
+        "long time. hows the project",
+      ]);
+    }
+  }
+
+  // Priority 6: Few days gap — has memory but no specific interest
+  if (userMemory && timeSince === 'few_days') {
+    return pick([
+      "been a few days. whats new",
+      "yo! havent heard from u in a bit. whats going on",
+      "there u are. whats up",
+    ]);
+  }
+
+  // Priority 7: Week+ gap — has memory
+  if (userMemory && timeSince === 'week_plus') {
+    return pick([
+      "look who remembered i exist",
+      "thought u forgot about me",
+      "been a minute. whats going on",
+      "long time. whats new",
+    ]);
+  }
+
+  // Priority 8: Week+ gap — no memory
+  if (timeSince === 'week_plus') {
+    return pick([
+      "look who remembered i exist",
+      "thought u forgot about me. whats up",
+    ]);
+  }
+
+  // Priority 9: Loyal user (10+ sessions) — familiar tone
+  if (sessionCount >= 10) {
+    return pick([
+      "yo. the usual?",
+      "alright whats on ur mind today",
+      "hey. whats going on",
+    ]);
+  }
+
+  // Priority 10: Regular returning user (has memory)
+  if (userMemory) {
+    return pick([
+      "yo whats up",
+      "hey. whats going on",
+      "yo. whats on ur mind",
+    ]);
+  }
+
+  // Default: New user — simple opener
+  return pick([
+    "yo whats up",
+    "hey. whats going on",
+    "yo. what can i help u with",
+  ]);
+}
 
 type CallStatus = "idle" | "connecting" | "connected" | "speaking" | "listening";
 
@@ -138,10 +309,25 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
         ? `${sessionContext}\n\n${zepContext}`
         : zepContext || "No additional context available.";
 
+      // Extract user memory section for opener generation
+      const userMemorySection = zepContext.includes("WHAT I REMEMBER ABOUT THIS USER:")
+        ? zepContext.split("WHAT I REMEMBER ABOUT THIS USER:")[1]
+        : null;
+
+      // Generate personalized opening message
+      const openingMessage = getOpeningMessage(sessionMetadata, userMemorySection);
+
+      // Debug logging for opener
+      console.log("[VOICE] Opening message:", openingMessage);
+      console.log("[VOICE] Time since last:", getTimeSinceLastSession(sessionMetadata));
+      console.log("[VOICE] Session count:", sessionMetadata?.sessionCount);
+      console.log("[VOICE] User interests detected:", extractInterests(userMemorySection));
+
       const conv = await Conversation.startSession({
         agentId,
         connectionType: "websocket",
         dynamicVariables: {
+          opening_message: openingMessage,
           zep_context: fullContext,
           user_id: userId,
           // Pass session info as separate variables for voice-llm to use
