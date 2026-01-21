@@ -1,11 +1,11 @@
 import { NextRequest } from "next/server";
-import { searchGraph, KAGAN_USER_ID, getUserMemoryFromThread } from "@/lib/zep";
+import { searchGraph, KAGAN_USER_ID, getUserMemoryFromThread, getThreadMessages } from "@/lib/zep";
 
 // API endpoint to fetch context for voice calls (display purposes)
 // Note: The actual LLM (voice-llm) fetches user memory separately during conversation
 export async function POST(req: NextRequest) {
   try {
-    const { query, userId } = await req.json();
+    const { query, userId, lastSessionThreadId } = await req.json();
 
     // Search Kagan's knowledge graph for relevant facts (his personality)
     const searchQuery = query || "Who is Kagan? What are his beliefs and background?";
@@ -45,10 +45,32 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Get last conversation from previous session thread
+    let lastConversation = "";
+    if (lastSessionThreadId) {
+      try {
+        const messages = await getThreadMessages(lastSessionThreadId, 20);
+        if (messages && messages.length > 0) {
+          const formatted = messages
+            .map((msg: { role: string; content: string }) =>
+              `${msg.role === 'user' ? 'User' : 'Kagan'}: ${msg.content}`
+            )
+            .join('\n');
+          lastConversation = formatted;
+          console.log(`[VOICE-CTX] Got ${messages.length} messages from last session`);
+        }
+      } catch (e) {
+        console.error(`[VOICE-CTX] Error getting last conversation:`, e);
+      }
+    }
+
     // Combine context for display
     let context = "";
     if (kaganFacts) {
       context += `KAGAN'S BACKGROUND:\n${kaganFacts}`;
+    }
+    if (lastConversation) {
+      context += `\n\nLAST CONVERSATION:\n${lastConversation}`;
     }
     if (userMemory) {
       context += `\n\nWHAT I REMEMBER ABOUT THIS USER:\n${userMemory}`;

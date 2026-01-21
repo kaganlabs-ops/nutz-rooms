@@ -274,6 +274,8 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
           body: JSON.stringify({
             query: `Who is ${characterName}? What should I know about them?`,
             userId,
+            // Pass last session thread ID to fetch previous conversation
+            lastSessionThreadId: sessionMetadataRef.current?.lastSessionThreadId || null,
             // Pass session metadata for context building
             sessionMetadata: sessionMetadataRef.current ? {
               lastSessionTimestamp: sessionMetadataRef.current.lastSessionTimestamp,
