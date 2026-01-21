@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
     const threadId = threadSetup;
     const parallelTime = Date.now() - startTime;
     console.log(`[CHAT] Parallel fetch completed in ${parallelTime}ms`);
+    console.log(`[CHAT] User memories fetched:`, userMemories.length, userMemories.slice(0, 3));
 
     // Add user message to thread (for history)
     await addMessages(threadId, [
