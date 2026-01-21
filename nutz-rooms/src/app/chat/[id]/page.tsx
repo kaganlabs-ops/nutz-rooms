@@ -70,7 +70,12 @@ export default function ChatPage() {
 
   // Extract ONE THING from message and return cleaned content
   const extractOneThing = (content: string): { cleanContent: string; oneThing: string | null } => {
+    // Debug: log what we're checking
+    console.log('[ONE THING] Checking content:', content.slice(0, 200));
+    console.log('[ONE THING] Contains "ONE THING":', content.includes('ONE THING'));
+
     // Match "📌 ONE THING: [action]" pattern (with or without emoji)
+    // The action can span to end of line or end of string
     const patterns = [
       /📌\s*ONE THING:\s*(.+?)(?:\n|$)/i,
       /ONE THING:\s*(.+?)(?:\n|$)/i,
@@ -80,12 +85,14 @@ export default function ChatPage() {
       const match = content.match(pattern);
       if (match) {
         const oneThing = match[1].trim();
+        console.log('[ONE THING] MATCH FOUND:', oneThing);
         // Remove the ONE THING line from content
         const cleanContent = content.replace(match[0], '').trim();
         return { cleanContent, oneThing };
       }
     }
 
+    console.log('[ONE THING] No match found');
     return { cleanContent: content, oneThing: null };
   };
 

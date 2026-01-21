@@ -26,8 +26,8 @@ describe('zep.ts - Memory Formatting', () => {
       const memories = ['User is building: an app'];
       const result = formatUserMemoryContext(memories);
 
-      expect(result).toContain('Reference what you remember naturally');
-      expect(result).toContain('hows [their project] going');
+      expect(result).toContain('HOW TO GREET RETURNING USERS');
+      expect(result).toContain('hows the [their project] going');
     });
 
     it('should return empty string for empty memories array', () => {

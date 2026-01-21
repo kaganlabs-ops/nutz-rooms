@@ -114,20 +114,39 @@ export async function addToGraph(userId: string, data: string, type: "text" | "j
 // ============================================
 
 // Get user's personal memory/context
+// Now does TWO searches: one broad (who is this user) + one specific (based on their message)
 export async function getUserMemory(userId: string, query: string, limit: number = 5): Promise<string[]> {
   console.log(`[ZEP] getUserMemory called - userId: ${userId}, query: "${query.slice(0, 50)}..."`);
   try {
-    const results = await zep.graph.search({
-      userId,
-      query,
-      limit,
+    // Parallel fetch: broad context + query-specific
+    const [broadResults, queryResults] = await Promise.all([
+      // 1. Broad search: who is this user, what are they working on
+      zep.graph.search({
+        userId,
+        query: "who is this user, what are they building, what is their project, what did we discuss",
+        limit: Math.ceil(limit / 2),
+      }),
+      // 2. Specific search: based on their current message
+      zep.graph.search({
+        userId,
+        query,
+        limit: Math.ceil(limit / 2),
+      }),
+    ]);
+
+    // Combine and dedupe
+    const allFacts = new Set<string>();
+
+    broadResults?.edges?.forEach((edge: { fact?: string }) => {
+      if (edge.fact) allFacts.add(edge.fact);
     });
 
-    const memories = results?.edges
-      ?.map((edge: { fact?: string }) => edge.fact)
-      .filter((f): f is string => Boolean(f)) || [];
+    queryResults?.edges?.forEach((edge: { fact?: string }) => {
+      if (edge.fact) allFacts.add(edge.fact);
+    });
 
-    console.log(`[ZEP] getUserMemory found ${memories.length} memories`);
+    const memories = Array.from(allFacts);
+    console.log(`[ZEP] getUserMemory found ${memories.length} memories (${broadResults?.edges?.length || 0} broad + ${queryResults?.edges?.length || 0} query-specific, deduped)`);
     return memories;
   } catch (e) {
     console.error(`[ZEP] getUserMemory ERROR:`, e);
@@ -155,6 +174,40 @@ export async function saveUserMemory(userId: string, fact: string): Promise<bool
 // Format user memories for inclusion in prompt
 export function formatUserMemoryContext(memories: string[]): string {
   if (memories.length === 0) return "";
-  return `## What I remember about you:\n${memories.map(m => `- ${m}`).join('\n')}`;
+
+  // Filter out noise (mode_state, timestamps, meta stuff)
+  const cleanMemories = memories.filter(m => {
+    const lower = m.toLowerCase();
+    // Skip meta/system noise
+    if (lower.includes('mode_state') || lower.includes('mode state')) return false;
+    if (lower.includes('last updated at')) return false;
+    if (lower.includes('current stage')) return false;
+    if (lower.includes('started at')) return false;
+    if (lower.includes('the assistant')) return false;
+    return true;
+  });
+
+  if (cleanMemories.length === 0) return "";
+
+  return `## RETURNING USER - What I remember about them:
+${cleanMemories.map(m => `- ${m}`).join('\n')}
+
+## HOW TO GREET RETURNING USERS
+
+CRITICAL: Do NOT ask "what are u working on" if u have memory context above.
+
+Instead, reference what u know:
+- "yo hows the [their project] going"
+- "did u talk to those users yet"
+- "any progress on [thing they mentioned]"
+- "last time u were stuck on X, figure it out?"
+
+If they just say "hey" or "yo", acknowledge u know them briefly then ask about their stuff:
+- "yo! hows the freelancer app"
+- "hey whats up, how'd the launch go"
+
+Only ask "what are u working on" if theres literally nothing in memory.
+
+Weave memory in naturally. Dont say "I remember you said..." - just reference it like u naturally recall.`;
 }
 
