@@ -222,6 +222,7 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
       const updatedMetadata = metadata ? { ...metadata, sessionCount: newCount } : {
         lastSessionTimestamp: Date.now(),
         lastSessionThreadId: '',
+        recentThreadIds: [],
         lastOneThing: null,
         lastOneThingDate: null,
         sessionCount: newCount,
@@ -253,6 +254,7 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
   };
 
   const startCall = useCallback(async () => {
+    console.log("🔴🔴🔴 NEW CODE VERSION 2025-01-21 🔴🔴🔴");
     if (hasStarted.current) return;
     hasStarted.current = true;
 
@@ -274,8 +276,10 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
           body: JSON.stringify({
             query: `Who is ${characterName}? What should I know about them?`,
             userId,
-            // Pass last session thread ID to fetch previous conversation
+            // Pass last session thread ID for backwards compat
             lastSessionThreadId: sessionMetadataRef.current?.lastSessionThreadId || null,
+            // Pass array of recent thread IDs for multi-session context
+            recentThreadIds: sessionMetadataRef.current?.recentThreadIds || [],
             // Pass session metadata for context building
             sessionMetadata: sessionMetadataRef.current ? {
               lastSessionTimestamp: sessionMetadataRef.current.lastSessionTimestamp,
@@ -315,41 +319,66 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
       }
 
       // Combine session context with Zep context for ElevenLabs
-      const fullContext = sessionContext
+      let fullContext = sessionContext
         ? `${sessionContext}\n\n${zepContext}`
         : zepContext || "No additional context available.";
 
+      // ElevenLabs has a limit on dynamic variable size - truncate if too large
+      const MAX_CONTEXT_LENGTH = 8000;
+      if (fullContext.length > MAX_CONTEXT_LENGTH) {
+        console.log(`[VOICE] Context too large (${fullContext.length}), truncating to ${MAX_CONTEXT_LENGTH}`);
+        fullContext = fullContext.slice(0, MAX_CONTEXT_LENGTH) + "\n\n[Context truncated...]";
+      }
+      console.log("[VOICE] Final context length:", fullContext.length);
+
       // Extract user memory section for opener generation
+      console.log("[VOICE] About to extract userMemorySection...");
       const userMemorySection = zepContext.includes("WHAT I REMEMBER ABOUT THIS USER:")
         ? zepContext.split("WHAT I REMEMBER ABOUT THIS USER:")[1]
         : null;
+      console.log("[VOICE] userMemorySection length:", userMemorySection?.length || 0);
 
-      // Generate personalized opening message
-      const openingMessage = getOpeningMessage(sessionMetadataRef.current, userMemorySection);
+      // Generate personalized opening message based on session context
+      const rawOpeningMessage = getOpeningMessage(sessionMetadataRef.current, userMemorySection);
+      const sanitizeForElevenLabs = (text: string): string => {
+        return text
+          .replace(/[^\w\s?.!,'-]/g, '')
+          .slice(0, 200)
+          .trim() || "hey whats up";
+      };
+      const openingMessage = sanitizeForElevenLabs(rawOpeningMessage);
 
       // Debug logging for opener
       console.log("[VOICE] Opening message:", openingMessage);
-      console.log("[VOICE] Time since last:", getTimeSinceLastSession(sessionMetadataRef.current));
+      console.log("[VOICE] Opening message length:", openingMessage.length);
       console.log("[VOICE] Session count:", sessionMetadataRef.current?.sessionCount);
-      console.log("[VOICE] User interests detected:", extractInterests(userMemorySection));
+
+      console.log("[VOICE] Starting ElevenLabs session with agentId:", agentId);
+      console.log("[VOICE] Dynamic variables:", {
+        opening_message: openingMessage,
+        zep_context: fullContext.slice(0, 100) + "...",
+        user_id: userId,
+        session_count: String(sessionMetadataRef.current?.sessionCount || 1),
+        last_one_thing: sessionMetadataRef.current?.lastOneThing || "",
+      });
 
       const conv = await Conversation.startSession({
         agentId,
         connectionType: "websocket",
+        // Pass opening_message via dynamicVariables to match {{opening_message}} in dashboard
         dynamicVariables: {
           opening_message: openingMessage,
           zep_context: fullContext,
           user_id: userId,
-          // Pass session info as separate variables for voice-llm to use
           session_count: String(sessionMetadataRef.current?.sessionCount || 1),
           last_one_thing: sessionMetadataRef.current?.lastOneThing || "",
         },
         onConnect: () => {
-          console.log("Connected to ElevenLabs");
+          console.log("[VOICE] ✅ Connected to ElevenLabs successfully");
           setStatus("connected");
         },
-        onDisconnect: () => {
-          console.log("Disconnected from ElevenLabs");
+        onDisconnect: (reason) => {
+          console.log("[VOICE] ❌ Disconnected from ElevenLabs, reason:", reason);
           setStatus("idle");
           setConversation(null);
         },
@@ -387,7 +416,8 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
           }
         },
         onError: (err) => {
-          console.error("ElevenLabs error:", err);
+          console.error("[VOICE] ElevenLabs error:", err);
+          console.error("[VOICE] Error details:", JSON.stringify(err, null, 2));
           setError("Connection error. Please try again.");
           setStatus("idle");
         },
@@ -400,7 +430,7 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
       setStatus("idle");
       hasStarted.current = false;
     }
-  }, [agentId, characterName, userId, sessionMetadataRef.current]);
+  }, [agentId, characterName, userId]);
 
   // Auto-start call when session metadata is loaded
   useEffect(() => {

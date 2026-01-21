@@ -3,11 +3,15 @@
 
 export interface SessionMetadata {
   lastSessionTimestamp: number;      // unix timestamp
-  lastSessionThreadId: string;       // for fetching last convo
+  lastSessionThreadId: string;       // for fetching last convo (kept for backwards compat)
+  recentThreadIds: string[];         // last N thread IDs for multi-session context
   lastOneThing: string | null;       // last action item
   lastOneThingDate: string | null;   // when it was set
   sessionCount: number;              // how many times they've talked
 }
+
+// Max number of recent threads to store
+const MAX_RECENT_THREADS = 5;
 
 // Get session metadata from localStorage
 export function getSessionMetadata(userId: string): SessionMetadata | null {
@@ -32,9 +36,16 @@ export function updateSessionAfterMessage(
 ): void {
   const existing = getSessionMetadata(userId);
 
+  // Build recent thread IDs array - add new thread at front, keep max N
+  let recentThreadIds = existing?.recentThreadIds || [];
+  if (threadId && !recentThreadIds.includes(threadId)) {
+    recentThreadIds = [threadId, ...recentThreadIds].slice(0, MAX_RECENT_THREADS);
+  }
+
   const updated: SessionMetadata = {
     lastSessionTimestamp: Date.now(),
     lastSessionThreadId: threadId,
+    recentThreadIds,
     // Only update ONE THING if a new one was found
     lastOneThing: oneThing || existing?.lastOneThing || null,
     lastOneThingDate: oneThing ? new Date().toISOString() : existing?.lastOneThingDate || null,
@@ -59,6 +70,7 @@ export function incrementSessionCount(userId: string): number {
     saveSessionMetadata(userId, {
       lastSessionTimestamp: Date.now(),
       lastSessionThreadId: '',
+      recentThreadIds: [],
       lastOneThing: null,
       lastOneThingDate: null,
       sessionCount: newCount,
@@ -210,6 +222,7 @@ export function buildSessionContextFromAPI(
   const fullMetadata: SessionMetadata = {
     lastSessionTimestamp: metadata.lastSessionTimestamp || 0,
     lastSessionThreadId: '',
+    recentThreadIds: [],
     lastOneThing: metadata.lastOneThing || null,
     lastOneThingDate: metadata.lastOneThingDate || null,
     sessionCount: metadata.sessionCount || 0,

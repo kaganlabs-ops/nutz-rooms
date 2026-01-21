@@ -43,6 +43,7 @@ describe('sessionStorage', () => {
       const metadata: SessionMetadata = {
         lastSessionTimestamp: 0,
         lastSessionThreadId: '',
+        recentThreadIds: [],
         lastOneThing: null,
         lastOneThingDate: null,
         sessionCount: 1,
@@ -55,6 +56,7 @@ describe('sessionStorage', () => {
       const metadata: SessionMetadata = {
         lastSessionTimestamp: Date.now() - 10 * 60 * 1000, // 10 minutes ago
         lastSessionThreadId: '',
+        recentThreadIds: [],
         lastOneThing: null,
         lastOneThingDate: null,
         sessionCount: 1,
@@ -67,6 +69,7 @@ describe('sessionStorage', () => {
       const metadata: SessionMetadata = {
         lastSessionTimestamp: Date.now() - 5 * 60 * 60 * 1000, // 5 hours ago
         lastSessionThreadId: '',
+        recentThreadIds: [],
         lastOneThing: null,
         lastOneThingDate: null,
         sessionCount: 1,
@@ -79,6 +82,7 @@ describe('sessionStorage', () => {
       const metadata: SessionMetadata = {
         lastSessionTimestamp: Date.now() - 3 * 24 * 60 * 60 * 1000, // 3 days ago
         lastSessionThreadId: '',
+        recentThreadIds: [],
         lastOneThing: null,
         lastOneThingDate: null,
         sessionCount: 1,
@@ -91,6 +95,7 @@ describe('sessionStorage', () => {
       const metadata: SessionMetadata = {
         lastSessionTimestamp: Date.now() - 10 * 24 * 60 * 60 * 1000, // 10 days ago
         lastSessionThreadId: '',
+        recentThreadIds: [],
         lastOneThing: null,
         lastOneThingDate: null,
         sessionCount: 1,
@@ -110,6 +115,7 @@ describe('sessionStorage', () => {
       const metadata: SessionMetadata = {
         lastSessionTimestamp: Date.now() - 10 * 60 * 1000, // 10 minutes ago
         lastSessionThreadId: '',
+        recentThreadIds: [],
         lastOneThing: null,
         lastOneThingDate: null,
         sessionCount: 1,
@@ -123,6 +129,7 @@ describe('sessionStorage', () => {
       const metadata: SessionMetadata = {
         lastSessionTimestamp: Date.now() - 60 * 1000,
         lastSessionThreadId: '',
+        recentThreadIds: [],
         lastOneThing: null,
         lastOneThingDate: null,
         sessionCount: 12,
@@ -137,6 +144,7 @@ describe('sessionStorage', () => {
       const metadata: SessionMetadata = {
         lastSessionTimestamp: Date.now() - 60 * 1000,
         lastSessionThreadId: '',
+        recentThreadIds: [],
         lastOneThing: 'talk to 5 freelancers this week',
         lastOneThingDate: '2024-01-20T10:00:00.000Z',
         sessionCount: 3,
@@ -151,6 +159,7 @@ describe('sessionStorage', () => {
       const metadata: SessionMetadata = {
         lastSessionTimestamp: Date.now() - 60 * 1000,
         lastSessionThreadId: '',
+        recentThreadIds: [],
         lastOneThing: null,
         lastOneThingDate: null,
         sessionCount: 2,
@@ -165,6 +174,7 @@ describe('sessionStorage', () => {
       const metadata: SessionMetadata = {
         lastSessionTimestamp: Date.now() - 3 * 24 * 60 * 60 * 1000, // 3 days ago
         lastSessionThreadId: '',
+        recentThreadIds: [],
         lastOneThing: null,
         lastOneThingDate: null,
         sessionCount: 5,
@@ -177,6 +187,7 @@ describe('sessionStorage', () => {
       const metadata: SessionMetadata = {
         lastSessionTimestamp: Date.now() - 10 * 24 * 60 * 60 * 1000, // 10 days ago
         lastSessionThreadId: '',
+        recentThreadIds: [],
         lastOneThing: null,
         lastOneThingDate: null,
         sessionCount: 5,

@@ -126,6 +126,7 @@ export default function ChatPage() {
       setSessionMetadata(prev => prev ? { ...prev, sessionCount: newCount } : {
         lastSessionTimestamp: Date.now(),
         lastSessionThreadId: '',
+        recentThreadIds: [],
         lastOneThing: null,
         lastOneThingDate: null,
         sessionCount: newCount,
