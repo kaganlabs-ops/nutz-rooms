@@ -196,16 +196,17 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
   const [transcript, setTranscript] = useState<Array<{ role: string; text: string }>>([]);
   const [error, setError] = useState<string | null>(null);
   const [pinnedAction, setPinnedAction] = useState<string | null>(null);
-  const [sessionMetadata, setSessionMetadata] = useState<SessionMetadata | null>(null);
+  const [sessionLoaded, setSessionLoaded] = useState(false);
   const hasStarted = useRef(false);
   const hasSaved = useRef(false);
   const currentOneThing = useRef<string | null>(null);
+  // Use ref for session metadata to avoid stale closures in useCallback
+  const sessionMetadataRef = useRef<SessionMetadata | null>(null);
 
   // Load session metadata on mount
   useEffect(() => {
     if (typeof window !== "undefined" && userId) {
       const metadata = getSessionMetadata(userId);
-      setSessionMetadata(metadata);
 
       // Load last ONE THING
       if (metadata?.lastOneThing) {
@@ -217,13 +218,20 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
       const newCount = incrementSessionCount(userId);
       console.log('[VOICE] Session count:', newCount);
 
-      setSessionMetadata(prev => prev ? { ...prev, sessionCount: newCount } : {
+      // Set metadata with updated count
+      const updatedMetadata = metadata ? { ...metadata, sessionCount: newCount } : {
         lastSessionTimestamp: Date.now(),
         lastSessionThreadId: '',
         lastOneThing: null,
         lastOneThingDate: null,
         sessionCount: newCount,
-      });
+      };
+
+      // Store in ref for stable access in callbacks
+      sessionMetadataRef.current = updatedMetadata;
+      setSessionLoaded(true);
+
+      console.log('[VOICE] Session metadata loaded:', updatedMetadata);
     }
   }, [userId]);
 
@@ -254,7 +262,7 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
       setError(null);
 
       // Build session context for the voice call
-      const sessionContext = buildSessionContext(sessionMetadata, null);
+      const sessionContext = buildSessionContext(sessionMetadataRef.current, null);
 
       // Fetch Zep context for the voice call (includes user memory)
       let zepContext = "";
@@ -267,11 +275,11 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
             query: `Who is ${characterName}? What should I know about them?`,
             userId,
             // Pass session metadata for context building
-            sessionMetadata: sessionMetadata ? {
-              lastSessionTimestamp: sessionMetadata.lastSessionTimestamp,
-              lastOneThing: sessionMetadata.lastOneThing,
-              lastOneThingDate: sessionMetadata.lastOneThingDate,
-              sessionCount: sessionMetadata.sessionCount,
+            sessionMetadata: sessionMetadataRef.current ? {
+              lastSessionTimestamp: sessionMetadataRef.current.lastSessionTimestamp,
+              lastOneThing: sessionMetadataRef.current.lastOneThing,
+              lastOneThingDate: sessionMetadataRef.current.lastOneThingDate,
+              sessionCount: sessionMetadataRef.current.sessionCount,
             } : null,
           }),
         });
@@ -315,12 +323,12 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
         : null;
 
       // Generate personalized opening message
-      const openingMessage = getOpeningMessage(sessionMetadata, userMemorySection);
+      const openingMessage = getOpeningMessage(sessionMetadataRef.current, userMemorySection);
 
       // Debug logging for opener
       console.log("[VOICE] Opening message:", openingMessage);
-      console.log("[VOICE] Time since last:", getTimeSinceLastSession(sessionMetadata));
-      console.log("[VOICE] Session count:", sessionMetadata?.sessionCount);
+      console.log("[VOICE] Time since last:", getTimeSinceLastSession(sessionMetadataRef.current));
+      console.log("[VOICE] Session count:", sessionMetadataRef.current?.sessionCount);
       console.log("[VOICE] User interests detected:", extractInterests(userMemorySection));
 
       const conv = await Conversation.startSession({
@@ -331,8 +339,8 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
           zep_context: fullContext,
           user_id: userId,
           // Pass session info as separate variables for voice-llm to use
-          session_count: String(sessionMetadata?.sessionCount || 1),
-          last_one_thing: sessionMetadata?.lastOneThing || "",
+          session_count: String(sessionMetadataRef.current?.sessionCount || 1),
+          last_one_thing: sessionMetadataRef.current?.lastOneThing || "",
         },
         onConnect: () => {
           console.log("Connected to ElevenLabs");
@@ -390,12 +398,14 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
       setStatus("idle");
       hasStarted.current = false;
     }
-  }, [agentId, characterName, userId, sessionMetadata]);
+  }, [agentId, characterName, userId, sessionMetadataRef.current]);
 
-  // Auto-start call when component mounts
+  // Auto-start call when session metadata is loaded
   useEffect(() => {
-    startCall();
-  }, [startCall]);
+    if (sessionLoaded) {
+      startCall();
+    }
+  }, [sessionLoaded, startCall]);
 
   const endCall = useCallback(async () => {
     if (conversation) {
