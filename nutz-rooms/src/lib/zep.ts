@@ -114,29 +114,36 @@ export async function addToGraph(userId: string, data: string, type: "text" | "j
 // ============================================
 
 // Get user's personal memory/context
-// Now does TWO searches: one broad (who is this user) + one specific (based on their message)
+// Does THREE things: graph search (broad + specific) AND retrieves user facts directly
 export async function getUserMemory(userId: string, query: string, limit: number = 5): Promise<string[]> {
   console.log(`[ZEP] getUserMemory called - userId: ${userId}, query: "${query.slice(0, 50)}..."`);
   try {
-    // Parallel fetch: broad context + query-specific
-    const [broadResults, queryResults] = await Promise.all([
+    // Parallel fetch: broad search + query search + user facts
+    const [broadResults, queryResults, userFacts] = await Promise.all([
       // 1. Broad search: who is this user, what are they working on
       zep.graph.search({
         userId,
-        query: "who is this user, what are they building, what is their project, what did we discuss",
+        query: "user is building working on project startup app name challenge",
         limit: Math.ceil(limit / 2),
-      }),
+      }).catch(e => { console.log('[ZEP] broad search failed:', e); return null; }),
       // 2. Specific search: based on their current message
       zep.graph.search({
         userId,
         query,
         limit: Math.ceil(limit / 2),
-      }),
+      }).catch(e => { console.log('[ZEP] query search failed:', e); return null; }),
+      // 3. Try to get user's stored facts directly (if API supports)
+      zep.graph.search({
+        userId,
+        query: "User is User's User has User works User founded User mentioned",
+        limit: limit,
+      }).catch(e => { console.log('[ZEP] user facts search failed:', e); return null; }),
     ]);
 
     // Combine and dedupe
     const allFacts = new Set<string>();
 
+    // Add facts from graph searches
     broadResults?.edges?.forEach((edge: { fact?: string }) => {
       if (edge.fact) allFacts.add(edge.fact);
     });
@@ -145,8 +152,15 @@ export async function getUserMemory(userId: string, query: string, limit: number
       if (edge.fact) allFacts.add(edge.fact);
     });
 
+    // Add user-specific facts (these should match "User is building X" format)
+    userFacts?.edges?.forEach((edge: { fact?: string }) => {
+      if (edge.fact && edge.fact.toLowerCase().startsWith('user')) {
+        allFacts.add(edge.fact);
+      }
+    });
+
     const memories = Array.from(allFacts);
-    console.log(`[ZEP] getUserMemory found ${memories.length} memories (${broadResults?.edges?.length || 0} broad + ${queryResults?.edges?.length || 0} query-specific, deduped)`);
+    console.log(`[ZEP] getUserMemory found ${memories.length} memories (${broadResults?.edges?.length || 0} broad + ${queryResults?.edges?.length || 0} query + ${userFacts?.edges?.length || 0} user facts, deduped)`);
     return memories;
   } catch (e) {
     console.error(`[ZEP] getUserMemory ERROR:`, e);
