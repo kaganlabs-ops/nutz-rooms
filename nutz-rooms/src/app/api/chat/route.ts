@@ -4,12 +4,19 @@ import { anthropic, KAGAN_SYSTEM_PROMPT } from "@/lib/openai";
 import { parseArtifact } from "@/lib/artifacts";
 import { searchGif } from "@/lib/giphy";
 import { findRelevantFacts, formatBrainContext, getKaganBrain } from "@/lib/brain";
+import { buildSessionContextFromAPI, extractOneThing } from "@/lib/sessionStorage";
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
 
   try {
-    const { message, threadId: existingThreadId, userId } = await req.json();
+    const {
+      message,
+      threadId: existingThreadId,
+      userId,
+      // Session metadata from client (localStorage)
+      sessionMetadata
+    } = await req.json();
 
     if (!message || !userId) {
       return NextResponse.json(
@@ -19,6 +26,9 @@ export async function POST(req: NextRequest) {
     }
 
     console.log(`[CHAT] Request from user: ${userId}`);
+    if (sessionMetadata) {
+      console.log(`[CHAT] Session metadata: count=${sessionMetadata.sessionCount}, lastOneThing=${sessionMetadata.lastOneThing || 'none'}`);
+    }
 
     // ============================================
     // STEP 1: Setup user and thread
@@ -26,6 +36,7 @@ export async function POST(req: NextRequest) {
 
     await ensureUser(userId);
     let threadId = existingThreadId;
+    const isNewSession = !threadId;
     if (!threadId) {
       threadId = await createThread(userId);
     }
@@ -65,7 +76,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ============================================
-    // BUILD CONTEXT: Combine brain + Zep memory
+    // BUILD CONTEXT: Session + Brain + Zep memory
     // ============================================
 
     // Get relevant facts from Kagan's brain based on message
@@ -79,22 +90,62 @@ export async function POST(req: NextRequest) {
       systemPrompt += `\n\n${formatBrainContext(relevantBrainFacts)}`;
     }
 
-    // Add user memory from Zep (this is the KEY part)
-    // Zep returns pre-formatted context - inject it directly
-    // Check if there's REAL content (not just empty template)
+    // Check if there's REAL content in Zep memory (not just empty template)
     const hasUserSummary = memoryContext?.includes('<USER_SUMMARY>') &&
                            !memoryContext.includes('No other personal or lifestyle details are currently known');
     const hasRealFacts = memoryContext?.includes('<FACTS>') &&
                          !memoryContext.match(/<FACTS>\s*<\/FACTS>/) &&
                          !memoryContext.match(/<FACTS>\s*\n\s*<\/FACTS>/);
-    const hasRealMemory = hasUserSummary || hasRealFacts;
+    const hasMemory = hasUserSummary || hasRealFacts;
 
-    console.log(`[CHAT] Memory analysis: hasUserSummary=${hasUserSummary}, hasRealFacts=${hasRealFacts}, hasRealMemory=${hasRealMemory}`);
+    console.log(`[CHAT] Memory analysis: hasUserSummary=${hasUserSummary}, hasRealFacts=${hasRealFacts}, hasMemory=${hasMemory}`);
 
-    console.log(`[CHAT] Memory check: hasRealMemory=${hasRealMemory}, length=${memoryContext?.length || 0}`);
+    // Build session context (time since last session, ONE THING, relationship depth)
+    const sessionContext = buildSessionContextFromAPI(sessionMetadata, hasMemory ? memoryContext : null);
 
-    if (hasRealMemory) {
-      systemPrompt += `\n\n## MEMORY - What I know about this user:
+    if (sessionContext) {
+      systemPrompt += `\n\n## SESSION CONTEXT\n${sessionContext}`;
+    }
+
+    // Add returning user instructions based on context
+    if (hasMemory || sessionMetadata?.lastOneThing || sessionMetadata?.sessionCount > 1) {
+      systemPrompt += `\n\n## RETURNING USER RULES
+
+You have context about this user above. USE IT.
+
+IF user has memory context:
+- DONT say generic opener ("well well well", "what are u working on")
+- Reference their project by name
+- Ask about progress, not basics
+
+IF they had a ONE THING last session:
+- Follow up on it early: "did u [action item]?"
+- Dont wait for them to bring it up
+- If they did it, acknowledge and move on
+- If they didn't, thats fine, ask whats blocking them
+
+IF session gap is very short (minutes):
+- "back already? 👀 whats up"
+
+IF session gap is same day:
+- "hey again. any updates?"
+
+IF session gap is days:
+- "been a few days. hows [project] going"
+
+IF session gap is week+:
+- "been a minute. whats new with [project]"
+
+IF session count > 10:
+- You know this person well. Be more familiar, reference past convos naturally.
+
+NEVER ask "what are you working on" if you already know from memory.
+NEVER make up memories. If context is empty, you're meeting them fresh.`;
+    }
+
+    // Add memory section
+    if (hasMemory) {
+      systemPrompt += `\n\n## ZEP MEMORY - What I know about this user:
 ${memoryContext}
 
 ## CRITICAL MEMORY RULES:
@@ -108,7 +159,7 @@ IMPORTANT:
 - NEVER make up or hallucinate conversations that aren't in FACTS
 - You can reference USER_SUMMARY for who they are, but NOT for what they said recently
 - If they just say "hey", greet based on USER_SUMMARY (their projects/work)`;
-    } else {
+    } else if (!sessionMetadata?.sessionCount || sessionMetadata.sessionCount <= 1) {
       systemPrompt += `\n\n## MEMORY:
 NO MEMORY AVAILABLE. This is a new user or I have no context from past conversations.
 
@@ -118,10 +169,10 @@ CRITICAL:
 - Be direct: "im not seeing our past convos, fill me in"`;
     }
 
-    console.log(`[CHAT] Context: ${relevantBrainFacts.length} brain facts, memory context: ${memoryContext ? 'yes' : 'no'}`);
+    console.log(`[CHAT] Context: ${relevantBrainFacts.length} brain facts, memory: ${hasMemory}, session: ${sessionMetadata ? 'yes' : 'no'}`);
 
     // ============================================
-    // STEP 2: CALL CLAUDE (stream to user)
+    // STEP 3: CALL CLAUDE
     // ============================================
 
     const claudeStartTime = Date.now();
@@ -154,9 +205,17 @@ CRITICAL:
     }
 
     // ============================================
-    // STEP 3: SAVE AI RESPONSE TO THREAD
+    // STEP 4: Extract ONE THING from response
+    // ============================================
+
+    const oneThing = extractOneThing(rawResponse);
+    if (oneThing) {
+      console.log(`[CHAT] ONE THING extracted: "${oneThing}"`);
+    }
+
+    // ============================================
+    // STEP 5: SAVE AI RESPONSE TO THREAD
     // Zep will automatically extract facts from the conversation!
-    // No need to manually extract and save facts.
     // ============================================
 
     if (responseText && responseText.trim()) {
@@ -177,6 +236,8 @@ CRITICAL:
       threadId,
       artifact,
       gifUrl,
+      oneThing, // Return extracted ONE THING for client to store
+      isNewSession, // Tell client if this was a new session
     });
   } catch (error) {
     console.error("Chat error:", error);
@@ -187,4 +248,3 @@ CRITICAL:
     );
   }
 }
-

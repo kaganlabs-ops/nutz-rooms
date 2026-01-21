@@ -1,10 +1,16 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import ArtifactCard from "@/components/ArtifactCard";
 import type { Artifact } from "@/lib/artifacts";
+import {
+  getSessionMetadata,
+  updateSessionAfterMessage,
+  incrementSessionCount,
+  type SessionMetadata,
+} from "@/lib/sessionStorage";
 
 interface Message {
   role: "user" | "assistant";
@@ -66,16 +72,13 @@ export default function ChatPage() {
   const [threadId, setThreadId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [pinnedAction, setPinnedAction] = useState<string | null>(null);
+  const [sessionMetadata, setSessionMetadata] = useState<SessionMetadata | null>(null);
+  const [sessionInitialized, setSessionInitialized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Extract ONE THING from message and return cleaned content
-  const extractOneThing = (content: string): { cleanContent: string; oneThing: string | null } => {
-    // Debug: log what we're checking
-    console.log('[ONE THING] Checking content:', content.slice(0, 200));
-    console.log('[ONE THING] Contains "ONE THING":', content.includes('ONE THING'));
-
+  const extractOneThing = useCallback((content: string): { cleanContent: string; oneThing: string | null } => {
     // Match "📌 ONE THING: [action]" pattern (with or without emoji)
-    // The action can span to end of line or end of string
     const patterns = [
       /📌\s*ONE THING:\s*(.+?)(?:\n|$)/i,
       /ONE THING:\s*(.+?)(?:\n|$)/i,
@@ -86,28 +89,51 @@ export default function ChatPage() {
       if (match) {
         const oneThing = match[1].trim();
         console.log('[ONE THING] MATCH FOUND:', oneThing);
-        // Remove the ONE THING line from content
         const cleanContent = content.replace(match[0], '').trim();
         return { cleanContent, oneThing };
       }
     }
 
-    console.log('[ONE THING] No match found');
     return { cleanContent: content, oneThing: null };
-  };
+  }, []);
 
-  // Initialize or retrieve user ID from localStorage
+  // Initialize user ID and session metadata from localStorage
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && !sessionInitialized) {
+      // Get or create user ID
       let storedUserId = localStorage.getItem("nutz-user-id");
       if (!storedUserId) {
-        // Generate new user ID
         storedUserId = `user-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         localStorage.setItem("nutz-user-id", storedUserId);
       }
       setUserId(storedUserId);
+
+      // Get session metadata (contains lastOneThing, sessionCount, etc.)
+      const metadata = getSessionMetadata(storedUserId);
+      setSessionMetadata(metadata);
+
+      // Load last ONE THING if exists
+      if (metadata?.lastOneThing) {
+        setPinnedAction(metadata.lastOneThing);
+        console.log('[SESSION] Loaded lastOneThing:', metadata.lastOneThing);
+      }
+
+      // Increment session count for new session
+      const newCount = incrementSessionCount(storedUserId);
+      console.log('[SESSION] Session count:', newCount);
+
+      // Update local metadata with new count
+      setSessionMetadata(prev => prev ? { ...prev, sessionCount: newCount } : {
+        lastSessionTimestamp: Date.now(),
+        lastSessionThreadId: '',
+        lastOneThing: null,
+        lastOneThingDate: null,
+        sessionCount: newCount,
+      });
+
+      setSessionInitialized(true);
     }
-  }, []);
+  }, [sessionInitialized]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -134,6 +160,13 @@ export default function ChatPage() {
           threadId,
           userId,
           characterId,
+          // Send session metadata to server for context building
+          sessionMetadata: sessionMetadata ? {
+            lastSessionTimestamp: sessionMetadata.lastSessionTimestamp,
+            lastOneThing: sessionMetadata.lastOneThing,
+            lastOneThingDate: sessionMetadata.lastOneThingDate,
+            sessionCount: sessionMetadata.sessionCount,
+          } : null,
         }),
       });
 
@@ -143,13 +176,31 @@ export default function ChatPage() {
         throw new Error(data.error);
       }
 
+      // Update thread ID
       setThreadId(data.threadId);
 
-      // Extract ONE THING if present
-      const { cleanContent, oneThing } = extractOneThing(data.response);
+      // Extract ONE THING from response (local extraction as backup)
+      const { cleanContent, oneThing: localOneThing } = extractOneThing(data.response);
+
+      // Use server-extracted ONE THING if available, else use local extraction
+      const oneThing = data.oneThing || localOneThing;
+
       if (oneThing) {
         setPinnedAction(oneThing);
+        console.log('[ONE THING] Set new action:', oneThing);
       }
+
+      // Update session metadata in localStorage after each message
+      updateSessionAfterMessage(userId, data.threadId, oneThing);
+
+      // Update local state with new metadata
+      setSessionMetadata(prev => prev ? {
+        ...prev,
+        lastSessionTimestamp: Date.now(),
+        lastSessionThreadId: data.threadId,
+        lastOneThing: oneThing || prev.lastOneThing,
+        lastOneThingDate: oneThing ? new Date().toISOString() : prev.lastOneThingDate,
+      } : null);
 
       setMessages((prev) => [
         ...prev,
@@ -163,6 +214,21 @@ export default function ChatPage() {
       ]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Handle clearing ONE THING (e.g., when user completes it)
+  const handleClearOneThing = () => {
+    setPinnedAction(null);
+    if (userId) {
+      // Clear from localStorage too
+      const metadata = getSessionMetadata(userId);
+      if (metadata) {
+        updateSessionAfterMessage(userId, threadId || '', null);
+        // Force clear the ONE THING
+        const updated = { ...metadata, lastOneThing: null, lastOneThingDate: null };
+        localStorage.setItem(`session_${userId}`, JSON.stringify(updated));
+      }
     }
   };
 
@@ -193,6 +259,12 @@ export default function ChatPage() {
             <p className="text-xs text-white/50">{character.title}</p>
           )}
         </div>
+        {/* Session indicator (dev only) */}
+        {sessionMetadata && process.env.NODE_ENV === 'development' && (
+          <div className="text-xs text-white/30">
+            S#{sessionMetadata.sessionCount}
+          </div>
+        )}
       </header>
 
       {/* Pinned ONE THING Banner */}
@@ -204,7 +276,7 @@ export default function ChatPage() {
             <p className="text-sm text-white/90 truncate">{pinnedAction}</p>
           </div>
           <button
-            onClick={() => setPinnedAction(null)}
+            onClick={handleClearOneThing}
             className="text-white/40 hover:text-white/70 transition-colors p-1"
             aria-label="Dismiss"
           >

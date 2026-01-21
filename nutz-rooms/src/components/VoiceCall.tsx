@@ -2,6 +2,13 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Conversation } from "@elevenlabs/client";
+import {
+  getSessionMetadata,
+  updateSessionAfterMessage,
+  incrementSessionCount,
+  buildSessionContext,
+  type SessionMetadata,
+} from "@/lib/sessionStorage";
 
 type CallStatus = "idle" | "connecting" | "connected" | "speaking" | "listening";
 
@@ -18,8 +25,36 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
   const [transcript, setTranscript] = useState<Array<{ role: string; text: string }>>([]);
   const [error, setError] = useState<string | null>(null);
   const [pinnedAction, setPinnedAction] = useState<string | null>(null);
+  const [sessionMetadata, setSessionMetadata] = useState<SessionMetadata | null>(null);
   const hasStarted = useRef(false);
   const hasSaved = useRef(false);
+  const currentOneThing = useRef<string | null>(null);
+
+  // Load session metadata on mount
+  useEffect(() => {
+    if (typeof window !== "undefined" && userId) {
+      const metadata = getSessionMetadata(userId);
+      setSessionMetadata(metadata);
+
+      // Load last ONE THING
+      if (metadata?.lastOneThing) {
+        setPinnedAction(metadata.lastOneThing);
+        console.log('[VOICE] Loaded lastOneThing:', metadata.lastOneThing);
+      }
+
+      // Increment session count
+      const newCount = incrementSessionCount(userId);
+      console.log('[VOICE] Session count:', newCount);
+
+      setSessionMetadata(prev => prev ? { ...prev, sessionCount: newCount } : {
+        lastSessionTimestamp: Date.now(),
+        lastSessionThreadId: '',
+        lastOneThing: null,
+        lastOneThingDate: null,
+        sessionCount: newCount,
+      });
+    }
+  }, [userId]);
 
   // Extract ONE THING from voice transcript (spoken as "ONE THING:" or "so ONE THING:")
   const extractOneThing = (text: string): string | null => {
@@ -47,6 +82,9 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
       setStatus("connecting");
       setError(null);
 
+      // Build session context for the voice call
+      const sessionContext = buildSessionContext(sessionMetadata, null);
+
       // Fetch Zep context for the voice call (includes user memory)
       let zepContext = "";
       try {
@@ -57,12 +95,19 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
           body: JSON.stringify({
             query: `Who is ${characterName}? What should I know about them?`,
             userId,
+            // Pass session metadata for context building
+            sessionMetadata: sessionMetadata ? {
+              lastSessionTimestamp: sessionMetadata.lastSessionTimestamp,
+              lastOneThing: sessionMetadata.lastOneThing,
+              lastOneThingDate: sessionMetadata.lastOneThingDate,
+              sessionCount: sessionMetadata.sessionCount,
+            } : null,
           }),
         });
         const contextData = await contextRes.json();
         zepContext = contextData.context || "";
 
-        // Log both sections clearly
+        // Log context info
         console.log("=".repeat(50));
         console.log("[VOICE] CONTEXT RECEIVED - Total length:", zepContext.length);
         console.log("=".repeat(50));
@@ -71,7 +116,7 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
         const kaganSection = zepContext.split("WHAT I REMEMBER ABOUT THIS USER:")[0];
         console.log("[VOICE] KAGAN'S BACKGROUND (preview):", kaganSection?.slice(0, 200) + "...");
 
-        // Log user memory section - THIS IS THE KEY PART
+        // Log user memory section
         const userMemorySection = zepContext.includes("WHAT I REMEMBER ABOUT THIS USER:")
           ? zepContext.split("WHAT I REMEMBER ABOUT THIS USER:")[1]
           : null;
@@ -88,12 +133,20 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
         console.error("Failed to fetch Zep context:", e);
       }
 
+      // Combine session context with Zep context for ElevenLabs
+      const fullContext = sessionContext
+        ? `${sessionContext}\n\n${zepContext}`
+        : zepContext || "No additional context available.";
+
       const conv = await Conversation.startSession({
         agentId,
         connectionType: "websocket",
         dynamicVariables: {
-          zep_context: zepContext || "No additional context available.",
+          zep_context: fullContext,
           user_id: userId,
+          // Pass session info as separate variables for voice-llm to use
+          session_count: String(sessionMetadata?.sessionCount || 1),
+          last_one_thing: sessionMetadata?.lastOneThing || "",
         },
         onConnect: () => {
           console.log("Connected to ElevenLabs");
@@ -116,6 +169,7 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
               const oneThing = extractOneThing(message.message);
               if (oneThing) {
                 setPinnedAction(oneThing);
+                currentOneThing.current = oneThing;
               }
             }
 
@@ -150,7 +204,7 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
       setStatus("idle");
       hasStarted.current = false;
     }
-  }, [agentId, characterName]);
+  }, [agentId, characterName, userId, sessionMetadata]);
 
   // Auto-start call when component mounts
   useEffect(() => {
@@ -169,7 +223,7 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
       try {
         console.log("[VOICE] Saving transcript to Zep for userId:", userId);
         console.log("[VOICE] Message count:", transcript.length);
-        await fetch("/api/voice-save", {
+        const response = await fetch("/api/voice-save", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -180,7 +234,14 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
             })),
           }),
         });
-        console.log("[VOICE] Transcript saved to Zep");
+        const data = await response.json();
+        console.log("[VOICE] Transcript saved to Zep, threadId:", data.threadId);
+
+        // Update session metadata after voice call
+        if (data.threadId) {
+          updateSessionAfterMessage(userId, data.threadId, currentOneThing.current);
+          console.log("[VOICE] Session metadata updated");
+        }
       } catch (e) {
         console.error("[VOICE] Failed to save transcript:", e);
       }
@@ -227,6 +288,20 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
     }
   };
 
+  // Handle clearing ONE THING
+  const handleClearOneThing = () => {
+    setPinnedAction(null);
+    currentOneThing.current = null;
+    // Also clear from localStorage
+    if (userId) {
+      const metadata = getSessionMetadata(userId);
+      if (metadata) {
+        const updated = { ...metadata, lastOneThing: null, lastOneThingDate: null };
+        localStorage.setItem(`session_${userId}`, JSON.stringify(updated));
+      }
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-black/90 flex flex-col">
       {/* Header */}
@@ -258,7 +333,7 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
             <p className="text-sm text-white/90">{pinnedAction}</p>
           </div>
           <button
-            onClick={() => setPinnedAction(null)}
+            onClick={handleClearOneThing}
             className="text-white/40 hover:text-white/70 transition-colors p-1"
             aria-label="Dismiss"
           >
