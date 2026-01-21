@@ -8,10 +8,11 @@ type CallStatus = "idle" | "connecting" | "connected" | "speaking" | "listening"
 interface VoiceCallProps {
   agentId: string;
   characterName: string;
+  userId: string;
   onClose: () => void;
 }
 
-export default function VoiceCall({ agentId, characterName, onClose }: VoiceCallProps) {
+export default function VoiceCall({ agentId, characterName, userId, onClose }: VoiceCallProps) {
   const [status, setStatus] = useState<CallStatus>("connecting");
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [transcript, setTranscript] = useState<Array<{ role: string; text: string }>>([]);
@@ -45,17 +46,43 @@ export default function VoiceCall({ agentId, characterName, onClose }: VoiceCall
       setStatus("connecting");
       setError(null);
 
-      // Fetch Zep context for the voice call
+      // Fetch Zep context for the voice call (includes user memory)
       let zepContext = "";
       try {
+        console.log("[VOICE] Fetching context for userId:", userId);
         const contextRes = await fetch("/api/voice-context", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: `Who is ${characterName}? What should I know about them?` }),
+          body: JSON.stringify({
+            query: `Who is ${characterName}? What should I know about them?`,
+            userId,
+          }),
         });
         const contextData = await contextRes.json();
         zepContext = contextData.context || "";
-        console.log("Fetched Zep context:", zepContext.slice(0, 200));
+
+        // Log both sections clearly
+        console.log("=".repeat(50));
+        console.log("[VOICE] CONTEXT RECEIVED - Total length:", zepContext.length);
+        console.log("=".repeat(50));
+
+        // Log Kagan's background (shortened)
+        const kaganSection = zepContext.split("WHAT I REMEMBER ABOUT THIS USER:")[0];
+        console.log("[VOICE] KAGAN'S BACKGROUND (preview):", kaganSection?.slice(0, 200) + "...");
+
+        // Log user memory section - THIS IS THE KEY PART
+        const userMemorySection = zepContext.includes("WHAT I REMEMBER ABOUT THIS USER:")
+          ? zepContext.split("WHAT I REMEMBER ABOUT THIS USER:")[1]
+          : null;
+
+        console.log("-".repeat(50));
+        if (userMemorySection) {
+          console.log("[VOICE] ✅ USER MEMORY FOUND:");
+          console.log(userMemorySection.slice(0, 1000));
+        } else {
+          console.log("[VOICE] ❌ NO USER MEMORY in context");
+        }
+        console.log("=".repeat(50));
       } catch (e) {
         console.error("Failed to fetch Zep context:", e);
       }
@@ -65,6 +92,7 @@ export default function VoiceCall({ agentId, characterName, onClose }: VoiceCall
         connectionType: "websocket",
         dynamicVariables: {
           zep_context: zepContext || "No additional context available.",
+          user_id: userId,
         },
         onConnect: () => {
           console.log("Connected to ElevenLabs");
@@ -133,8 +161,31 @@ export default function VoiceCall({ agentId, characterName, onClose }: VoiceCall
       await conversation.endSession();
       setConversation(null);
     }
+
+    // Save transcript to Zep for memory persistence
+    if (transcript.length > 0) {
+      try {
+        console.log("[VOICE] Saving transcript to Zep for userId:", userId);
+        console.log("[VOICE] Message count:", transcript.length);
+        await fetch("/api/voice-save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            messages: transcript.map(t => ({
+              role: t.role,
+              content: t.text,
+            })),
+          }),
+        });
+        console.log("[VOICE] Transcript saved to Zep");
+      } catch (e) {
+        console.error("[VOICE] Failed to save transcript:", e);
+      }
+    }
+
     setStatus("idle");
-  }, [conversation]);
+  }, [conversation, transcript, userId]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -189,7 +240,10 @@ export default function VoiceCall({ agentId, characterName, onClose }: VoiceCall
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-        <div className="text-white font-medium">Voice Call with {characterName}</div>
+        <div className="text-center">
+          <div className="text-white font-medium">Voice Call with {characterName}</div>
+          <div className="text-white/40 text-xs font-mono">{userId?.slice(0, 20)}...</div>
+        </div>
         <div className="w-10" />
       </div>
 

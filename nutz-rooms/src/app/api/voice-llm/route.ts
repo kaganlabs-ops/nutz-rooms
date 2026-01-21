@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { openai, KAGAN_VOICE_PROMPT } from "@/lib/openai";
-import { getUserMemory, formatUserMemoryContext, KAGAN_USER_ID } from "@/lib/zep";
+import { getUserMemoryFromThread, hasRealMemory } from "@/lib/zep";
 import { findRelevantFacts, formatBrainContext, getKaganBrain } from "@/lib/brain";
 
 // CORS headers for ElevenLabs
@@ -29,6 +29,17 @@ interface ChatCompletionRequest {
   stream?: boolean;
 }
 
+// Extract userId from ElevenLabs system message (injected via dynamicVariables)
+function extractUserId(messages: ChatMessage[]): string | null {
+  const systemMsg = messages.find(m => m.role === "system");
+  if (!systemMsg) return null;
+
+  // ElevenLabs injects dynamic variables into the system prompt
+  // Look for user_id pattern
+  const match = systemMsg.content.match(/user_id[:\s]+([a-zA-Z0-9_-]+)/i);
+  return match ? match[1] : null;
+}
+
 export async function POST(req: NextRequest) {
   const timestamp = new Date().toISOString();
   console.log(`\n========================================`);
@@ -37,11 +48,31 @@ export async function POST(req: NextRequest) {
 
   try {
     const bodyText = await req.text();
-    const body: ChatCompletionRequest = JSON.parse(bodyText);
-    const { messages, stream = true } = body;
+    const body = JSON.parse(bodyText);
+    const { messages, stream = true } = body as ChatCompletionRequest;
 
-    // Use KAGAN_USER_ID for voice calls (shared state with text chat)
-    const userId = KAGAN_USER_ID;
+    // Log the full request body to see what ElevenLabs sends
+    console.log(`[VOICE] Full request body keys:`, Object.keys(body));
+
+    // Check for elevenlabs_extra_body (where dynamic variables might be passed)
+    const extraBody = body.elevenlabs_extra_body || body.extra_body || {};
+    console.log(`[VOICE] Extra body:`, JSON.stringify(extraBody));
+
+    // Try to extract userId from various sources:
+    // 1. elevenlabs_extra_body (if custom LLM extra body is enabled)
+    // 2. System message (if agent has prompt with {{user_id}})
+    let userId = extraBody.user_id || extraBody.userId || null;
+
+    if (!userId) {
+      // Fall back to extracting from system message
+      userId = extractUserId(messages);
+    }
+
+    console.log(`[VOICE] Extracted userId: ${userId || "none"}`);
+
+    if (!userId) {
+      console.log(`[VOICE] WARNING: No userId found in system message, memory will not work`);
+    }
 
     // Log incoming messages (transcript)
     console.log(`[VOICE] Conversation history:`);
@@ -80,11 +111,11 @@ export async function POST(req: NextRequest) {
       // Just preload cache (instant)
       getKaganBrain();
       console.log(`[VOICE] Simple greeting - skipping memory lookup`);
-    } else {
+    } else if (userId) {
       // Parallel fetch: brain cache (instant) + user memory (async)
-      const [_brainPreload, userMemories] = await Promise.all([
+      const [_brainPreload, userMemoryContext] = await Promise.all([
         Promise.resolve(getKaganBrain()),
-        getUserMemory(userId, userMessage, 10),
+        getUserMemoryFromThread(userId),
       ]);
 
       // Get relevant brain facts based on user's message
@@ -95,12 +126,20 @@ export async function POST(req: NextRequest) {
         systemPrompt += `\n\n${formatBrainContext(relevantBrainFacts)}`;
       }
 
-      // Add user's personal memory
-      if (userMemories.length > 0) {
-        systemPrompt += `\n\n${formatUserMemoryContext(userMemories)}`;
+      // Add user's personal memory (pre-formatted from Zep)
+      if (hasRealMemory(userMemoryContext)) {
+        systemPrompt += `\n\n## USER MEMORY:\n${userMemoryContext}`;
+        console.log(`[VOICE] Context: ${relevantBrainFacts.length} brain facts, user memory: ${userMemoryContext?.length || 0} chars`);
+      } else {
+        console.log(`[VOICE] Context: ${relevantBrainFacts.length} brain facts, no user memory`);
       }
-
-      console.log(`[VOICE] Context: ${relevantBrainFacts.length} brain facts, ${userMemories.length} user memories`);
+    } else {
+      // No userId - just use brain facts without user memory
+      const relevantBrainFacts = findRelevantFacts(userMessage, 5);
+      if (relevantBrainFacts.length > 0) {
+        systemPrompt += `\n\n${formatBrainContext(relevantBrainFacts)}`;
+      }
+      console.log(`[VOICE] No userId - using ${relevantBrainFacts.length} brain facts only`);
     }
 
     console.log(`[VOICE] Stream mode: ${stream}, prompt length: ${systemPrompt.length}`);

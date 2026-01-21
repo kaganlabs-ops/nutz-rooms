@@ -101,7 +101,20 @@ export default function RoomPage() {
   const [videoState] = useState<VideoState>("idle");
   const [showVoiceCall, setShowVoiceCall] = useState(false);
   const [micError, setMicError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Initialize or retrieve user ID from localStorage (same as chat page)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      let storedUserId = localStorage.getItem("nutz-user-id");
+      if (!storedUserId) {
+        storedUserId = `user-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+        localStorage.setItem("nutz-user-id", storedUserId);
+      }
+      setUserId(storedUserId);
+    }
+  }, []);
 
   // Info panel expanded state
   const [isInfoExpanded, setIsInfoExpanded] = useState(false);
@@ -482,10 +495,11 @@ export default function RoomPage() {
       </div>
 
       {/* Voice Call Overlay */}
-      {showVoiceCall && selectedCharacter.agentId && (
+      {showVoiceCall && selectedCharacter.agentId && userId && (
         <VoiceCall
           agentId={selectedCharacter.agentId}
           characterName={selectedCharacter.name}
+          userId={userId}
           onClose={() => setShowVoiceCall(false)}
         />
       )}

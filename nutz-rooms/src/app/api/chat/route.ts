@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ensureUser, createThread, addMessages, getThreadMessages, getUserMemory, saveUserMemory, formatUserMemoryContext } from "@/lib/zep";
+import { ensureUser, createThread, addMessages, getThreadMessages, getUserContext, hasRealMemory } from "@/lib/zep";
 import { anthropic, KAGAN_SYSTEM_PROMPT } from "@/lib/openai";
 import { parseArtifact } from "@/lib/artifacts";
 import { searchGif } from "@/lib/giphy";
@@ -21,51 +21,41 @@ export async function POST(req: NextRequest) {
     console.log(`[CHAT] Request from user: ${userId}`);
 
     // ============================================
-    // STEP 1: PARALLEL FETCH (before Claude)
-    // - Kagan's brain (cached, instant)
-    // - User's memory (from Zep, ~150ms)
-    // - Thread setup (if needed)
+    // STEP 1: Setup user and thread
     // ============================================
 
-    // Start parallel operations
-    const [
-      _brainPreload,        // Just to ensure cache is warm
-      userMemories,         // User's personal memories
-      threadSetup,          // Ensure user + thread exists
-    ] = await Promise.all([
-      // 1. Kagan's brain - instant from cache
-      Promise.resolve(getKaganBrain()),
+    await ensureUser(userId);
+    let threadId = existingThreadId;
+    if (!threadId) {
+      threadId = await createThread(userId);
+    }
 
-      // 2. User's memory from Zep (fetch 10 to get more context across sessions)
-      getUserMemory(userId, message, 10),
-
-      // 3. Setup: ensure user exists + get/create thread
-      (async () => {
-        await ensureUser(userId);
-        let threadId = existingThreadId;
-        if (!threadId) {
-          threadId = await createThread(userId);
-        }
-        return threadId;
-      })(),
-    ]);
-
-    const threadId = threadSetup;
-    const parallelTime = Date.now() - startTime;
-    console.log(`[CHAT] Parallel fetch completed in ${parallelTime}ms`);
-    console.log(`[CHAT] User memories fetched:`, userMemories.length, userMemories.slice(0, 3));
-
-    // Add user message to thread (for history)
+    // Add user message to thread FIRST (so Zep can use it for context retrieval)
     await addMessages(threadId, [
       { role: "user", content: message, name: "User" },
     ]);
 
-    // Get conversation history
-    const threadMessages = await getThreadMessages(threadId);
+    // ============================================
+    // STEP 2: GET MEMORY CONTEXT
+    // thread.getUserContext() is the KEY method:
+    // - Uses last 2 messages to search the ENTIRE user graph
+    // - Returns pre-formatted context block with user summary + relevant facts
+    // - Works across ALL sessions, not just current thread
+    // ============================================
+
+    const [memoryContext, threadMessages] = await Promise.all([
+      getUserContext(threadId),
+      getThreadMessages(threadId),
+    ]);
+
+    const parallelTime = Date.now() - startTime;
+    console.log(`[CHAT] Memory fetch completed in ${parallelTime}ms`);
+    console.log(`[CHAT] Memory context from Zep:`, memoryContext?.slice(0, 300) || 'none');
+
+    // Get conversation history (last 6 messages as fallback - Zep ingestion takes a few mins)
     const messageHistory: Array<{ role: "user" | "assistant"; content: string }> = [];
-    const recentMessages = threadMessages.slice(-10);
+    const recentMessages = threadMessages.slice(-6);
     for (const msg of recentMessages) {
-      // Only include messages with actual content (Claude API requires non-empty content)
       if ((msg.role === "user" || msg.role === "assistant") && msg.content && msg.content.trim()) {
         messageHistory.push({
           role: msg.role,
@@ -75,7 +65,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ============================================
-    // BUILD CONTEXT: Combine brain + user memory
+    // BUILD CONTEXT: Combine brain + Zep memory
     // ============================================
 
     // Get relevant facts from Kagan's brain based on message
@@ -84,17 +74,51 @@ export async function POST(req: NextRequest) {
     // Build system prompt with combined context
     let systemPrompt = KAGAN_SYSTEM_PROMPT;
 
-    // Add Kagan's brain (shared knowledge)
+    // Add Kagan's brain (shared knowledge about Kagan)
     if (relevantBrainFacts.length > 0) {
       systemPrompt += `\n\n${formatBrainContext(relevantBrainFacts)}`;
     }
 
-    // Add user's personal memory
-    if (userMemories.length > 0) {
-      systemPrompt += `\n\n${formatUserMemoryContext(userMemories)}`;
+    // Add user memory from Zep (this is the KEY part)
+    // Zep returns pre-formatted context - inject it directly
+    // Check if there's REAL content (not just empty template)
+    const hasUserSummary = memoryContext?.includes('<USER_SUMMARY>') &&
+                           !memoryContext.includes('No other personal or lifestyle details are currently known');
+    const hasRealFacts = memoryContext?.includes('<FACTS>') &&
+                         !memoryContext.match(/<FACTS>\s*<\/FACTS>/) &&
+                         !memoryContext.match(/<FACTS>\s*\n\s*<\/FACTS>/);
+    const hasRealMemory = hasUserSummary || hasRealFacts;
+
+    console.log(`[CHAT] Memory analysis: hasUserSummary=${hasUserSummary}, hasRealFacts=${hasRealFacts}, hasRealMemory=${hasRealMemory}`);
+
+    console.log(`[CHAT] Memory check: hasRealMemory=${hasRealMemory}, length=${memoryContext?.length || 0}`);
+
+    if (hasRealMemory) {
+      systemPrompt += `\n\n## MEMORY - What I know about this user:
+${memoryContext}
+
+## CRITICAL MEMORY RULES:
+1. USER_SUMMARY = long-term facts about who they are (job, projects, preferences)
+2. FACTS = specific things from recent conversations with dates
+
+IMPORTANT:
+- Only reference things EXPLICITLY in the memory above
+- If they ask "what did we talk about last time" - look at FACTS section for dated items
+- If FACTS section is empty or only has meta-info like "Assistant asked..." - say "im not seeing specifics from our last convo"
+- NEVER make up or hallucinate conversations that aren't in FACTS
+- You can reference USER_SUMMARY for who they are, but NOT for what they said recently
+- If they just say "hey", greet based on USER_SUMMARY (their projects/work)`;
+    } else {
+      systemPrompt += `\n\n## MEMORY:
+NO MEMORY AVAILABLE. This is a new user or I have no context from past conversations.
+
+CRITICAL:
+- Do NOT make up or hallucinate past conversations
+- If user asks "what did I tell you last time" - say "i dont have context from our last convo, whats up?"
+- Be direct: "im not seeing our past convos, fill me in"`;
     }
 
-    console.log(`[CHAT] Context: ${relevantBrainFacts.length} brain facts, ${userMemories.length} user memories`);
+    console.log(`[CHAT] Context: ${relevantBrainFacts.length} brain facts, memory context: ${memoryContext ? 'yes' : 'no'}`);
 
     // ============================================
     // STEP 2: CALL CLAUDE (stream to user)
@@ -130,30 +154,19 @@ export async function POST(req: NextRequest) {
     }
 
     // ============================================
-    // STEP 3: SAVE TO MEMORY (quick, ~100ms)
-    // - Save AI response to thread
-    // - Extract and save user facts to USER memory only
+    // STEP 3: SAVE AI RESPONSE TO THREAD
+    // Zep will automatically extract facts from the conversation!
+    // No need to manually extract and save facts.
     // ============================================
 
-    const saveTasks: Promise<unknown>[] = [];
-
-    // Save AI response to thread (only if there's actual text content)
     if (responseText && responseText.trim()) {
-      saveTasks.push(
-        addMessages(threadId, [
+      try {
+        await addMessages(threadId, [
           { role: "assistant", content: responseText, name: "Kagan" },
-        ])
-      );
-    }
-
-    // Extract and save facts to USER's memory (not Kagan's brain)
-    saveTasks.push(extractAndSaveUserFacts(userId, message, responseText));
-
-    // Wait for saves (must await or serverless kills it)
-    try {
-      await Promise.all(saveTasks);
-    } catch (err) {
-      console.error('[CHAT] Save failed:', err);
+        ]);
+      } catch (err) {
+        console.error('[CHAT] Save failed:', err);
+      }
     }
 
     const totalTime = Date.now() - startTime;
@@ -175,49 +188,3 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Extract facts from user message and AI response, save to USER's memory only
-async function extractAndSaveUserFacts(userId: string, userMessage: string, aiResponse: string): Promise<void> {
-  console.log(`[EXTRACT] Starting extraction for user ${userId}, message: "${userMessage.slice(0, 50)}..."`);
-  const factsToSave: string[] = [];
-
-  // Patterns to extract from user message
-  // Note: i(?:'m|m| am) handles "i'm", "im", "i am"
-  const userPatterns = [
-    { pattern: /i(?:'m|m| am) building (.+)/i, template: "User is building: $1" },
-    { pattern: /my (?:startup|company|project|app) is (?:called )?(.+)/i, template: "User's project: $1" },
-    { pattern: /i work (?:on|at|for) (.+)/i, template: "User works at/on: $1" },
-    { pattern: /my name is (.+)/i, template: "User's name: $1" },
-    { pattern: /i(?:'m|m| am) a (.+?)(?:\.|,|$)/i, template: "User is a: $1" },
-    { pattern: /i founded (.+)/i, template: "User founded: $1" },
-    { pattern: /i have (\d+) (?:users|customers)/i, template: "User has $1 users/customers" },
-    { pattern: /we(?:'ve| have) raised (.+)/i, template: "User raised: $1" },
-    { pattern: /i(?:'m|m| am) (?:feeling |)(?:stuck|overwhelmed|lost|stressed)/i, template: "User mentioned feeling stuck/overwhelmed" },
-    { pattern: /my (?:biggest |main )?(?:problem|challenge|issue) is (.+)/i, template: "User's main challenge: $1" },
-    { pattern: /(?:building|working on|making) (?:a |an )?(.+? (?:app|platform|tool|startup|company|product|saas|service))/i, template: "User is building: $1" },
-  ];
-
-  for (const { pattern, template } of userPatterns) {
-    const match = userMessage.match(pattern);
-    if (match) {
-      const fact = template.replace('$1', match[1]?.trim() || match[0]);
-      console.log(`[EXTRACT] Pattern matched: ${pattern} -> "${fact}"`);
-      factsToSave.push(fact);
-    }
-  }
-
-  console.log(`[EXTRACT] Total facts found: ${factsToSave.length}`);
-
-  // Save extracted facts (max 3 per message to avoid noise)
-  const factsToActuallySave = factsToSave.slice(0, 3);
-  for (const fact of factsToActuallySave) {
-    console.log(`[EXTRACT] Saving fact to Zep: "${fact}"`);
-    const success = await saveUserMemory(userId, fact);
-    console.log(`[EXTRACT] Save result: ${success}`);
-  }
-
-  if (factsToActuallySave.length > 0) {
-    console.log(`[CHAT] Saved ${factsToActuallySave.length} facts to user memory: ${factsToActuallySave.join(', ')}`);
-  } else {
-    console.log(`[EXTRACT] No facts to save for this message`);
-  }
-}

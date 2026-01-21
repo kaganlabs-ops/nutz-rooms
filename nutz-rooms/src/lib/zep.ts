@@ -5,36 +5,95 @@ export const zep = new ZepClient({
   apiKey: process.env.ZEP_API_KEY!,
 });
 
-// Kagan's user ID in Zep
+// Kagan's user ID in Zep (for his personality/brain facts)
 export const KAGAN_USER_ID = "kagan-sumer";
 
-// Create or get user
+// Fact rating instruction for new users
+const FACT_RATING_INSTRUCTION = `Rate facts by relevance to helping this user with startup/business problems.
+High priority = their current project, goals, blockers, what they're building
+Medium priority = background info, preferences, past experience
+Low priority = casual mentions, small talk details`;
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+// Ensure user exists in Zep (create if not found)
 export async function ensureUser(userId: string, firstName?: string, lastName?: string) {
+  console.log(`[ZEP] ensureUser called - userId: ${userId}`);
   try {
     const user = await zep.user.get(userId);
+    console.log(`[ZEP] User exists: ${userId}`);
     return user;
   } catch {
-    // User doesn't exist, create them
+    // User doesn't exist, create them with fact rating instruction
+    console.log(`[ZEP] Creating new user: ${userId}`);
     const user = await zep.user.add({
       userId,
       firstName,
       lastName,
+      metadata: {
+        factRatingInstruction: FACT_RATING_INSTRUCTION,
+      },
     });
+    console.log(`[ZEP] User created: ${userId}`);
     return user;
   }
 }
 
-// Create a new conversation thread
-export async function createThread(userId: string) {
-  const threadId = `thread-${userId}-${Date.now()}`;
+// ============================================
+// THREAD MANAGEMENT
+// ============================================
+
+// Create a new thread for a session (each session = new thread)
+export async function createThread(userId: string, sessionId?: string) {
+  const threadId = sessionId || `thread-${userId}-${Date.now()}`;
+  console.log(`[ZEP] Creating thread: ${threadId} for user: ${userId}`);
+
   await zep.thread.create({
     threadId,
     userId,
   });
+
+  console.log(`[ZEP] Thread created: ${threadId}`);
   return threadId;
 }
 
-// Add messages to thread
+// Get user's most recent thread ID
+export async function getUserLatestThread(userId: string): Promise<string | null> {
+  console.log(`[ZEP] getUserLatestThread - userId: ${userId}`);
+  try {
+    const threads = await zep.thread.listAll({
+      pageSize: 20,
+    });
+
+    // Filter to this user's threads and sort by most recent
+    const userThreads = threads.threads
+      ?.filter(t => t.userId === userId)
+      ?.sort((a, b) => {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bTime - aTime;
+      });
+
+    if (userThreads && userThreads.length > 0) {
+      console.log(`[ZEP] Found ${userThreads.length} threads, latest: ${userThreads[0].threadId}`);
+      return userThreads[0].threadId || null;
+    }
+
+    console.log(`[ZEP] No threads found for user ${userId}`);
+    return null;
+  } catch (e) {
+    console.error(`[ZEP] getUserLatestThread ERROR:`, e);
+    return null;
+  }
+}
+
+// ============================================
+// MESSAGE MANAGEMENT
+// ============================================
+
+// Add messages to thread (Zep auto-extracts facts from these)
 export async function addMessages(
   threadId: string,
   messages: Array<{
@@ -43,6 +102,8 @@ export async function addMessages(
     name?: string;
   }>
 ) {
+  console.log(`[ZEP] addMessages - threadId: ${threadId}, count: ${messages.length}`);
+
   await zep.thread.addMessages(threadId, {
     messages: messages.map((m) => ({
       content: m.content,
@@ -50,41 +111,79 @@ export async function addMessages(
       roleName: m.name,
     })),
   });
+
+  console.log(`[ZEP] Messages added to thread ${threadId}`);
 }
 
-// Get messages from thread
-export async function getThreadMessages(threadId: string) {
+// Get messages from a specific thread (for "last session" context)
+export async function getThreadMessages(threadId: string, limit: number = 10) {
+  console.log(`[ZEP] getThreadMessages - threadId: ${threadId}, limit: ${limit}`);
   try {
     const response = await zep.thread.get(threadId, {});
-    return response.messages || [];
-  } catch {
+    const messages = response.messages || [];
+    console.log(`[ZEP] Got ${messages.length} messages from thread`);
+    return messages.slice(-limit);
+  } catch (e) {
+    console.error(`[ZEP] getThreadMessages ERROR:`, e);
     return [];
   }
 }
 
-// Get user context for a thread (includes knowledge graph facts)
-export async function getUserContext(threadId: string) {
+// ============================================
+// CONTEXT RETRIEVAL (THE KEY PART!)
+// ============================================
+
+// Get user context from thread - searches ENTIRE user graph across ALL sessions
+// This is the primary way to get memory - returns pre-formatted context block
+export async function getUserContext(threadId: string): Promise<string | null> {
+  console.log(`[ZEP] getUserContext - threadId: ${threadId}`);
   try {
-    const context = await zep.thread.getUserContext(threadId, {});
-    return context;
-  } catch {
+    const response = await zep.thread.getUserContext(threadId, {});
+    const context = response.context || '';
+
+    console.log(`[ZEP] getUserContext returned ${context.length} chars`);
+    if (context.length > 0) {
+      console.log(`[ZEP] Context preview: ${context.slice(0, 200)}...`);
+    }
+
+    return context || null;
+  } catch (e) {
+    console.error(`[ZEP] getUserContext ERROR:`, e);
     return null;
   }
 }
 
-// Search the knowledge graph
-export async function searchGraph(userId: string, query: string) {
-  console.log(`[ZEP] searchGraph called - userId: ${userId}, query: "${query.slice(0, 50)}..."`);
+// Get user memory from their most recent thread
+// Useful when you don't have a current thread yet
+export async function getUserMemoryFromThread(userId: string): Promise<string | null> {
+  console.log(`[ZEP] getUserMemoryFromThread - userId: ${userId}`);
+
+  const threadId = await getUserLatestThread(userId);
+  if (!threadId) {
+    console.log(`[ZEP] No thread found for user`);
+    return null;
+  }
+
+  return await getUserContext(threadId);
+}
+
+// ============================================
+// GRAPH SEARCH (LOWER LEVEL)
+// ============================================
+
+// Search the knowledge graph directly (useful for specific queries)
+export async function searchGraph(userId: string, query: string, limit: number = 10) {
+  console.log(`[ZEP] searchGraph - userId: ${userId}, query: "${query.slice(0, 50)}..."`);
   try {
     const results = await zep.graph.search({
       userId,
       query,
-      limit: 10,
+      limit,
     });
-    console.log(`[ZEP] searchGraph results:`, {
-      edgeCount: results?.edges?.length || 0,
-      facts: results?.edges?.slice(0, 3).map(e => e.fact?.slice(0, 50)) || []
-    });
+
+    const facts = results?.edges?.map(e => e.fact).filter(Boolean) || [];
+    console.log(`[ZEP] searchGraph found ${facts.length} facts`);
+
     return results;
   } catch (e) {
     console.error(`[ZEP] searchGraph ERROR:`, e);
@@ -92,9 +191,28 @@ export async function searchGraph(userId: string, query: string) {
   }
 }
 
-// Add data to the knowledge graph
+// Get user memory via graph search (fallback method)
+export async function getUserMemory(userId: string, query: string, limit: number = 5): Promise<string[]> {
+  console.log(`[ZEP] getUserMemory - userId: ${userId}, query: "${query.slice(0, 50)}..."`);
+  try {
+    const results = await zep.graph.search({
+      userId,
+      query,
+      limit,
+    });
+
+    const facts = results?.edges?.map(e => e.fact).filter(Boolean) as string[] || [];
+    console.log(`[ZEP] getUserMemory found ${facts.length} facts`);
+    return facts;
+  } catch (e) {
+    console.error(`[ZEP] getUserMemory ERROR:`, e);
+    return [];
+  }
+}
+
+// Add data directly to the knowledge graph
 export async function addToGraph(userId: string, data: string, type: "text" | "json" = "text") {
-  console.log(`[ZEP] addToGraph called - userId: ${userId}, type: ${type}, data: "${data.slice(0, 100)}..."`);
+  console.log(`[ZEP] addToGraph - userId: ${userId}, type: ${type}`);
   try {
     await zep.graph.add({
       userId,
@@ -110,89 +228,16 @@ export async function addToGraph(userId: string, data: string, type: "text" | "j
 }
 
 // ============================================
-// USER MEMORY SYSTEM (per-user, separate from Kagan's brain)
+// FORMATTING HELPERS
 // ============================================
 
-// Get user's personal memory/context
-// Does THREE things: graph search (broad + specific) AND retrieves user facts directly
-export async function getUserMemory(userId: string, query: string, limit: number = 5): Promise<string[]> {
-  console.log(`[ZEP] getUserMemory called - userId: ${userId}, query: "${query.slice(0, 50)}..."`);
-  try {
-    // Parallel fetch: broad search + query search + user facts
-    const [broadResults, queryResults, userFacts] = await Promise.all([
-      // 1. Broad search: who is this user, what are they working on
-      zep.graph.search({
-        userId,
-        query: "user is building working on project startup app name challenge",
-        limit: Math.ceil(limit / 2),
-      }).catch(e => { console.log('[ZEP] broad search failed:', e); return null; }),
-      // 2. Specific search: based on their current message
-      zep.graph.search({
-        userId,
-        query,
-        limit: Math.ceil(limit / 2),
-      }).catch(e => { console.log('[ZEP] query search failed:', e); return null; }),
-      // 3. Try to get user's stored facts directly (if API supports)
-      zep.graph.search({
-        userId,
-        query: "User is User's User has User works User founded User mentioned",
-        limit: limit,
-      }).catch(e => { console.log('[ZEP] user facts search failed:', e); return null; }),
-    ]);
-
-    // Combine and dedupe
-    const allFacts = new Set<string>();
-
-    // Add facts from graph searches
-    broadResults?.edges?.forEach((edge: { fact?: string }) => {
-      if (edge.fact) allFacts.add(edge.fact);
-    });
-
-    queryResults?.edges?.forEach((edge: { fact?: string }) => {
-      if (edge.fact) allFacts.add(edge.fact);
-    });
-
-    // Add user-specific facts (these should match "User is building X" format)
-    userFacts?.edges?.forEach((edge: { fact?: string }) => {
-      if (edge.fact && edge.fact.toLowerCase().startsWith('user')) {
-        allFacts.add(edge.fact);
-      }
-    });
-
-    const memories = Array.from(allFacts);
-    console.log(`[ZEP] getUserMemory found ${memories.length} memories (${broadResults?.edges?.length || 0} broad + ${queryResults?.edges?.length || 0} query + ${userFacts?.edges?.length || 0} user facts, deduped)`);
-    return memories;
-  } catch (e) {
-    console.error(`[ZEP] getUserMemory ERROR:`, e);
-    return [];
-  }
-}
-
-// Save fact to user's personal memory (NOT Kagan's brain)
-export async function saveUserMemory(userId: string, fact: string): Promise<boolean> {
-  console.log(`[ZEP] saveUserMemory - userId: ${userId}, fact: "${fact.slice(0, 100)}..."`);
-  try {
-    await zep.graph.add({
-      userId,
-      type: "text",
-      data: fact,
-    });
-    console.log(`[ZEP] saveUserMemory SUCCESS`);
-    return true;
-  } catch (e) {
-    console.error(`[ZEP] saveUserMemory FAILED:`, e);
-    return false;
-  }
-}
-
-// Format user memories for inclusion in prompt
+// Format user memories for prompt injection
 export function formatUserMemoryContext(memories: string[]): string {
   if (memories.length === 0) return "";
 
-  // Filter out noise (mode_state, timestamps, meta stuff)
+  // Filter out noise
   const cleanMemories = memories.filter(m => {
     const lower = m.toLowerCase();
-    // Skip meta/system noise
     if (lower.includes('mode_state') || lower.includes('mode state')) return false;
     if (lower.includes('last updated at')) return false;
     if (lower.includes('current stage')) return false;
@@ -225,3 +270,32 @@ Only ask "what are u working on" if theres literally nothing in memory.
 Weave memory in naturally. Dont say "I remember you said..." - just reference it like u naturally recall.`;
 }
 
+// Format thread messages as "last session" context
+export function formatLastSessionMessages(messages: Array<{ role?: string; content?: string }>): string {
+  if (!messages || messages.length === 0) return "";
+
+  const formatted = messages
+    .filter(m => m.role === 'user' || m.role === 'assistant')
+    .map(m => `${m.role === 'user' ? 'User' : 'Kagan'}: ${m.content}`)
+    .join('\n');
+
+  return `## LAST SESSION RECAP:
+${formatted}`;
+}
+
+// Check if context has real content (not just template text)
+export function hasRealMemory(context: string | null): boolean {
+  if (!context || context.length < 50) return false;
+
+  // Check for actual USER_SUMMARY content
+  const hasUserSummary = context.includes('<USER_SUMMARY>') &&
+    !context.includes('No other personal or lifestyle details are currently known') &&
+    !context.includes('No other personal or lifestyle details are available');
+
+  // Check for non-empty FACTS section
+  const hasRealFacts = context.includes('<FACTS>') &&
+    !context.match(/<FACTS>\s*<\/FACTS>/) &&
+    !context.match(/<FACTS>\s*\n\s*<\/FACTS>/);
+
+  return hasUserSummary || hasRealFacts;
+}
