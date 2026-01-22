@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+// Quick test of the updated artifact prompt with overwhelmed scenario
+// Run with: cd /Users/kagan/nutz-rooms && export $(grep -v '^#' .env.local | xargs) && npx tsx scripts/test-single-artifact.ts
+
 import Anthropic from "@anthropic-ai/sdk";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// Copy the prompt from create-artifact route
 const KAGAN_ARTIFACT_PROMPT = `## WHO YOU ARE
 
 You are Kagan. Not generic AI. Not a helpful assistant. You're Kagan Sümer.
@@ -148,69 +149,6 @@ These are how you think:
    "Don't build demos. BE the product first. Manually. This week."
    "You said next week. Why not today? Who can you message right now?"
 
-## EXAMPLE: GOOD VS BAD
-
-User is overwhelmed with multiple projects.
-
-### BAD ARTIFACT (generic, templated):
-
-\`\`\`
-# Brain Dump & Priority Sorting
-
-## Step 1: Get Everything Out
-- [ ] List all tasks for Project A
-- [ ] List all tasks for Project B
-- [ ] Add deadlines
-
-## Step 2: Prioritize
-- [ ] Mark urgent items
-- [ ] Identify most important
-
-## Next Steps
-Consider which project has the biggest impact.
-\`\`\`
-
-### GOOD ARTIFACT (Kagan):
-
-\`\`\`
-# Clarity: Your Plate Right Now
-
-## EVERYTHING YOU MENTIONED
-- Slides - status unclear
-- Nuts - figuring out if worth pursuing
-- Session - status unclear
-- Outcomplex closing - family stuff
-- Family
-
-You're carrying all 5 equally. That's why you're overwhelmed.
-
-## MY TAKE
-You spent 80% of our conversation on Nuts. That's signal. Your brain wants to resolve this one.
-
-The others are maintenance. Nuts is the decision that changes your trajectory.
-
-## YOUR ONE THING THIS WEEK
-Validate Nuts: Talk to 3 potential USERS (not creators) by Friday.
-
-You've talked to creators. They like it. That's supply.
-You haven't validated demand. Do users actually want this?
-
-## PARKING LOT
-- Slides - park it
-- Session - park it
-- Outcomplex - handle minimum needed
-- Family - scheduled time only
-
-## DO TODAY
-□ Write down 3 people who might USE a creator AI clone
-□ Message the first one right now
-
-When I built Gorillas, I didn't build an app first. I delivered groceries on a bike.
-For Nuts: BE the AI clone for one creator manually. See if users care.
-
-Don't touch the parking lot until you've talked to 3 users.
-\`\`\`
-
 ## WHAT YOU CAN CREATE
 
 Anything that helps. You decide the format:
@@ -256,61 +194,88 @@ Make it something they'd screenshot and actually use.
 
 Output ONLY the markdown content, no preamble.`;
 
-export async function POST(request: NextRequest) {
-  try {
-    const { context, intent, transcript } = await request.json();
+async function testOverwhelmedScenario() {
+  console.log("Testing overwhelmed scenario with updated prompt...\n");
 
-    console.log('[CREATE-ARTIFACT] Generating for context:', JSON.stringify(context).slice(0, 100));
-    console.log('[CREATE-ARTIFACT] Transcript length:', transcript?.length || 0, 'messages');
+  const transcript = [
+    { role: "user", content: "man I have so much going on right now, I don't know where to start" },
+    { role: "assistant", content: "ya I know that feeling. what's on your plate right now" },
+    { role: "user", content: "I'm building this app called FitTrack, trying to talk to investors, need to hire a designer, landing page is broken, and I promised my cofounder Jake I'd fix this auth bug by tomorrow" },
+    { role: "assistant", content: "ok that's a lot. which one is actually blocking everything else" },
+    { role: "user", content: "honestly I think I need users first before investors will care, but I keep getting pulled into random stuff. We have like 50 beta users but no revenue" },
+    { role: "assistant", content: "ya so users are the bottleneck. but you also have 50 users already - have you talked to them? do they love it" },
+    { role: "user", content: "some of them seem to like it but I haven't really talked to them much. Been too busy building features" },
+    { role: "assistant", content: "got you, working on it. let me put together a clarity doc" },
+  ];
 
-    // Build conversation context from transcript
-    const conversationSummary = transcript
-      ?.slice(-20)
-      .map((m: { role: string; content: string }) => `${m.role}: ${m.content}`)
-      .join('\n') || '';
+  const conversationSummary = transcript
+    .map((m) => `${m.role}: ${m.content}`)
+    .join("\n");
 
-    const startTime = Date.now();
+  const startTime = Date.now();
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
-      messages: [
-        {
-          role: "user",
-          content: `${KAGAN_ARTIFACT_PROMPT}
+  const response = await anthropic.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 4096,
+    messages: [
+      {
+        role: "user",
+        content: `${KAGAN_ARTIFACT_PROMPT}
 
 ---
 
 CONVERSATION:
 ${conversationSummary}
 
-USER'S REQUEST: "${context}"
+USER'S REQUEST: "Help me figure out what to focus on"
 
-INTENT: ${intent}
+INTENT: clarity
 
 Now create the artifact.`,
-        },
-      ],
-    });
+      },
+    ],
+  });
 
-    const elapsed = Date.now() - startTime;
-    console.log('[CREATE-ARTIFACT] Generated in', elapsed + 'ms');
+  const timeMs = Date.now() - startTime;
+  const content = response.content[0].type === "text" ? response.content[0].text : "";
 
-    const content = response.content[0].type === 'text' ? response.content[0].text : '';
-    console.log('[CREATE-ARTIFACT] Generated', content.length, 'chars of content');
+  console.log("=".repeat(60));
+  console.log("GENERATED ARTIFACT");
+  console.log("=".repeat(60));
+  console.log(`\nGeneration time: ${timeMs}ms\n`);
+  console.log(content);
 
-    return NextResponse.json({
-      id: `artifact-${Date.now()}`,
-      content,
-      context,
-      intent,
-      createdAt: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('[CREATE-ARTIFACT] Error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create artifact' },
-      { status: 500 }
-    );
+  // Quality check
+  console.log("\n" + "=".repeat(60));
+  console.log("QUALITY CHECKLIST");
+  console.log("=".repeat(60));
+
+  const lower = content.toLowerCase();
+  const checks = [
+    { name: "Uses specific items (FitTrack, Jake, auth bug)", pass: lower.includes("fittrack") || lower.includes("jake") || lower.includes("auth") },
+    { name: "Takes clear stance", pass: lower.includes("one thing") || lower.includes("priority") || lower.includes("focus on") },
+    { name: "Has ONE THING", pass: lower.includes("one thing") || lower.includes("single") },
+    { name: "Has deadline (today, friday)", pass: lower.includes("today") || lower.includes("friday") || lower.includes("this week") },
+    { name: "Has parking lot", pass: lower.includes("parking lot") || lower.includes("not now") || lower.includes("park") },
+    { name: "References Kagan's experience", pass: lower.includes("gorillas") || lower.includes("when i") || lower.includes("i've seen") },
+    { name: "Ends with TODAY action", pass: lower.includes("do today") || lower.includes("today:") || lower.includes("right now") },
+    { name: "No template placeholders", pass: !lower.includes("___") && !lower.includes("[your") && !lower.includes("fill in") },
+  ];
+
+  let passCount = 0;
+  for (const check of checks) {
+    const status = check.pass ? "✅" : "❌";
+    console.log(`${status} ${check.name}`);
+    if (check.pass) passCount++;
+  }
+
+  console.log(`\nScore: ${passCount}/${checks.length}`);
+
+  if (passCount >= 7) {
+    console.log("\n🎉 PASS - Artifact meets quality bar!");
+  } else {
+    console.log("\n⚠️  NEEDS WORK - Some checks failed");
   }
 }
+
+testOverwhelmedScenario().catch(console.error);
