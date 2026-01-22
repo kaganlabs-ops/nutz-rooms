@@ -183,36 +183,6 @@ function getOpeningMessage(
 
 type CallStatus = "idle" | "connecting" | "connected" | "speaking" | "listening";
 
-// Summary extracted at end of call
-interface CallSummary {
-  oneThing: string | null;
-  parkedItems: string[];
-  insight: string | null;
-  blocker: string | null;
-}
-
-// Active artifact task (generated in real-time during call)
-interface ArtifactTask {
-  id: string;
-  status: 'pending' | 'done' | 'error';
-  context: string;
-  content?: string;
-  createdAt: string;
-}
-
-// Trigger phrases that indicate Kagan is working on something
-const ARTIFACT_TRIGGER_PHRASES = [
-  "got you, working on it",
-  "got you working on it",
-  "on it, give me a sec",
-  "on it give me a sec",
-  "cool i got you",
-  "cool, i got you",
-  "let me put something together",
-  "ill put something together",
-  "working on it",
-];
-
 interface VoiceCallProps {
   agentId: string;
   characterName: string;
@@ -227,18 +197,11 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
   const [error, setError] = useState<string | null>(null);
   const [pinnedAction, setPinnedAction] = useState<string | null>(null);
   const [sessionLoaded, setSessionLoaded] = useState(false);
-  const [callSummary, setCallSummary] = useState<CallSummary | null>(null);
-  const [isExtractingSummary, setIsExtractingSummary] = useState(false);
-  // Active artifact tasks (generated during call)
-  const [artifactTasks, setArtifactTasks] = useState<ArtifactTask[]>([]);
-  const [selectedArtifact, setSelectedArtifact] = useState<ArtifactTask | null>(null);
   const hasStarted = useRef(false);
   const hasSaved = useRef(false);
   const currentOneThing = useRef<string | null>(null);
   // Use ref for session metadata to avoid stale closures in useCallback
   const sessionMetadataRef = useRef<SessionMetadata | null>(null);
-  // Track transcript in ref for artifact generation (avoids stale closure)
-  const transcriptRef = useRef<Array<{ role: string; text: string }>>([]);
 
   // Load session metadata on mount
   useEffect(() => {
@@ -288,86 +251,6 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
       }
     }
     return null;
-  };
-
-  // Check if Kagan's message contains a trigger phrase indicating artifact creation
-  const checkForArtifactTrigger = (text: string): boolean => {
-    const lowerText = text.toLowerCase();
-    return ARTIFACT_TRIGGER_PHRASES.some(phrase => lowerText.includes(phrase));
-  };
-
-  // Extract context from recent transcript for artifact generation
-  const getRecentContext = (): string => {
-    // Get last 10 messages or all if fewer
-    const recent = transcriptRef.current.slice(-10);
-    if (recent.length === 0) return "";
-
-    // Find the user's request that Kagan is responding to
-    // Look backwards from end for user message
-    let userRequest = "";
-    for (let i = recent.length - 1; i >= 0; i--) {
-      if (recent[i].role === "user") {
-        userRequest = recent[i].text;
-        break;
-      }
-    }
-    return userRequest;
-  };
-
-  // Fire off artifact generation (non-blocking)
-  const triggerArtifactGeneration = async (context: string) => {
-    const taskId = `task-${Date.now()}`;
-    const task: ArtifactTask = {
-      id: taskId,
-      status: 'pending',
-      context,
-      createdAt: new Date().toISOString(),
-    };
-
-    // Add task immediately (shows "Working..." UI)
-    setArtifactTasks(prev => {
-      // Cap at 3 tasks
-      const updated = [...prev, task];
-      return updated.slice(-3);
-    });
-
-    try {
-      const response = await fetch('/api/create-artifact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          context,
-          intent: "Help the user based on conversation",
-          transcript: transcriptRef.current.map(t => ({
-            role: t.role,
-            content: t.text,
-          })),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create artifact');
-      }
-
-      const data = await response.json();
-
-      // Update task to done with content
-      setArtifactTasks(prev => prev.map(t =>
-        t.id === taskId
-          ? { ...t, status: 'done' as const, content: data.content }
-          : t
-      ));
-
-      console.log('[ARTIFACT] Generated artifact:', data.id);
-    } catch (err) {
-      console.error('[ARTIFACT] Generation failed:', err);
-      // Update task to error state
-      setArtifactTasks(prev => prev.map(t =>
-        t.id === taskId
-          ? { ...t, status: 'error' as const }
-          : t
-      ));
-    }
   };
 
   const startCall = useCallback(async () => {
@@ -513,24 +396,15 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
                 setPinnedAction(oneThing);
                 currentOneThing.current = oneThing;
               }
-
-              // Check for artifact trigger phrases
-              if (checkForArtifactTrigger(message.message)) {
-                console.log('[ARTIFACT] Trigger phrase detected:', message.message);
-                const context = getRecentContext();
-                if (context) {
-                  triggerArtifactGeneration(context);
-                }
-              }
             }
 
-            // Update transcript state and ref
-            const newMessage = { role, text: message.message };
-            setTranscript((prev) => {
-              const updated = [...prev, newMessage];
-              transcriptRef.current = updated; // Keep ref in sync
-              return updated;
-            });
+            setTranscript((prev) => [
+              ...prev,
+              {
+                role,
+                text: message.message,
+              },
+            ]);
           }
         },
         onModeChange: (mode) => {
@@ -595,37 +469,6 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
         if (data.threadId) {
           updateSessionAfterMessage(userId, data.threadId, currentOneThing.current);
           console.log("[VOICE] Session metadata updated");
-        }
-
-        // Extract summary from transcript (shows card at end of call)
-        setIsExtractingSummary(true);
-        try {
-          const summaryRes = await fetch("/api/extract-summary", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              transcript: transcript.map(t => ({
-                role: t.role,
-                content: t.text,
-              })),
-              userId,
-            }),
-          });
-          const summaryData = await summaryRes.json();
-          console.log("[VOICE] Summary extracted:", summaryData);
-
-          if (summaryData.hasContent) {
-            setCallSummary({
-              oneThing: summaryData.oneThing,
-              parkedItems: summaryData.parkedItems || [],
-              insight: summaryData.insight,
-              blocker: summaryData.blocker,
-            });
-          }
-        } catch (e) {
-          console.error("[VOICE] Failed to extract summary:", e);
-        } finally {
-          setIsExtractingSummary(false);
         }
       } catch (e) {
         console.error("[VOICE] Failed to save transcript:", e);
@@ -729,45 +572,6 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
         </div>
       )}
 
-      {/* Active Artifact Tasks */}
-      {artifactTasks.length > 0 && (
-        <div className="mx-4 mb-2 space-y-2">
-          {artifactTasks.map((task) => (
-            <button
-              key={task.id}
-              onClick={() => task.status === 'done' && setSelectedArtifact(task)}
-              disabled={task.status === 'pending'}
-              className={`w-full text-left rounded-xl px-4 py-3 flex items-center gap-3 transition-all ${
-                task.status === 'pending'
-                  ? 'bg-white/5 border border-white/10'
-                  : task.status === 'done'
-                  ? 'bg-gradient-to-r from-green-900/40 to-emerald-900/40 border border-green-500/30 hover:border-green-500/50 cursor-pointer'
-                  : 'bg-red-900/20 border border-red-500/30'
-              }`}
-            >
-              {task.status === 'pending' && (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white/80 rounded-full animate-spin" />
-              )}
-              {task.status === 'done' && (
-                <span className="text-green-400 text-lg">✓</span>
-              )}
-              {task.status === 'error' && (
-                <span className="text-red-400 text-lg">✕</span>
-              )}
-              <div className="flex-1 min-w-0">
-                <span className="text-xs text-white/50 uppercase tracking-wide font-medium">
-                  {task.status === 'pending' ? 'Working...' : task.status === 'done' ? 'Ready' : 'Failed'}
-                </span>
-                <p className="text-sm text-white/80 truncate">{task.context}</p>
-              </div>
-              {task.status === 'done' && (
-                <span className="text-white/40 text-sm">Tap to view</span>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* Status indicator */}
       <div className="flex-1 flex flex-col items-center justify-center gap-8">
         {/* Animated circle */}
@@ -809,66 +613,6 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
         )}
       </div>
 
-      {/* End-of-call Summary Card */}
-      {status === "idle" && (isExtractingSummary || callSummary) && (
-        <div className="mx-4 mb-4">
-          {isExtractingSummary ? (
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-              <div className="animate-pulse text-white/60 text-sm">Extracting summary...</div>
-            </div>
-          ) : callSummary && (
-            <div className="bg-gradient-to-br from-white/10 to-white/5 border border-white/20 rounded-xl p-4 space-y-3">
-              <div className="flex items-center gap-2 text-white/80">
-                <span className="text-lg">📋</span>
-                <span className="font-medium">What we captured</span>
-              </div>
-
-              {callSummary.oneThing && (
-                <div className="bg-amber-500/20 border border-amber-500/30 rounded-lg px-3 py-2">
-                  <div className="text-xs text-amber-400/80 uppercase tracking-wide font-medium">ONE THING</div>
-                  <div className="text-white/90 text-sm">{callSummary.oneThing}</div>
-                </div>
-              )}
-
-              {callSummary.parkedItems.length > 0 && (
-                <div>
-                  <div className="text-xs text-white/50 uppercase tracking-wide font-medium mb-1">Parked for later</div>
-                  <ul className="space-y-1">
-                    {callSummary.parkedItems.map((item, i) => (
-                      <li key={i} className="text-white/70 text-sm flex items-start gap-2">
-                        <span className="text-white/30">•</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {callSummary.insight && (
-                <div>
-                  <div className="text-xs text-white/50 uppercase tracking-wide font-medium mb-1">Key insight</div>
-                  <div className="text-white/70 text-sm italic">&ldquo;{callSummary.insight}&rdquo;</div>
-                </div>
-              )}
-
-              {callSummary.blocker && (
-                <div>
-                  <div className="text-xs text-white/50 uppercase tracking-wide font-medium mb-1">Blocker mentioned</div>
-                  <div className="text-white/70 text-sm">{callSummary.blocker}</div>
-                </div>
-              )}
-
-              <button
-                onClick={onClose}
-                className="w-full mt-2 bg-white/10 hover:bg-white/20 text-white/90 text-sm py-2 px-4 rounded-lg transition-colors"
-              >
-                Done
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Call button */}
       <div className="p-8 flex justify-center">
         {status === "idle" ? (
@@ -891,107 +635,6 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
           </button>
         )}
       </div>
-
-      {/* Artifact Viewer Modal */}
-      {selectedArtifact && (
-        <div className="fixed inset-0 z-60 bg-black/95 flex flex-col">
-          {/* Modal Header */}
-          <div className="p-4 flex items-center justify-between border-b border-white/10">
-            <button
-              onClick={() => setSelectedArtifact(null)}
-              className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-            >
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <div className="text-white font-medium">Your Page</div>
-            <div className="w-10" />
-          </div>
-
-          {/* Modal Content - Markdown Rendered */}
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-2xl mx-auto prose prose-invert prose-sm">
-              {/* Simple markdown rendering - headers, lists, bold */}
-              {selectedArtifact.content?.split('\n').map((line, i) => {
-                // Headers
-                if (line.startsWith('### ')) {
-                  return <h3 key={i} className="text-lg font-semibold text-white mt-4 mb-2">{line.slice(4)}</h3>;
-                }
-                if (line.startsWith('## ')) {
-                  return <h2 key={i} className="text-xl font-semibold text-white mt-6 mb-3">{line.slice(3)}</h2>;
-                }
-                if (line.startsWith('# ')) {
-                  return <h1 key={i} className="text-2xl font-bold text-white mt-6 mb-4">{line.slice(2)}</h1>;
-                }
-                // Checkbox items
-                if (line.startsWith('- [ ] ')) {
-                  return (
-                    <div key={i} className="flex items-start gap-2 text-white/80 my-1">
-                      <span className="text-white/40 mt-0.5">☐</span>
-                      <span>{line.slice(6)}</span>
-                    </div>
-                  );
-                }
-                if (line.startsWith('- [x] ') || line.startsWith('- [X] ')) {
-                  return (
-                    <div key={i} className="flex items-start gap-2 text-white/60 my-1 line-through">
-                      <span className="text-green-400 mt-0.5">☑</span>
-                      <span>{line.slice(6)}</span>
-                    </div>
-                  );
-                }
-                // Bullet points
-                if (line.startsWith('- ') || line.startsWith('* ')) {
-                  return (
-                    <div key={i} className="flex items-start gap-2 text-white/80 my-1">
-                      <span className="text-white/40">•</span>
-                      <span>{line.slice(2)}</span>
-                    </div>
-                  );
-                }
-                // Numbered lists
-                const numberedMatch = line.match(/^(\d+)\.\s+(.+)$/);
-                if (numberedMatch) {
-                  return (
-                    <div key={i} className="flex items-start gap-2 text-white/80 my-1">
-                      <span className="text-white/50 min-w-[1.5rem]">{numberedMatch[1]}.</span>
-                      <span>{numberedMatch[2]}</span>
-                    </div>
-                  );
-                }
-                // Bold text (simple replacement)
-                if (line.includes('**')) {
-                  const parts = line.split(/\*\*(.+?)\*\*/g);
-                  return (
-                    <p key={i} className="text-white/80 my-2">
-                      {parts.map((part, j) =>
-                        j % 2 === 1 ? <strong key={j} className="text-white font-semibold">{part}</strong> : part
-                      )}
-                    </p>
-                  );
-                }
-                // Empty lines
-                if (line.trim() === '') {
-                  return <div key={i} className="h-2" />;
-                }
-                // Regular paragraphs
-                return <p key={i} className="text-white/80 my-2">{line}</p>;
-              })}
-            </div>
-          </div>
-
-          {/* Modal Footer */}
-          <div className="p-4 border-t border-white/10">
-            <button
-              onClick={() => setSelectedArtifact(null)}
-              className="w-full bg-white/10 hover:bg-white/20 text-white py-3 px-4 rounded-xl transition-colors font-medium"
-            >
-              Done
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
