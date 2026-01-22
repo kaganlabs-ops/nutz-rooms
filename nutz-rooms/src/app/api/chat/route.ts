@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ensureUser, createThread, addMessages, getThreadMessages, getUserContext, hasRealMemory } from "@/lib/zep";
+import { ensureUser, createThread, addMessages, getThreadMessages, getUserContext, hasRealMemory, saveTaggedMemory, saveTaggedMemories, type TaggedMemoryData } from "@/lib/zep";
 import { anthropic, KAGAN_SYSTEM_PROMPT } from "@/lib/openai";
 import { parseArtifact } from "@/lib/artifacts";
 import { searchGif } from "@/lib/giphy";
 import { findRelevantFacts, formatBrainContext, getKaganBrain } from "@/lib/brain";
 import { buildSessionContextFromAPI, extractOneThing } from "@/lib/sessionStorage";
+import { extractStructuredData, hasContent } from "@/lib/extraction";
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
@@ -230,6 +231,72 @@ CRITICAL:
 
     const totalTime = Date.now() - startTime;
     console.log(`[CHAT] Total request time: ${totalTime}ms`);
+
+    // ============================================
+    // STEP 6: PASSIVE EXTRACTION (non-blocking)
+    // Run after response is ready - extracts commitments,
+    // parking lot items, insights, and blockers to Zep
+    // ============================================
+
+    // Fire and forget - don't await, let it run in background
+    (async () => {
+      try {
+        const extraction = await extractStructuredData(message, responseText);
+
+        if (hasContent(extraction)) {
+          console.log(`[EXTRACTION] Found content:`, {
+            commitment: extraction.commitment,
+            parkingLot: extraction.parkingLotItems.length,
+            insight: extraction.insight,
+            blocker: extraction.blockerMentioned,
+          });
+
+          const now = new Date().toISOString();
+          const itemsToSave: TaggedMemoryData[] = [];
+
+          if (extraction.commitment) {
+            itemsToSave.push({
+              type: 'commitment',
+              content: extraction.commitment,
+              date: now,
+            });
+          }
+
+          for (const item of extraction.parkingLotItems) {
+            itemsToSave.push({
+              type: 'parking_lot',
+              content: item,
+              date: now,
+            });
+          }
+
+          if (extraction.insight) {
+            itemsToSave.push({
+              type: 'insight',
+              content: extraction.insight,
+              date: now,
+            });
+          }
+
+          if (extraction.blockerMentioned) {
+            itemsToSave.push({
+              type: 'blocker',
+              content: extraction.blockerMentioned,
+              date: now,
+            });
+          }
+
+          if (itemsToSave.length > 0) {
+            const result = await saveTaggedMemories(userId, itemsToSave);
+            console.log(`[EXTRACTION] Saved ${result.saved} items to Zep`);
+          }
+        } else {
+          console.log(`[EXTRACTION] No structured content found in exchange`);
+        }
+      } catch (err) {
+        console.error(`[EXTRACTION] Passive extraction failed:`, err);
+      }
+    })();
 
     return NextResponse.json({
       response: responseText,

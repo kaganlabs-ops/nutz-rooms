@@ -286,3 +286,100 @@ export function hasRealMemory(context: string | null): boolean {
 
   return hasUserSummary || hasRealFacts;
 }
+
+// ============================================
+// TAGGED MEMORY (PASSIVE EXTRACTION)
+// ============================================
+
+export type MemoryTag = 'commitment' | 'parking_lot' | 'insight' | 'blocker';
+
+export interface TaggedMemoryData {
+  type: MemoryTag;
+  content: string;
+  date: string;
+}
+
+// Save extracted data with semantic tags to user's knowledge graph
+// This powers the passive extraction system - runs silently after each message
+export async function saveTaggedMemory(
+  userId: string,
+  data: TaggedMemoryData
+): Promise<boolean> {
+  console.log(`[ZEP] saveTaggedMemory - userId: ${userId}, type: ${data.type}`);
+
+  try {
+    // Format the memory with a clear tag prefix for later retrieval
+    // Zep will auto-extract facts from this text
+    const taggedContent = `[${data.type.toUpperCase()}] ${data.content} (recorded: ${data.date})`;
+
+    // Add to user's knowledge graph
+    await zep.graph.add({
+      userId,
+      type: "text",
+      data: taggedContent,
+    });
+
+    console.log(`[ZEP] saveTaggedMemory SUCCESS - ${data.type}: "${data.content.slice(0, 50)}..."`);
+    return true;
+  } catch (e) {
+    console.error(`[ZEP] saveTaggedMemory FAILED:`, e);
+    return false;
+  }
+}
+
+// Save multiple tagged memories at once (batch operation)
+export async function saveTaggedMemories(
+  userId: string,
+  items: TaggedMemoryData[]
+): Promise<{ saved: number; failed: number }> {
+  console.log(`[ZEP] saveTaggedMemories - userId: ${userId}, count: ${items.length}`);
+
+  let saved = 0;
+  let failed = 0;
+
+  for (const item of items) {
+    const success = await saveTaggedMemory(userId, item);
+    if (success) {
+      saved++;
+    } else {
+      failed++;
+    }
+  }
+
+  console.log(`[ZEP] saveTaggedMemories complete - saved: ${saved}, failed: ${failed}`);
+  return { saved, failed };
+}
+
+// Search for tagged memories by type
+export async function getTaggedMemories(
+  userId: string,
+  type?: MemoryTag,
+  limit: number = 10
+): Promise<string[]> {
+  const query = type
+    ? `[${type.toUpperCase()}]`
+    : "commitment parking_lot insight blocker";
+
+  console.log(`[ZEP] getTaggedMemories - userId: ${userId}, type: ${type || 'all'}`);
+
+  try {
+    const results = await zep.graph.search({
+      userId,
+      query,
+      limit,
+    });
+
+    const facts = results?.edges?.map(e => e.fact).filter(Boolean) as string[] || [];
+
+    // Filter by type prefix if specified
+    const filtered = type
+      ? facts.filter(f => f.toLowerCase().includes(`[${type}]`))
+      : facts;
+
+    console.log(`[ZEP] getTaggedMemories found ${filtered.length} items`);
+    return filtered;
+  } catch (e) {
+    console.error(`[ZEP] getTaggedMemories ERROR:`, e);
+    return [];
+  }
+}
