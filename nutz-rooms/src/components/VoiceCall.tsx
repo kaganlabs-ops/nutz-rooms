@@ -191,15 +191,65 @@ interface ArtifactTask {
   content?: string;
 }
 
-// Trigger phrases that indicate Kagan is working on something
-const ARTIFACT_TRIGGER_PHRASES = [
-  "got you, working on it",
-  "got you working on it",
-  "on it, give me a sec",
-  "on it give me a sec",
-  "let me put something together",
-  "working on it",
-];
+// Patterns that indicate Kagan is committing to create something
+// More flexible than exact phrases - looks for intent signals
+const checkForArtifactIntent = (text: string): boolean => {
+  const lower = text.toLowerCase();
+
+  // Must have a "doing it" signal
+  const doingSignals = [
+    "working on it",
+    "on it",
+    "got it",
+    "got you",
+    "will do",
+    "i'll do",
+    "i can do",
+    "let me",
+    "give me a",
+    "hold on",
+    "one sec",
+    "i'll get",
+    "i'll make",
+    "i'll put",
+    "i'll format",
+    "i'll have it",
+    "i'll send",
+    "i'll write",
+    "sorting it",
+    "handle it",
+  ];
+
+  // Must also have a "creating" context (avoid false positives on casual "got it")
+  const createSignals = [
+    "list",
+    "pager",
+    "ready",
+    "format",
+    "write",
+    "make",
+    "put together",
+    "send it",
+    "for you",
+    "sorted",
+    "shortly",
+  ];
+
+  const hasDoingSignal = doingSignals.some(s => lower.includes(s));
+  const hasCreateSignal = createSignals.some(s => lower.includes(s));
+
+  // Special cases that are strong enough on their own
+  const strongSignals = [
+    "working on it",
+    "i'll have it ready",
+    "let me put something together",
+    "got you, working",
+    "on it, give me",
+  ];
+  const hasStrongSignal = strongSignals.some(s => lower.includes(s));
+
+  return hasStrongSignal || (hasDoingSignal && hasCreateSignal);
+};
 
 interface VoiceCallProps {
   agentId: string;
@@ -275,10 +325,9 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
     return null;
   };
 
-  // Check if Kagan's message contains a trigger phrase indicating artifact creation
+  // Check if Kagan's message indicates artifact creation intent
   const checkForArtifactTrigger = (text: string): boolean => {
-    const lowerText = text.toLowerCase();
-    return ARTIFACT_TRIGGER_PHRASES.some(phrase => lowerText.includes(phrase));
+    return checkForArtifactIntent(text);
   };
 
   // Extract context from recent transcript for artifact generation
