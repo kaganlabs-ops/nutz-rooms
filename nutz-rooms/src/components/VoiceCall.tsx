@@ -274,6 +274,8 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
   const sessionMetadataRef = useRef<SessionMetadata | null>(null);
   // Track transcript in ref for artifact generation (avoids stale closure)
   const transcriptRef = useRef<Array<{ role: string; text: string }>>([]);
+  // Store Zep context (includes Kagan's background) for artifact generation
+  const zepContextRef = useRef<string>("");
 
   // Load session metadata on mount
   useEffect(() => {
