@@ -183,6 +183,24 @@ function getOpeningMessage(
 
 type CallStatus = "idle" | "connecting" | "connected" | "speaking" | "listening";
 
+// Active artifact task (generated in real-time during call)
+interface ArtifactTask {
+  id: string;
+  status: 'pending' | 'done' | 'error';
+  context: string;
+  content?: string;
+}
+
+// Trigger phrases that indicate Kagan is working on something
+const ARTIFACT_TRIGGER_PHRASES = [
+  "got you, working on it",
+  "got you working on it",
+  "on it, give me a sec",
+  "on it give me a sec",
+  "let me put something together",
+  "working on it",
+];
+
 interface VoiceCallProps {
   agentId: string;
   characterName: string;
@@ -197,11 +215,15 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
   const [error, setError] = useState<string | null>(null);
   const [pinnedAction, setPinnedAction] = useState<string | null>(null);
   const [sessionLoaded, setSessionLoaded] = useState(false);
+  const [artifactTasks, setArtifactTasks] = useState<ArtifactTask[]>([]);
+  const [selectedArtifact, setSelectedArtifact] = useState<ArtifactTask | null>(null);
   const hasStarted = useRef(false);
   const hasSaved = useRef(false);
   const currentOneThing = useRef<string | null>(null);
   // Use ref for session metadata to avoid stale closures in useCallback
   const sessionMetadataRef = useRef<SessionMetadata | null>(null);
+  // Track transcript in ref for artifact generation (avoids stale closure)
+  const transcriptRef = useRef<Array<{ role: string; text: string }>>([]);
 
   // Load session metadata on mount
   useEffect(() => {
@@ -251,6 +273,69 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
       }
     }
     return null;
+  };
+
+  // Check if Kagan's message contains a trigger phrase indicating artifact creation
+  const checkForArtifactTrigger = (text: string): boolean => {
+    const lowerText = text.toLowerCase();
+    return ARTIFACT_TRIGGER_PHRASES.some(phrase => lowerText.includes(phrase));
+  };
+
+  // Extract context from recent transcript for artifact generation
+  const getRecentContext = (): string => {
+    const recent = transcriptRef.current.slice(-10);
+    if (recent.length === 0) return "";
+    // Find the user's request that Kagan is responding to
+    for (let i = recent.length - 1; i >= 0; i--) {
+      if (recent[i].role === "user") {
+        return recent[i].text;
+      }
+    }
+    return "";
+  };
+
+  // Fire off artifact generation (non-blocking)
+  const triggerArtifactGeneration = async (context: string) => {
+    const taskId = `task-${Date.now()}`;
+    const task: ArtifactTask = {
+      id: taskId,
+      status: 'pending',
+      context,
+    };
+
+    // Add task immediately (shows "Working..." UI)
+    setArtifactTasks(prev => [...prev, task].slice(-3)); // Cap at 3
+
+    try {
+      const response = await fetch('/api/create-artifact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          context,
+          intent: "Help the user based on conversation",
+          transcript: transcriptRef.current.map(t => ({
+            role: t.role,
+            content: t.text,
+          })),
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to create artifact');
+
+      const data = await response.json();
+
+      // Update task to done with content
+      setArtifactTasks(prev => prev.map(t =>
+        t.id === taskId ? { ...t, status: 'done' as const, content: data.content } : t
+      ));
+
+      console.log('[ARTIFACT] Generated:', data.id);
+    } catch (err) {
+      console.error('[ARTIFACT] Generation failed:', err);
+      setArtifactTasks(prev => prev.map(t =>
+        t.id === taskId ? { ...t, status: 'error' as const } : t
+      ));
+    }
   };
 
   const startCall = useCallback(async () => {
@@ -396,15 +481,24 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
                 setPinnedAction(oneThing);
                 currentOneThing.current = oneThing;
               }
+
+              // Check for artifact trigger phrases
+              if (checkForArtifactTrigger(message.message)) {
+                console.log('[ARTIFACT] Trigger phrase detected:', message.message);
+                const context = getRecentContext();
+                if (context) {
+                  triggerArtifactGeneration(context);
+                }
+              }
             }
 
-            setTranscript((prev) => [
-              ...prev,
-              {
-                role,
-                text: message.message,
-              },
-            ]);
+            // Update transcript state and ref together
+            const newMessage = { role, text: message.message };
+            setTranscript((prev) => {
+              const updated = [...prev, newMessage];
+              transcriptRef.current = updated;
+              return updated;
+            });
           }
         },
         onModeChange: (mode) => {
@@ -611,7 +705,59 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
             ))}
           </div>
         )}
+
+        {/* Artifact Tasks */}
+        {artifactTasks.length > 0 && (
+          <div className="w-full max-w-md px-4 space-y-2">
+            {artifactTasks.map((task) => (
+              <button
+                key={task.id}
+                onClick={() => task.status === 'done' && setSelectedArtifact(task)}
+                className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
+                  task.status === 'pending'
+                    ? 'bg-blue-900/40 border-blue-500/40 animate-pulse'
+                    : task.status === 'done'
+                    ? 'bg-green-900/40 border-green-500/40 hover:bg-green-900/60 cursor-pointer'
+                    : 'bg-red-900/40 border-red-500/40'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">
+                    {task.status === 'pending' ? '📝' : task.status === 'done' ? '✓' : '⚠️'}
+                  </span>
+                  <span className="text-sm text-white/80">
+                    {task.status === 'pending' ? 'Working on it...' : task.status === 'done' ? 'Ready - tap to view' : 'Failed'}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Artifact Modal */}
+      {selectedArtifact && (
+        <div className="fixed inset-0 z-60 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden">
+            <div className="p-4 border-b border-white/10 flex items-center justify-between">
+              <span className="text-white font-medium">📋 What we captured</span>
+              <button
+                onClick={() => setSelectedArtifact(null)}
+                className="text-white/40 hover:text-white/70"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto max-h-[60vh]">
+              <pre className="text-sm text-white/80 whitespace-pre-wrap font-sans">
+                {selectedArtifact.content}
+              </pre>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Call button */}
       <div className="p-8 flex justify-center">
