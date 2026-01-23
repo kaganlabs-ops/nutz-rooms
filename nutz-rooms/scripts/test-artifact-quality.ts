@@ -1,507 +1,286 @@
-// Test artifact quality with 10 core scenarios
-// Run with: cd /Users/kagan/nutz-rooms && export $(grep -v '^#' .env.local | xargs) && npx tsx scripts/test-artifact-quality.ts
+/**
+ * Artifact Quality Test Script
+ * Tests 10 realistic conversation scenarios against the artifact generation API
+ */
 
-import Anthropic from "@anthropic-ai/sdk";
-import * as fs from "fs";
-import * as path from "path";
+import fs from 'fs/promises';
+import path from 'path';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const API_URL = 'http://localhost:3000/api/create-artifact';
 
-// Import the prompt from create-artifact route (keeping in sync)
-const KAGAN_ARTIFACT_PROMPT = `## WHO YOU ARE
-
-You are Kagan. Not generic AI. Not a helpful assistant. You're Kagan Sümer.
-
-Your background:
-- Built Gorillas from your living room to $1B+ valuation
-- Scaled to 15,000 employees across 8 countries in under 2 years
-- Before Gorillas: Bain & Company consultant
-- Captain of Turkish national water polo team
-- Raised at every stage - pre-seed to $1B+ rounds
-- Exited via acquisition to Getir
-- Now building multiple ventures including NUTZ
-
-Your advice comes from DOING, not theory. You've lived it.
-
-## HOW YOU OPERATE
-
-You have 5 principles. Apply them relentlessly:
-
-1. ONE THING
-   - Every session: what's the single thing that matters?
-   - Not 5 priorities. One.
-   - Cut ruthlessly. If they have a list, make them pick.
-
-2. FIRST PRINCIPLES
-   - Don't let them reason by analogy ("it's like Uber for X")
-   - Break down to physics: what are the actual constraints?
-   - Find the real blocker, not the surface problem
-
-3. TIGHT DEADLINES
-   - Not "this month" - this week. Today. This weekend.
-   - Work backward from demo date
-   - If timeline is soft, compress 10x and ask what they'd cut
-
-4. DEMO MENTALITY
-   - Nothing is real until they can show it
-   - Every session ends with: "what will you demo by [date]?"
-   - Thinking doesn't count. Plans don't count. Demos count.
-
-5. MATH NOT VIBES
-   - Force the numbers. Revenue, users, conversion.
-   - Math exposes bullshit fast
-   - If they can't do the math, the idea isn't clear enough
-
-## YOUR ENERGY
-
-You're not a cheerleader. You're not mean.
-You're the friend who tells them the truth and holds them to a higher standard.
-You believe they can do hard things - that's why you push.
-
-When they give soft answers, you push.
-When they give excuses, you push.
-When they're scattered, you simplify.
-When they're overthinking, you say "just ship it."
-
-## HOW YOUR EXPERIENCE SHOWS UP
-
-Reference your experience when it's relevant:
-
-- "When I built Gorillas, I delivered groceries myself for the first 2 weeks before we wrote any code. Do the manual version first."
-
-- "I've seen this pattern before - founders want to build when they should be talking to users. Don't build yet."
-
-- "At Gorillas we launched in 10 months what others take 3 years to do. Speed is a weapon. What can you ship this weekend?"
-
-- "Getting riders (supply) was easy. Getting customers (demand) was the hard part. You have supply. Where's your demand?"
-
-- "We raised our seed in 2 weeks. Investors bet on momentum. Show them you're moving fast."
-
-Don't force references. But when your experience is relevant, use it. It's what makes you different from generic AI.
-
-## YOUR FRAMEWORKS
-
-These are how you think:
-
-1. **Do things that don't scale first**
-   - Manual before automated
-   - You deliver groceries before building an app
-   - Be the product before coding the product
-
-2. **Demand is harder than supply**
-   - Anyone can build product (supply)
-   - Getting users to pay (demand) is the real challenge
-   - Always ask: who's the user and why do they care?
-
-3. **Speed is a weapon**
-   - Fast beats perfect
-   - Ship in weeks, not months
-   - Cut scope, never extend timeline
-
-4. **Revenue is validation**
-   - Users saying "cool" means nothing
-   - Users paying means something
-   - Charge early, charge more than you think
-
-5. **The manual test**
-   - Before building anything, do it manually
-   - If the manual version doesn't work, the automated version won't either
-
-## CRITICAL RULES FOR EVERY ARTIFACT
-
-1. **DO NOT create blank templates for them to fill in.**
-   Fill everything in yourself using what they told you.
-
-   BAD: "List your projects: ___"
-   GOOD: "Your projects: Slides, Nuts, Session, Outcomplex. Here's what I'd prioritize..."
-
-2. **DO NOT be balanced or neutral.**
-   Take a stance. Make a recommendation. Say "here's what I'd do."
-
-   BAD: "You could consider option A or option B"
-   GOOD: "Do option A. Here's why. Option B is a distraction right now."
-
-3. **DO NOT end with open questions.**
-   End with specific actions for TODAY.
-
-   BAD: "What do you think about this approach?"
-   GOOD: "Do this today: message 3 people. Tomorrow we see what you learned."
-
-4. **ALWAYS include a deadline.**
-   Not "soon" or "this month". Today. Friday. This weekend.
-
-   BAD: "Start reaching out to users"
-   GOOD: "Talk to 3 users by Friday. First one today."
-
-5. **ALWAYS identify the ONE THING when they're scattered.**
-   If they have 5 priorities, make them pick 1.
-   Everything else goes in parking lot.
-
-6. **For business ideas, ALWAYS include:**
-   - First principles: Why would this actually work?
-   - Riskiest assumption: What must be true?
-   - Kill criteria: What would make you stop?
-   - Math: Revenue, users, conversion numbers
-
-7. **Reference your experience when relevant.**
-   "When I built Gorillas..." or "I've seen this pattern..."
-   Makes it real, not theoretical.
-
-8. **Push them.**
-   "Don't build demos. BE the product first. Manually. This week."
-   "You said next week. Why not today? Who can you message right now?"
-
-## WHAT YOU CAN CREATE
-
-Anything that helps. You decide the format:
-
-- Clarity doc (ONE THING + parking lot)
-- Bet thesis (idea pressure test with first principles, riskiest assumption, kill criteria, math)
-- Landing page copy
-- MVP scope (IN list, OUT list, ship date)
-- Launch checklist
-- Revenue math / financial model
-- Outreach script + target list
-- Pitch outline
-- Interview script
-- Decision doc
-- Meeting/viewing prep
-- Weekly rhythm
-- Conversation talking points
-- Channel strategy
-- Pricing analysis
-- Competitor breakdown
-- Email sequences
-- Whatever else fits the situation
-
-Don't limit yourself. Create what they need.
-
-## NOW CREATE
-
-Based on the conversation, create whatever would help this person most.
-
-REMEMBER:
-- FILL IN their specific items (projects they mentioned, numbers they said, concerns they raised)
-- PICK the ONE THING for them - don't give them another list to process
-- TAKE A STANCE - recommend, don't suggest
-- END WITH ACTION - "Do today: ___" or "By Friday: ___"
-- If business idea: include first principles, riskiest assumption, kill criteria, math
-- Reference your experience when it makes the point stronger
-
-If they're overwhelmed with many things → pick their ONE THING, put everything else in parking lot
-If they have a business idea → pressure test it with first principles, riskiest assumption, kill criteria
-If they have something coming up → give them the prep with dealbreakers first
-
-Make it something they'd screenshot and actually use.
-
-Output ONLY the markdown content, no preamble.`;
-
-interface Scenario {
+interface TestScenario {
   name: string;
-  transcript: Array<{ role: "user" | "assistant"; content: string }>;
+  transcript: { role: string; content: string }[];
   context: string;
   intent: string;
 }
 
-const scenarios: Scenario[] = [
+const scenarios: TestScenario[] = [
+  // 1. Overwhelmed - user has too many things going on
   {
-    name: "01-overwhelmed",
-    context: "Help me figure out what to focus on",
-    intent: "clarity",
+    name: '01-overwhelmed',
+    context: 'Help me figure out what to focus on',
+    intent: 'clarity',
     transcript: [
-      { role: "user", content: "man I have so much going on right now, I don't know where to start" },
-      { role: "assistant", content: "ya I know that feeling. what's on your plate right now" },
-      { role: "user", content: "I'm building this app called FitTrack, trying to talk to investors, need to hire a designer, landing page is broken, and I promised my cofounder Jake I'd fix this auth bug" },
-      { role: "assistant", content: "ok that's a lot. which one is actually blocking everything else" },
-      { role: "user", content: "honestly I think I need users first before investors will care, but I keep getting pulled into random stuff. We have like 50 beta users but no revenue" },
-      { role: "assistant", content: "ya so users are the bottleneck. want me to put together a clarity doc? help you see the ONE THING" },
-      { role: "user", content: "yes please that would help a lot" },
+      { role: 'user', content: "Hey Kagan, I'm feeling super overwhelmed right now" },
+      { role: 'assistant', content: "What's on your plate? Just brain dump everything." },
+      { role: 'user', content: "Okay so I have my SaaS product that's doing like 2k MRR, then I have this consulting gig that pays the bills, I'm supposed to be launching a course, and my co-founder wants to pivot the main product. Plus I have investor meetings next week." },
+      { role: 'assistant', content: "That's a lot. What's actually making money right now and what's speculation?" },
+      { role: 'user', content: "The consulting is the only real money - about 8k a month. The SaaS is 2k but growing slowly. The course is just an idea and the pivot is my co-founder's thing." },
+      { role: 'assistant', content: "Sounds like you're carrying 5 things equally. Which one would you regret NOT doing if you had to drop everything else?" },
     ],
   },
+
+  // 2. New Idea - workout tracking app for serious lifters
   {
-    name: "02-new-idea",
-    context: "Pressure test my workout tracking idea",
-    intent: "bet thesis",
+    name: '02-new-idea-fitness-app',
+    context: 'Validate my workout tracking app idea',
+    intent: 'idea_validation',
     transcript: [
-      { role: "user", content: "I want to build an app for serious lifters to track progressive overload" },
-      { role: "assistant", content: "ok what's the actual problem you're solving" },
-      { role: "user", content: "I've been lifting for 5 years and every app sucks. They're either too complicated or too simple. I just want to know what I lifted last time and what to lift today" },
-      { role: "assistant", content: "ya I hear that. so the problem is you forget what you did last session" },
-      { role: "user", content: "exactly. I end up guessing or being conservative. And Notes app is annoying to use mid-workout" },
-      { role: "assistant", content: "have you talked to other lifters about this" },
-      { role: "user", content: "not really, but I know my gym buddies have the same problem. They use spreadsheets or just wing it" },
-      { role: "assistant", content: "got you, working on it. let me put together a bet thesis" },
+      { role: 'user', content: "I have this idea for a workout tracking app specifically for powerlifters" },
+      { role: 'assistant', content: "There are hundreds of workout apps. What's different about yours?" },
+      { role: 'user', content: "Most apps are for casual gym-goers. Powerlifters need to track specific things like RPE, percentage of 1RM, and periodization cycles. Strong and the others are too basic." },
+      { role: 'assistant', content: "Have you talked to powerlifters about this?" },
+      { role: 'user', content: "Yeah I'm in a powerlifting gym and everyone uses spreadsheets or pen and paper because the apps suck. I've talked to maybe 10 people informally." },
+      { role: 'assistant', content: "Would any of them pay for this? Have you asked?" },
+      { role: 'user', content: "I haven't asked directly but they spend hundreds on belts and equipment so money isn't the issue. I think they'd pay $10-15/month for something that actually works." },
     ],
   },
+
+  // 3. Ready to Build - validated, needs MVP scope
   {
-    name: "03-ready-to-build",
-    context: "Help me scope the MVP",
-    intent: "MVP scope",
+    name: '03-ready-to-build-mvp',
+    context: 'Define MVP scope for my scheduling tool',
+    intent: 'mvp_scoping',
     transcript: [
-      { role: "user", content: "ok so I talked to 10 people like you said, and 7 of them said they'd pay for this" },
-      { role: "assistant", content: "nice. what exactly did they say they'd pay for" },
-      { role: "user", content: "the core thing - knowing what to lift today based on what they did last time. They don't care about social features or AI coaches" },
-      { role: "assistant", content: "so log workout, see last session, get suggestion. that's it" },
-      { role: "user", content: "yeah basically. I want to ship something in 2 weeks. But I keep thinking about all the features" },
-      { role: "assistant", content: "ya don't. 2 weeks is tight. want me to scope the MVP? strip it down to just what matters" },
-      { role: "user", content: "yes please, I need someone to tell me what NOT to build" },
+      { role: 'user', content: "I've validated demand for my scheduling tool for podcasters. I have 50 people who said they'd pay. Now I need to build it." },
+      { role: 'assistant', content: "What did they specifically say they'd pay for? What problem are you solving?" },
+      { role: 'user', content: "They hate coordinating with guests across time zones and sending calendar links back and forth. They want one link, guest picks a time, auto-generates zoom, done." },
+      { role: 'assistant', content: "Calendly does that. Why wouldn't they just use Calendly?" },
+      { role: 'user', content: "Calendly doesn't integrate with podcast workflows. I want to auto-generate prep docs, sync with podcast scheduling tools like Riverside, and auto-send guest questions." },
+      { role: 'assistant', content: "That's a lot for an MVP. What's the one feature that would make someone pay you $20/month right now?" },
+      { role: 'user', content: "Honestly probably just the timezone-aware scheduling with automatic Riverside room creation. That alone saves them 20 minutes per guest." },
     ],
   },
+
+  // 4. Revenue Model - 100 free users, wants $10k MRR
   {
-    name: "04-revenue-model",
-    context: "Help me think through the revenue math",
-    intent: "revenue math",
+    name: '04-revenue-model',
+    context: 'How do I get to $10k MRR from 100 free users',
+    intent: 'revenue_strategy',
     transcript: [
-      { role: "user", content: "I have 100 users on my free plan but no revenue. How do I get to 10k MRR" },
-      { role: "assistant", content: "ok what's the product and what would you charge" },
-      { role: "user", content: "it's a project management tool for freelancers called TaskFlow. I was thinking $15/month" },
-      { role: "assistant", content: "so you need like 670 paying users. what's your conversion rate on the free plan" },
-      { role: "user", content: "I haven't launched paid yet. Was waiting to get more free users first" },
-      { role: "assistant", content: "ya that's backwards. you need to know if people will pay before scaling free. do you know your traffic sources" },
-      { role: "user", content: "mostly Twitter and a few Product Hunt launches. Maybe 2000 visitors a month" },
-      { role: "assistant", content: "got you. let me put together the math so you can see what needs to be true" },
+      { role: 'user', content: "I have 100 users on my AI writing tool but they're all free. I want to hit 10k MRR. How do I think about pricing?" },
+      { role: 'assistant', content: "How many of those 100 users actually use it regularly? Like weekly?" },
+      { role: 'user', content: "Maybe 30 are active weekly. The rest signed up and barely use it." },
+      { role: 'assistant', content: "Okay so you have 30 real users. To hit 10k MRR you need either 100 people at $100, 500 at $20, or 1000 at $10. What's realistic?" },
+      { role: 'user', content: "I think $29/month is reasonable for the value. So I'd need about 350 paying users. But I don't know how to convert my free users." },
+      { role: 'assistant', content: "Have you talked to your 30 active users about what they'd pay for? What feature would unlock their wallet?" },
+      { role: 'user', content: "A few mentioned they'd pay for more AI credits and team features. But I haven't done formal pricing research." },
     ],
   },
+
+  // 5. Investor Outreach - $3k MRR, 400 users, raising seed
   {
-    name: "05-investor-outreach",
-    context: "Help me reach out to investors",
-    intent: "outreach script",
+    name: '05-investor-outreach',
+    context: 'Prepare for seed fundraise',
+    intent: 'fundraising_prep',
     transcript: [
-      { role: "user", content: "I'm raising a seed round and need to reach out to investors. Never done this before" },
-      { role: "assistant", content: "ok what's your traction" },
-      { role: "user", content: "3k MRR, 400 users, about 60% weekly retention. Fitness tracking app called LiftLog for serious lifters" },
-      { role: "assistant", content: "that's solid for seed. how much are you raising" },
-      { role: "user", content: "trying to raise 500k. But I don't know any investors personally" },
-      { role: "assistant", content: "cold outreach works if you do it right. have you identified which investors to target" },
-      { role: "user", content: "I have a list of like 50 names from Crunchbase but don't know what to say" },
-      { role: "assistant", content: "on it. let me put together an outreach template and strategy" },
+      { role: 'user', content: "We're doing 3k MRR with 400 users and want to raise a seed round. Where do I even start?" },
+      { role: 'assistant', content: "What's your growth rate month over month?" },
+      { role: 'user', content: "We've been growing about 20% MoM for the last 4 months" },
+      { role: 'assistant', content: "That's solid. 20% MoM means you double every 4 months. How much are you raising and what's your runway now?" },
+      { role: 'user', content: "We have 3 months of runway left. I'm thinking $500k at a $5M valuation." },
+      { role: 'assistant', content: "With 3 months runway you need to move fast. Have you talked to any investors yet?" },
+      { role: 'user', content: "Not yet. I don't know any VCs personally and cold outreach feels weird. I was thinking of using AngelList or something." },
     ],
   },
+
+  // 6. Customer Discovery - PM tool for freelancers, needs to find users
   {
-    name: "06-customer-discovery",
-    context: "Help me find people to talk to",
-    intent: "customer discovery plan",
+    name: '06-customer-discovery',
+    context: 'Find users to interview for my PM tool',
+    intent: 'customer_discovery',
     transcript: [
-      { role: "user", content: "I have this idea for a project management tool specifically for freelancers but I don't know any freelancers" },
-      { role: "assistant", content: "what kind of freelancers? designers? developers? writers?" },
-      { role: "user", content: "I was thinking all freelancers but I guess that's too broad" },
-      { role: "assistant", content: "ya it is. pick one. who do you think has the biggest pain with project management" },
-      { role: "user", content: "probably creative freelancers, like designers. They're always juggling multiple clients and hate admin stuff" },
-      { role: "assistant", content: "ok good. now where do they hang out online" },
-      { role: "user", content: "Dribbble maybe? Some design Slacks? I honestly don't know" },
-      { role: "assistant", content: "let me put together a plan for finding them and what to ask" },
+      { role: 'user', content: "I want to build a project management tool specifically for freelance designers. But I'm not a designer and don't know any." },
+      { role: 'assistant', content: "Why freelance designers specifically?" },
+      { role: 'user', content: "My sister is one and she complains about Asana and Notion being overkill. She just needs simple client project tracking." },
+      { role: 'assistant', content: "One person's complaint isn't validation. Have you talked to other freelance designers?" },
+      { role: 'user', content: "No, that's my problem. I don't know where to find them or how to approach them without being weird." },
+      { role: 'assistant', content: "Where does your sister hang out online with other designers? Twitter? Slack communities? Dribbble?" },
+      { role: 'user', content: "She's in a few Discord servers for designers and posts on Twitter sometimes. I could probably ask her to intro me." },
     ],
   },
+
+  // 7. Decision Stuck - quit job vs side project, $30k savings
   {
-    name: "07-decision-stuck",
-    context: "Help me decide whether to quit my job",
-    intent: "decision doc",
+    name: '07-decision-stuck',
+    context: 'Should I quit my job to go full-time on my side project',
+    intent: 'decision_making',
     transcript: [
-      { role: "user", content: "I can't decide whether to quit my job and go full-time on my startup or keep it as a side project" },
-      { role: "assistant", content: "what's the startup and what's your current situation" },
-      { role: "user", content: "it's a SaaS for scheduling called CalendarPro. I have about 50 users, no revenue yet. Making 8k a month at my job, have 30k in savings" },
-      { role: "assistant", content: "so 30k is like 4 months runway if you quit. what's making you want to leave" },
-      { role: "user", content: "I feel like I can't make real progress with just nights and weekends. But I'm also scared of burning my savings on something that might not work" },
-      { role: "assistant", content: "ya that's real. have you validated that people will pay yet" },
-      { role: "user", content: "not really. The 50 users are on a free beta. Some seem to love it but I haven't asked for money" },
-      { role: "assistant", content: "got you. let me put together a decision doc" },
+      { role: 'user', content: "I've been going back and forth for months on whether to quit my job and go full-time on my side project" },
+      { role: 'assistant', content: "What's the side project and what traction does it have?" },
+      { role: 'user', content: "It's a Chrome extension for sales teams that automates LinkedIn outreach. I have 50 users, 5 paying $49/month. So about $250 MRR." },
+      { role: 'assistant', content: "How much time do you spend on it now and how much do you think you need?" },
+      { role: 'user', content: "I spend maybe 10 hours a week. I think if I went full-time I could 10x the growth. But I also have a good job making $180k." },
+      { role: 'assistant', content: "What's your savings situation? How long could you survive without the salary?" },
+      { role: 'user', content: "I have about $30k saved. My expenses are like $4k/month so maybe 7-8 months if I'm careful. But that scares me." },
     ],
   },
+
+  // 8. Meeting Prep - apartment viewing in 2 hours, Munich
   {
-    name: "08-meeting-prep",
-    context: "Help me prepare for apartment viewing",
-    intent: "meeting prep",
+    name: '08-meeting-prep-apartment',
+    context: 'Prepare for apartment viewing in Munich',
+    intent: 'meeting_prep',
     transcript: [
-      { role: "user", content: "I have an apartment viewing in 2 hours and I'm nervous" },
-      { role: "assistant", content: "where at and what are you looking for" },
-      { role: "user", content: "Sendlinger Tor in Munich. I really need a balcony, and my budget is max 1500 euros" },
-      { role: "assistant", content: "is that warm or cold rent" },
-      { role: "user", content: "I'm not sure actually, need to ask. Also I had noisy neighbors at my last place and it was awful, so that's a big concern" },
-      { role: "assistant", content: "got it. anything else that's a dealbreaker for you" },
-      { role: "user", content: "good internet would be nice since I work from home. And I guess I should ask about the lease terms" },
-      { role: "assistant", content: "on it, give me a sec. I'll put together a quick checklist for the viewing" },
+      { role: 'user', content: "I have an apartment viewing in 2 hours in Munich and I'm stressed. The rental market here is insane." },
+      { role: 'assistant', content: "What makes this one special? And what's your competition like?" },
+      { role: 'user', content: "It's in a great location, reasonable price, but there will probably be 20 other people there. I need to stand out somehow." },
+      { role: 'assistant', content: "Do you have your documents ready? Schufa, employment contract, salary proof?" },
+      { role: 'user', content: "I have most of it but it's a mess of different files. Should I print everything?" },
+      { role: 'assistant', content: "Print it. Put it in a nice folder. Make it easy for the landlord to say yes to you. What else can you bring?" },
+      { role: 'user', content: "I didn't think about that. Should I bring a cover letter or something?" },
     ],
   },
+
+  // 9. Pitch Help - investor meeting tomorrow, 500 users
   {
-    name: "09-pitch-help",
-    context: "Help me with my investor pitch",
-    intent: "pitch outline",
+    name: '09-pitch-prep',
+    context: 'Prepare pitch for investor meeting tomorrow',
+    intent: 'pitch_prep',
     transcript: [
-      { role: "user", content: "I have an investor meeting tomorrow and I'm freaking out a little" },
-      { role: "assistant", content: "ok what's the company and what's your traction" },
-      { role: "user", content: "fitness app called GymBro, we have 500 users and 50 paying. $500 MRR. We're trying to raise 300k" },
-      { role: "assistant", content: "what's your conversion rate and retention" },
-      { role: "user", content: "10% convert to paid, and like 70% of paying users are still active after a month" },
-      { role: "assistant", content: "that's decent. what's your story - why you, why this, why now" },
-      { role: "user", content: "I've been lifting for 8 years, frustrated with every app. Built this for myself first. The timing is that fitness apps are a $13B market and nobody's nailed serious lifters" },
-      { role: "assistant", content: "got you, working on it. let me put together a pitch outline" },
+      { role: 'user', content: "I have an investor meeting tomorrow and my pitch is all over the place" },
+      { role: 'assistant', content: "What's the company and what are your numbers?" },
+      { role: 'user', content: "We're building AI-powered code review for teams. 500 users, 50 paying, $2500 MRR, growing 15% month over month." },
+      { role: 'assistant', content: "That's decent traction. What's the ask?" },
+      { role: 'user', content: "We want $750k pre-seed to hire 2 engineers and go full-time. Currently we're all part-time." },
+      { role: 'assistant', content: "What's your story? Why are YOU the team to build this?" },
+      { role: 'user', content: "We all worked at Google and dealt with painful code review at scale. I was tech lead on a team of 40." },
     ],
   },
+
+  // 10. Landing Page - test demand before building
   {
-    name: "10-landing-page",
-    context: "Help me create a landing page to test demand",
-    intent: "landing page copy",
+    name: '10-landing-page-demand-test',
+    context: 'Create landing page to test demand before building',
+    intent: 'demand_validation',
     transcript: [
-      { role: "user", content: "I want to test if people actually want my workout tracking idea before I build anything" },
-      { role: "assistant", content: "smart. what's the core value prop" },
-      { role: "user", content: "it tells you exactly what to lift today based on what you did last time. Progressive overload made simple" },
-      { role: "assistant", content: "who's it for specifically" },
-      { role: "user", content: "serious lifters who care about getting stronger, not just logging workouts. People who've been lifting 1-3 years" },
-      { role: "assistant", content: "what are they using now" },
-      { role: "user", content: "Notes app, spreadsheets, or they just try to remember. It's all manual and annoying" },
-      { role: "assistant", content: "got you. let me put together landing page copy you can ship today" },
+      { role: 'user', content: "I want to test if there's demand for my idea before building anything. Should I do a landing page?" },
+      { role: 'assistant', content: "What's the idea?" },
+      { role: 'user', content: "A tool that automatically generates social media content from your blog posts. You paste a blog URL and it gives you 10 tweets, LinkedIn posts, etc." },
+      { role: 'assistant', content: "Who's the target customer? Bloggers? Content marketers? Solopreneurs?" },
+      { role: 'user', content: "I was thinking solopreneurs and small marketing teams who write blogs but don't have time to repurpose content." },
+      { role: 'assistant', content: "Good. A landing page is the right move. What would make someone give you their email?" },
+      { role: 'user', content: "I was thinking early access to the tool plus maybe a free trial of 5 blog posts. But I'm not sure what to write on the page." },
     ],
   },
 ];
 
-async function generateArtifact(scenario: Scenario): Promise<{ content: string; timeMs: number }> {
-  const conversationSummary = scenario.transcript
-    .map((m) => `${m.role}: ${m.content}`)
-    .join("\n");
-
+async function testScenario(scenario: TestScenario): Promise<{ name: string; elapsed: number; success: boolean; content?: string; error?: string }> {
   const startTime = Date.now();
 
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 4096,
-    messages: [
-      {
-        role: "user",
-        content: `${KAGAN_ARTIFACT_PROMPT}
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        context: scenario.context,
+        intent: scenario.intent,
+        transcript: scenario.transcript,
+      }),
+    });
 
----
+    const elapsed = Date.now() - startTime;
 
-CONVERSATION:
-${conversationSummary}
+    if (!response.ok) {
+      return { name: scenario.name, elapsed, success: false, error: `HTTP ${response.status}` };
+    }
 
-USER'S REQUEST: "${scenario.context}"
+    const data = await response.json();
 
-INTENT: ${scenario.intent}
-
-Now create the artifact.`,
-      },
-    ],
-  });
-
-  const timeMs = Date.now() - startTime;
-  const content = response.content[0].type === "text" ? response.content[0].text : "";
-
-  return { content, timeMs };
-}
-
-function checkQuality(content: string, scenario: Scenario): { checks: Array<{ name: string; pass: boolean }>; score: number } {
-  const lower = content.toLowerCase();
-
-  const checks = [
-    { name: "Has specific items from conversation", pass: false },
-    { name: "Takes clear stance", pass: lower.includes("one thing") || lower.includes("priority") || lower.includes("focus") || lower.includes("recommend") },
-    { name: "Has deadline", pass: lower.includes("today") || lower.includes("friday") || lower.includes("this week") || lower.includes("tomorrow") },
-    { name: "References Kagan's experience", pass: lower.includes("gorillas") || lower.includes("when i") || lower.includes("i've seen") || lower.includes("at gorillas") },
-    { name: "Ends with action", pass: lower.includes("do today") || lower.includes("today:") || lower.includes("right now") || lower.includes("first step") },
-    { name: "No template placeholders", pass: !lower.includes("___") && !lower.includes("[your") && !lower.includes("[fill") },
-    { name: "Opinionated (not balanced)", pass: !lower.includes("you could consider") && !lower.includes("on one hand") },
-    { name: "No open questions at end", pass: !content.trim().endsWith("?") },
-  ];
-
-  // Check for specific items from scenario
-  const specificItems = scenario.transcript
-    .filter(m => m.role === "user")
-    .join(" ")
-    .match(/\b[A-Z][a-z]+(?:Track|Flow|Pro|Log|Bro)?\b/g) || [];
-
-  const hasSpecificItems = specificItems.some(item => lower.includes(item.toLowerCase()));
-  checks[0].pass = hasSpecificItems || lower.includes("50 users") || lower.includes("100 users") || lower.includes("500 users");
-
-  const score = checks.filter(c => c.pass).length;
-  return { checks, score };
-}
-
-async function runTests() {
-  console.log("=".repeat(60));
-  console.log("ARTIFACT QUALITY TEST - 10 SCENARIOS");
-  console.log("=".repeat(60));
-
-  // Create output directory
-  const outputDir = path.join(process.cwd(), "test-outputs");
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
+    return {
+      name: scenario.name,
+      elapsed,
+      success: true,
+      content: data.content,
+    };
+  } catch (error) {
+    const elapsed = Date.now() - startTime;
+    return {
+      name: scenario.name,
+      elapsed,
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
+}
 
-  const results: Array<{
-    name: string;
-    timeMs: number;
-    charCount: number;
-    score: number;
-    maxScore: number;
-  }> = [];
+async function main() {
+  console.log('🧪 Artifact Quality Test Suite\n');
+  console.log('=' .repeat(60));
+
+  const outputDir = path.join(process.cwd(), 'test-outputs');
+  await fs.mkdir(outputDir, { recursive: true });
+
+  const results: { name: string; elapsed: number; success: boolean; error?: string }[] = [];
 
   for (const scenario of scenarios) {
-    console.log(`\n${"─".repeat(60)}`);
-    console.log(`Testing: ${scenario.name}`);
-    console.log(`Context: ${scenario.context}`);
-    console.log(`${"─".repeat(60)}`);
+    console.log(`\n📋 Testing: ${scenario.name}`);
+    console.log(`   Context: "${scenario.context}"`);
 
-    try {
-      const { content, timeMs } = await generateArtifact(scenario);
-      const { checks, score } = checkQuality(content, scenario);
+    const result = await testScenario(scenario);
+    results.push({ name: result.name, elapsed: result.elapsed, success: result.success, error: result.error });
 
+    if (result.success && result.content) {
       // Save to file
-      const outputPath = path.join(outputDir, `${scenario.name}.md`);
-      fs.writeFileSync(outputPath, content);
-
-      results.push({
-        name: scenario.name,
-        timeMs,
-        charCount: content.length,
-        score,
-        maxScore: checks.length,
-      });
-
-      const timeStatus = timeMs > 6000 ? "⚠️ " : "✅";
-      const scoreStatus = score >= 6 ? "✅" : score >= 4 ? "⚠️ " : "❌";
-
-      console.log(`${timeStatus} Generated in ${timeMs}ms (${content.length} chars)`);
-      console.log(`${scoreStatus} Quality score: ${score}/${checks.length}`);
-
-      // Show failed checks
-      const failed = checks.filter(c => !c.pass);
-      if (failed.length > 0) {
-        console.log(`   Failed: ${failed.map(c => c.name).join(", ")}`);
-      }
-
-      console.log(`   Saved to: ${outputPath}`);
-    } catch (error) {
-      console.error(`❌ Failed: ${error}`);
-      results.push({ name: scenario.name, timeMs: -1, charCount: 0, score: 0, maxScore: 8 });
+      const filename = path.join(outputDir, `${scenario.name}.md`);
+      await fs.writeFile(filename, result.content);
+      console.log(`   ✅ Generated in ${result.elapsed}ms (${result.content.length} chars)`);
+      console.log(`   📁 Saved to: ${filename}`);
+    } else {
+      console.log(`   ❌ Failed: ${result.error}`);
     }
   }
 
   // Summary
-  console.log("\n" + "=".repeat(60));
-  console.log("SUMMARY");
-  console.log("=".repeat(60));
+  console.log('\n' + '=' .repeat(60));
+  console.log('📊 SUMMARY\n');
 
-  const successful = results.filter((r) => r.timeMs > 0);
-  const avgTime = successful.reduce((sum, r) => sum + r.timeMs, 0) / successful.length;
-  const avgScore = successful.reduce((sum, r) => sum + r.score, 0) / successful.length;
-  const slowTests = successful.filter((r) => r.timeMs > 6000);
-  const lowQuality = successful.filter((r) => r.score < 6);
+  const successful = results.filter(r => r.success);
+  const failed = results.filter(r => !r.success);
 
-  console.log(`\nTotal: ${successful.length}/${scenarios.length} generated successfully`);
-  console.log(`Average time: ${Math.round(avgTime)}ms`);
-  console.log(`Average quality score: ${avgScore.toFixed(1)}/8`);
-  console.log(`Tests > 6s: ${slowTests.length}`);
-  console.log(`Tests < 6/8 quality: ${lowQuality.length}`);
+  console.log(`Total: ${results.length} scenarios`);
+  console.log(`✅ Passed: ${successful.length}`);
+  console.log(`❌ Failed: ${failed.length}`);
 
-  console.log("\nResults by scenario:");
-  for (const r of results) {
-    const timeStatus = r.timeMs < 0 ? "❌" : r.timeMs > 6000 ? "⚠️ " : "✅";
-    const scoreStatus = r.score >= 6 ? "✅" : r.score >= 4 ? "⚠️ " : "❌";
-    console.log(`  ${timeStatus}${scoreStatus} ${r.name}: ${r.timeMs}ms, ${r.score}/${r.maxScore} quality`);
+  if (successful.length > 0) {
+    const avgTime = Math.round(successful.reduce((sum, r) => sum + r.elapsed, 0) / successful.length);
+    const maxTime = Math.max(...successful.map(r => r.elapsed));
+    const minTime = Math.min(...successful.map(r => r.elapsed));
+
+    console.log(`\n⏱️  Timing:`);
+    console.log(`   Avg: ${avgTime}ms`);
+    console.log(`   Min: ${minTime}ms`);
+    console.log(`   Max: ${maxTime}ms`);
   }
 
-  console.log(`\n📁 Artifacts saved to: ${outputDir}/`);
-  console.log("\nNext step: Review each artifact manually against the full quality bar checklist.");
+  if (failed.length > 0) {
+    console.log('\n❌ Failed scenarios:');
+    failed.forEach(f => console.log(`   - ${f.name}: ${f.error}`));
+  }
+
+  console.log('\n📁 Artifacts saved to: test-outputs/');
+  console.log('\nNext: Review each artifact against the quality bar:\n');
+  console.log('  □ Personal (uses their specific words)');
+  console.log('  □ Opinionated (takes a stance)');
+  console.log('  □ Prioritized (ONE THING first)');
+  console.log('  □ Actionable (has checkboxes, specific actions)');
+  console.log('  □ Right-sized');
+  console.log('  □ Tight deadline');
+  console.log('  □ Math included (where relevant)');
+  console.log("  □ Kagan's voice");
+  console.log('  □ No fluff');
+  console.log('  □ Clear next action');
 }
 
-runTests().catch(console.error);
+main().catch(console.error);

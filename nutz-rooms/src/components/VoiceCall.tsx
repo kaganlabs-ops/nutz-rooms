@@ -10,6 +10,14 @@ import {
   getTimeSinceLastSession,
   type SessionMetadata,
 } from "@/lib/sessionStorage";
+import {
+  type Commitment,
+  parseDeadline,
+  parseFrequency,
+  addLocalCommitment,
+  getLocalCommitments,
+} from "@/lib/commitments";
+import { CommitmentCard } from "./CommitmentCard";
 
 // Helper to pick random item from array
 const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
@@ -251,6 +259,96 @@ const checkForArtifactIntent = (text: string): boolean => {
   return hasStrongSignal || (hasDoingSignal && hasCreateSignal);
 };
 
+// Commitment trigger phrases - detect when user confirms they'll do something
+const COMMITMENT_TRIGGERS = [
+  "done",
+  "locked in",
+  "lock it in",
+  "committed",
+  "i commit",
+  "i'm committing",
+  "deal",
+  "bet",
+  "you got it",
+  "consider it done",
+  "i'll do it",
+  "i will do it",
+  "on it",
+  "i'm on it",
+  "absolutely",
+  "definitely",
+  "for sure",
+  "promise",
+  "i promise",
+];
+
+// Check if user message contains a commitment trigger
+const checkForCommitmentTrigger = (text: string): boolean => {
+  const lower = text.toLowerCase().trim();
+
+  // Must be short (affirmations are brief)
+  if (lower.length > 30) return false;
+
+  // Simple check: does it contain any trigger word?
+  return COMMITMENT_TRIGGERS.some(trigger => lower.includes(trigger));
+};
+
+// Extract commitment details from Kagan's previous message
+interface ExtractedCommitment {
+  commitment: string;
+  deadline: string;           // ISO date string
+  displayDeadline: string;    // Human readable like "Fri"
+  frequency?: string;         // "3x this week"
+  total?: number;             // For progress tracking
+}
+
+const extractCommitmentFromContext = (
+  kaganMessage: string,
+  _userConfirmation: string
+): ExtractedCommitment | null => {
+  // Look for ONE THING pattern first
+  const oneThingMatch = kaganMessage.match(/ONE THING[:\s]+(.+?)(?:\.|$)/i);
+  if (oneThingMatch) {
+    const commitment = oneThingMatch[1].trim();
+    const deadlineInfo = parseDeadline(commitment) || parseDeadline(kaganMessage);
+    const frequencyInfo = parseFrequency(commitment) || parseFrequency(kaganMessage);
+    return {
+      commitment,
+      deadline: deadlineInfo.deadline,
+      displayDeadline: deadlineInfo.displayDeadline,
+      frequency: frequencyInfo?.frequency,
+      total: frequencyInfo?.total,
+    };
+  }
+
+  // Look for action items in Kagan's message
+  const actionPatterns = [
+    /(?:you need to|you should|go|do|make|build|ship|send|call|message|reach out|email|write|create|launch|post|publish|finish|complete)\s+(.+?)(?:\.|,|$)/i,
+    /(?:your job|your task|your goal|the goal)\s+(?:is to\s+)?(.+?)(?:\.|,|$)/i,
+    /(?:by|before|until)\s+(?:friday|monday|tuesday|wednesday|thursday|saturday|sunday|tomorrow|tonight|eod|eow|end of week|end of day)[,\s]+(.+?)(?:\.|$)/i,
+  ];
+
+  for (const pattern of actionPatterns) {
+    const match = kaganMessage.match(pattern);
+    if (match) {
+      const commitment = match[1].trim();
+      if (commitment.length > 5 && commitment.length < 200) {
+        const deadlineInfo = parseDeadline(kaganMessage);
+        const frequencyInfo = parseFrequency(kaganMessage);
+        return {
+          commitment,
+          deadline: deadlineInfo.deadline,
+          displayDeadline: deadlineInfo.displayDeadline,
+          frequency: frequencyInfo?.frequency,
+          total: frequencyInfo?.total,
+        };
+      }
+    }
+  }
+
+  return null;
+};
+
 interface VoiceCallProps {
   agentId: string;
   characterName: string;
@@ -268,6 +366,12 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
   const [artifactTasks, setArtifactTasks] = useState<ArtifactTask[]>([]);
   const [selectedArtifact, setSelectedArtifact] = useState<ArtifactTask | null>(null);
   const [copied, setCopied] = useState(false);
+  // Commitments captured during this call
+  const [capturedCommitments, setCapturedCommitments] = useState<ExtractedCommitment[]>([]);
+  // Existing commitments loaded at start
+  const [existingCommitments, setExistingCommitments] = useState<Commitment[]>([]);
+  // Show end of call summary
+  const [showSummary, setShowSummary] = useState(false);
   const hasStarted = useRef(false);
   const hasSaved = useRef(false);
   const currentOneThing = useRef<string | null>(null);
@@ -277,8 +381,10 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
   const transcriptRef = useRef<Array<{ role: string; text: string }>>([]);
   // Store Zep context (includes Kagan's background) for artifact generation
   const zepContextRef = useRef<string>("");
+  // Track last Kagan message for commitment extraction context
+  const lastKaganMessageRef = useRef<string>("");
 
-  // Load session metadata on mount
+  // Load session metadata and existing commitments on mount
   useEffect(() => {
     if (typeof window !== "undefined" && userId) {
       const metadata = getSessionMetadata(userId);
@@ -288,6 +394,11 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
         setPinnedAction(metadata.lastOneThing);
         console.log('[VOICE] Loaded lastOneThing:', metadata.lastOneThing);
       }
+
+      // Load existing commitments
+      const commitments = getLocalCommitments(userId);
+      setExistingCommitments(commitments.filter(c => c.status === 'active'));
+      console.log('[VOICE] Loaded existing commitments:', commitments.length);
 
       // Increment session count
       const newCount = incrementSessionCount(userId);
@@ -542,6 +653,28 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
                   triggerArtifactGeneration(context);
                 }
               }
+
+              // Store Kagan's message for commitment extraction context
+              lastKaganMessageRef.current = message.message;
+            }
+
+            // Check for commitment trigger in user messages
+            if (role === "user" && checkForCommitmentTrigger(message.message)) {
+              console.log('[COMMITMENT] Trigger detected:', message.message);
+              const extracted = extractCommitmentFromContext(
+                lastKaganMessageRef.current,
+                message.message
+              );
+              if (extracted) {
+                console.log('[COMMITMENT] Extracted:', extracted);
+                setCapturedCommitments(prev => {
+                  // Avoid duplicates
+                  if (prev.some(c => c.commitment === extracted.commitment)) {
+                    return prev;
+                  }
+                  return [...prev, extracted];
+                });
+              }
             }
 
             // Update transcript state and ref together
@@ -619,10 +752,48 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
       } catch (e) {
         console.error("[VOICE] Failed to save transcript:", e);
       }
+
+      // Save captured commitments
+      if (capturedCommitments.length > 0) {
+        console.log("[VOICE] Saving captured commitments:", capturedCommitments.length);
+        for (const extracted of capturedCommitments) {
+          const commitment: Commitment = {
+            id: `commit-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+            userId,
+            commitment: extracted.commitment,
+            deadline: extracted.deadline,
+            frequency: extracted.frequency,
+            progress: extracted.total ? { done: 0, total: extracted.total } : undefined,
+            status: "active",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+
+          // Save to localStorage
+          addLocalCommitment(userId, commitment);
+
+          // Also save to API
+          try {
+            await fetch("/api/commitments", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(commitment),
+            });
+          } catch (e) {
+            console.error("[VOICE] Failed to save commitment to API:", e);
+          }
+        }
+        console.log("[VOICE] Commitments saved");
+      }
     }
 
     setStatus("idle");
-  }, [conversation, transcript, userId]);
+
+    // Show summary if there are commitments or artifacts
+    if (capturedCommitments.length > 0 || artifactTasks.some(t => t.status === 'done')) {
+      setShowSummary(true);
+    }
+  }, [conversation, transcript, userId, capturedCommitments, artifactTasks]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -718,6 +889,35 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
         </div>
       )}
 
+      {/* Pinned Commitments during call */}
+      {(existingCommitments.length > 0 || capturedCommitments.length > 0) && (
+        <div className="mx-4 mb-2">
+          <div className="flex flex-wrap gap-2">
+            {/* Existing commitments (compact) */}
+            {existingCommitments.slice(0, 3).map((commitment) => (
+              <CommitmentCard
+                key={commitment.id}
+                commitment={commitment}
+                onComplete={() => {}}
+                compact
+              />
+            ))}
+            {/* Newly captured commitments */}
+            {capturedCommitments.map((extracted, i) => (
+              <div
+                key={`new-${i}`}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs bg-green-900/40 border border-green-500/30 text-green-400"
+              >
+                <span className="text-sm">✓</span>
+                <span className="truncate max-w-[120px]">{extracted.commitment}</span>
+                <span className="text-white/40">·</span>
+                <span className="text-green-400/70">{extracted.displayDeadline}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Status indicator */}
       <div className="flex-1 flex flex-col items-center justify-center gap-8">
         {/* Animated circle */}
@@ -796,7 +996,7 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(selectedArtifact.content);
+                    navigator.clipboard.writeText(selectedArtifact.content || "");
                     setCopied(true);
                     setTimeout(() => setCopied(false), 2000);
                   }}
@@ -832,6 +1032,103 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
               <pre className="text-sm text-white/80 whitespace-pre-wrap font-sans">
                 {selectedArtifact.content}
               </pre>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* End of Call Summary Modal */}
+      {showSummary && (
+        <div className="fixed inset-0 z-60 bg-black/90 flex items-center justify-center p-4">
+          <div className="bg-gray-900 rounded-2xl max-w-md w-full overflow-hidden">
+            <div className="p-5 border-b border-white/10">
+              <h2 className="text-xl font-semibold text-white">Call Summary</h2>
+              <p className="text-white/50 text-sm mt-1">Here's what we captured</p>
+            </div>
+
+            <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+              {/* Captured Commitments */}
+              {capturedCommitments.length > 0 && (
+                <div>
+                  <h3 className="text-sm text-white/60 uppercase tracking-wider mb-3">
+                    You committed to
+                  </h3>
+                  <div className="space-y-2">
+                    {capturedCommitments.map((c, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-3 p-3 rounded-xl bg-green-900/30 border border-green-500/30"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
+                          <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white text-sm">{c.commitment}</p>
+                          <p className="text-green-400/70 text-xs mt-0.5">Due {c.displayDeadline}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Artifacts */}
+              {artifactTasks.filter(t => t.status === 'done').length > 0 && (
+                <div>
+                  <h3 className="text-sm text-white/60 uppercase tracking-wider mb-3">
+                    Documents created
+                  </h3>
+                  <div className="space-y-2">
+                    {artifactTasks.filter(t => t.status === 'done').map((artifact) => (
+                      <button
+                        key={artifact.id}
+                        onClick={() => {
+                          setShowSummary(false);
+                          setSelectedArtifact(artifact);
+                        }}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl bg-blue-900/30 border border-blue-500/30 hover:bg-blue-900/40 transition-colors text-left"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center">
+                          <span className="text-sm">📋</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white text-sm">Document ready</p>
+                          <p className="text-blue-400/70 text-xs mt-0.5">Tap to view</p>
+                        </div>
+                        <svg className="w-4 h-4 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ONE THING reminder */}
+              {pinnedAction && (
+                <div>
+                  <h3 className="text-sm text-white/60 uppercase tracking-wider mb-3">
+                    Your ONE THING
+                  </h3>
+                  <div className="p-3 rounded-xl bg-amber-900/30 border border-amber-500/30">
+                    <p className="text-white text-sm">{pinnedAction}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-5 border-t border-white/10">
+              <button
+                onClick={() => {
+                  setShowSummary(false);
+                  onClose();
+                }}
+                className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition-colors"
+              >
+                Done
+              </button>
             </div>
           </div>
         </div>

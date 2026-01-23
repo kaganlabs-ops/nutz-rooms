@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import VoiceCall from "@/components/VoiceCall";
+import { HomeScreen } from "@/components/HomeScreen";
 
 type VideoState = "idle" | "listening" | "speaking";
 
@@ -493,6 +494,11 @@ export default function RoomPage() {
           draggable={false}
         />
       </div>
+
+      {/* Home Screen with Commitments - show for Kagan when not in call */}
+      {!showVoiceCall && selectedCharacter.id === "kagan" && userId && (
+        <HomeScreen userId={userId} />
+      )}
 
       {/* Voice Call Overlay */}
       {showVoiceCall && selectedCharacter.agentId && userId && (
