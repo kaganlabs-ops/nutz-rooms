@@ -124,3 +124,76 @@ Detects user confirmation phrases:
 ### Session Context
 - `sessionStorage.ts` tracks session metadata (count, last timestamp, last ONE THING)
 - Personalized openers based on time since last session and user interests
+
+## Phase 5: Agent Execution
+
+Kagan can now DO things, not just advise. Works in both **chat** and **voice**.
+
+### Architecture
+- **Chat**: Claude Sonnet for conversation, Claude Opus (agent) for execution
+- **Voice**: GPT-4o-mini (ElevenLabs) for conversation, Claude Opus (agent) for execution
+- **Agent Brain**: Claude Opus with tools (web_search, deploy_page, create_document)
+
+### Agent Files
+- `/src/app/api/agent/route.ts` - Main agent endpoint with Claude Opus + tools
+- `/src/lib/tools/deploy-page.ts` - Vercel deployment tool
+
+### Agent Tools (Opus decides which to use)
+1. **web_search** - Research competitors, market, validation
+2. **deploy_page** - Build and deploy working code (HTML apps, prototypes, demos)
+3. **create_document** - Generate markdown docs (clarity, MVP scope, plans)
+
+### How It Works
+
+**In Chat** (`/api/chat`):
+1. User asks for something
+2. Kagan responds with intent ("gonna build you a prototype")
+3. Chat detects create intent, calls `/api/agent`
+4. Agent (Opus) decides: deploy_page or create_document
+5. Returns deployed URL or document to user
+
+**In Voice** (`VoiceCall.tsx`):
+1. User asks for something
+2. Kagan says trigger phrase ("let me build you something")
+3. VoiceCall detects trigger, fires async request to `/api/agent`
+4. Conversation continues (non-blocking)
+5. Result arrives, shown in UI
+
+### Trigger Detection
+
+**Build triggers** (→ deploy_page):
+- "gonna build", "let me build", "building you"
+- "let me make you", "let me spin up"
+- "html prototype", "let me create"
+
+**Document triggers** (→ create_document):
+- "let me put together some clarity"
+- "let me organize", "putting together a plan"
+- "let me outline", "let me draft"
+
+**Research triggers** (→ web_search):
+- "let me look into that"
+- "let me research", "checking now"
+
+### Environment Variables
+```
+VERCEL_TOKEN=    # For page deployment
+```
+
+### Testing Agent
+```bash
+# Test deploy (builds working code)
+curl -X POST http://localhost:3000/api/agent \
+  -H "Content-Type: application/json" \
+  -d '{"task":"Build a workout tracker prototype","context":"User wants app for personal trainers"}'
+
+# Test document (creates markdown)
+curl -X POST http://localhost:3000/api/agent \
+  -H "Content-Type: application/json" \
+  -d '{"task":"Create clarity doc for user priorities","context":"User has 5 projects"}'
+
+# Test research
+curl -X POST http://localhost:3000/api/agent \
+  -H "Content-Type: application/json" \
+  -d '{"task":"Research workout tracking apps","context":"User wants to build gym app"}'
+```

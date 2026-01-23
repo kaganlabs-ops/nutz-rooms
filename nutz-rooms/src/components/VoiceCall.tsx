@@ -199,64 +199,72 @@ interface ArtifactTask {
   content?: string;
 }
 
-// Patterns that indicate Kagan is committing to create something
-// More flexible than exact phrases - looks for intent signals
+// Agent trigger phrases - detect when Kagan initiates research/execution
+const AGENT_RESEARCH_TRIGGERS = [
+  "let me look into that",
+  "let me look that up",
+  "let me research that",
+  "let me find out",
+  "checking now",
+  "let me check",
+  "looking into it",
+  "researching now",
+];
+
+const AGENT_DEPLOY_TRIGGERS = [
+  // Existing
+  "let me build",
+  "let me spin up",
+  "let me create",
+  "building you a",
+  "spinning up a",
+  "creating a page",
+  "deploying now",
+  "on it, making",
+  // NEW - catch more build intent
+  "let me make you",
+  "making you a",
+  "building that",
+  "building this",
+  "let me put together a demo",
+  "let me put together something",
+  "working on your demo",
+  "got you, building",
+];
+
+const checkForAgentTrigger = (text: string): { triggered: boolean; type: 'research' | 'deploy' } => {
+  const lower = text.toLowerCase();
+
+  if (AGENT_DEPLOY_TRIGGERS.some(trigger => lower.includes(trigger))) {
+    return { triggered: true, type: 'deploy' };
+  }
+
+  if (AGENT_RESEARCH_TRIGGERS.some(trigger => lower.includes(trigger))) {
+    return { triggered: true, type: 'research' };
+  }
+
+  return { triggered: false, type: 'research' };
+};
+
+// Patterns that indicate Kagan is creating a DOCUMENT (not code)
+// Narrowed to doc-specific phrases - build phrases go to agent instead
 const checkForArtifactIntent = (text: string): boolean => {
   const lower = text.toLowerCase();
 
-  // Must have a "doing it" signal
-  const doingSignals = [
-    "working on it",
-    "on it",
-    "got it",
-    "got you",
-    "will do",
-    "i'll do",
-    "i can do",
-    "let me",
-    "give me a",
-    "hold on",
-    "one sec",
-    "i'll get",
-    "i'll make",
-    "i'll put",
-    "i'll format",
-    "i'll have it",
-    "i'll send",
-    "i'll write",
-    "sorting it",
-    "handle it",
+  // Only trigger for document-specific phrases
+  const docSignals = [
+    "let me put together some clarity",
+    "let me organize",
+    "let me outline",
+    "putting together a doc",
+    "putting together a plan",
+    "writing up",
+    "drafting",
+    "let me write that up",
+    "let me draft",
   ];
 
-  // Must also have a "creating" context (avoid false positives on casual "got it")
-  const createSignals = [
-    "list",
-    "pager",
-    "ready",
-    "format",
-    "write",
-    "make",
-    "put together",
-    "send it",
-    "for you",
-    "sorted",
-    "shortly",
-  ];
-
-  const hasDoingSignal = doingSignals.some(s => lower.includes(s));
-  const hasCreateSignal = createSignals.some(s => lower.includes(s));
-
-  // Special cases that are strong enough on their own
-  const strongSignals = [
-    "working on it",
-    "i'll have it ready",
-    "let me put something together",
-    "got you, working",
-    "on it, give me",
-  ];
-  const hasStrongSignal = strongSignals.some(s => lower.includes(s));
-
-  return hasStrongSignal || (hasDoingSignal && hasCreateSignal);
+  return docSignals.some(s => lower.includes(s));
 };
 
 // Commitment trigger phrases - detect when user confirms they'll do something
@@ -383,6 +391,15 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
   const zepContextRef = useRef<string>("");
   // Track last Kagan message for commitment extraction context
   const lastKaganMessageRef = useRef<string>("");
+  // Agent task state for research/execution
+  const [agentTask, setAgentTask] = useState<{
+    id: string;
+    status: 'pending' | 'done' | 'error';
+    type: 'research' | 'deploy';
+    result?: string;
+  } | null>(null);
+  // Pending agent result for injection into conversation
+  const pendingAgentResult = useRef<string | null>(null);
 
   // Load session metadata and existing commitments on mount
   useEffect(() => {
@@ -501,6 +518,54 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
     }
   };
 
+  // Fire off agent task (non-blocking - conversation continues)
+  const triggerAgentTask = async (type: 'research' | 'deploy', context: string) => {
+    const taskId = `agent-${Date.now()}`;
+    setAgentTask({ id: taskId, status: 'pending', type });
+    console.log('[AGENT] Triggering', type, 'task:', taskId);
+
+    // Build task description based on type
+    const taskDescription = type === 'research'
+      ? 'Research competitors and market for this idea. Find 3-5 relevant players, their pricing, and identify gaps/opportunities.'
+      : 'Build and deploy a page to help validate or demonstrate this idea. Could be a landing page, interactive demo, game prototype, or whatever fits best. Make it look good and work on mobile.';
+
+    // NON-BLOCKING - conversation continues while this runs
+    fetch('/api/agent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        task: taskDescription,
+        context,
+        transcript: transcriptRef.current.slice(-15).map(t => ({
+          role: t.role,
+          content: t.text,
+        })),
+      }),
+    })
+      .then(res => res.json())
+      .then(({ result }) => {
+        console.log('[AGENT] Task completed:', taskId);
+        console.log('[AGENT] Result preview:', result?.slice(0, 200));
+        pendingAgentResult.current = result;
+        // Also append to zepContextRef so Kagan can see it in context
+        if (result) {
+          zepContextRef.current = zepContextRef.current + `\n\nAGENT_RESULT:\n${result}`;
+        }
+        setAgentTask(prev => prev ? { ...prev, status: 'done', result } : null);
+      })
+      .catch((err) => {
+        console.error('[AGENT] Task failed:', err);
+        setAgentTask(prev => prev ? { ...prev, status: 'error' } : null);
+      });
+
+    // Don't await - let conversation continue
+  };
+
+  // Extract recent context from transcript for agent tasks
+  const extractRecentContext = (messages: Array<{ role: string; text: string }>, count: number): string => {
+    return messages.slice(-count).map(m => `${m.role}: ${m.text}`).join('\n');
+  };
+
   const startCall = useCallback(async () => {
     console.log("🔴🔴🔴 NEW CODE VERSION 2025-01-21 🔴🔴🔴");
     if (hasStarted.current) return;
@@ -539,6 +604,8 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
         });
         const contextData = await contextRes.json();
         zepContext = contextData.context || "";
+        // Store in ref for agent result injection
+        zepContextRef.current = zepContext;
 
         // Log context info
         console.log("=".repeat(50));
@@ -645,8 +712,17 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
                 currentOneThing.current = oneThing;
               }
 
-              // Check for artifact trigger phrases
-              if (checkForArtifactTrigger(message.message)) {
+              // Check for agent trigger phrases FIRST (research/deploy)
+              // Agent handles: builds, demos, research
+              const agentTriggerResult = checkForAgentTrigger(message.message);
+              if (agentTriggerResult.triggered) {
+                console.log('[AGENT] Trigger detected:', message.message, 'type:', agentTriggerResult.type);
+                const recentContext = extractRecentContext(transcriptRef.current, 10);
+                triggerAgentTask(agentTriggerResult.type, recentContext);
+              }
+              // Only check artifact triggers if agent didn't trigger
+              // Artifact handles: documents, clarity, plans
+              else if (checkForArtifactTrigger(message.message)) {
                 console.log('[ARTIFACT] Trigger phrase detected:', message.message);
                 const context = getRecentContext();
                 if (context) {
@@ -955,6 +1031,42 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
                 {msg.text}
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Agent Task Indicator */}
+        {agentTask && (
+          <div className="w-full max-w-md px-4 mb-2">
+            <div className={`px-4 py-3 rounded-xl border transition-all ${
+              agentTask.status === 'pending'
+                ? (agentTask.type === 'research' ? 'bg-purple-900/40 border-purple-500/40' : 'bg-blue-900/40 border-blue-500/40')
+                : agentTask.status === 'done'
+                ? 'bg-green-900/40 border-green-500/40'
+                : 'bg-red-900/40 border-red-500/40'
+            }`}>
+              <div className="flex items-center gap-2">
+                <span className={`text-lg ${agentTask.status === 'pending' ? 'animate-pulse' : ''}`}>
+                  {agentTask.status === 'pending'
+                    ? (agentTask.type === 'research' ? '🔍' : '🔨')
+                    : agentTask.status === 'done'
+                    ? '✓'
+                    : '⚠️'}
+                </span>
+                <span className="text-sm text-white/80">
+                  {agentTask.status === 'pending'
+                    ? (agentTask.type === 'research' ? 'Researching...' : 'Building...')
+                    : agentTask.status === 'done'
+                    ? (agentTask.type === 'research' ? 'Research done' : 'Built & deployed')
+                    : 'Something went wrong'}
+                </span>
+              </div>
+              {/* Show result preview when done */}
+              {agentTask.status === 'done' && agentTask.result && (
+                <p className="text-xs text-white/50 mt-2 line-clamp-2">
+                  {agentTask.result.slice(0, 150)}...
+                </p>
+              )}
+            </div>
           </div>
         )}
 

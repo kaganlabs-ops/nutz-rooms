@@ -17,6 +17,10 @@ interface Message {
   content: string;
   artifact?: Artifact | null;
   gifUrl?: string | null;
+  deployedUrl?: string | null;
+  agentDocument?: { title: string; content: string; type: string } | null;
+  isBuilding?: boolean; // Shows building indicator
+  buildId?: string | null; // For polling build status
 }
 
 interface Character {
@@ -203,10 +207,23 @@ export default function ChatPage() {
         lastOneThingDate: oneThing ? new Date().toISOString() : prev.lastOneThingDate,
       } : null);
 
+      const newMessageIndex = messages.length + 1; // +1 for user message we just added
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: cleanContent, artifact: data.artifact, gifUrl: data.gifUrl },
+        {
+          role: "assistant",
+          content: cleanContent,
+          artifact: data.artifact,
+          gifUrl: data.gifUrl,
+          isBuilding: data.isBuilding,
+          buildId: data.buildId,
+        },
       ]);
+
+      // If building, start polling for result
+      if (data.buildId) {
+        pollBuildStatus(data.buildId, newMessageIndex);
+      }
     } catch (error) {
       console.error("Failed to send message:", error);
       setMessages((prev) => [
@@ -216,6 +233,61 @@ export default function ChatPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Poll for build status
+  const pollBuildStatus = async (buildId: string, messageIndex: number) => {
+    const maxAttempts = 60; // 60 attempts * 2 seconds = 2 minutes max
+    let attempts = 0;
+
+    const poll = async () => {
+      attempts++;
+      try {
+        const res = await fetch(`/api/build-status?buildId=${buildId}`);
+        const data = await res.json();
+
+        if (data.status === 'complete') {
+          // Update the message with the result
+          setMessages((prev) => prev.map((msg, i) =>
+            i === messageIndex
+              ? {
+                  ...msg,
+                  isBuilding: false,
+                  deployedUrl: data.deployedUrl,
+                  agentDocument: data.document,
+                }
+              : msg
+          ));
+          return; // Done polling
+        }
+
+        if (data.status === 'error') {
+          console.error('[BUILD] Failed:', data.error);
+          setMessages((prev) => prev.map((msg, i) =>
+            i === messageIndex ? { ...msg, isBuilding: false } : msg
+          ));
+          return; // Done polling
+        }
+
+        // Still building, poll again
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 2000); // Poll every 2 seconds
+        } else {
+          // Timeout
+          setMessages((prev) => prev.map((msg, i) =>
+            i === messageIndex ? { ...msg, isBuilding: false } : msg
+          ));
+        }
+      } catch (err) {
+        console.error('[BUILD] Poll error:', err);
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 2000);
+        }
+      }
+    };
+
+    // Start polling after a short delay
+    setTimeout(poll, 1000);
   };
 
   // Handle clearing ONE THING (e.g., when user completes it)
@@ -343,6 +415,57 @@ export default function ChatPage() {
                 </div>
               )}
               {message.artifact && <ArtifactCard artifact={message.artifact} />}
+
+              {/* Building indicator */}
+              {message.isBuilding && !message.deployedUrl && (
+                <div className="mt-2 bg-amber-900/40 border border-amber-500/40 rounded-xl p-4 animate-pulse">
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber-400 animate-spin">⚙️</span>
+                    <span className="text-amber-400 font-medium text-sm">Building your demo...</span>
+                  </div>
+                  <p className="text-white/60 text-xs mt-1">This usually takes 10-20 seconds</p>
+                </div>
+              )}
+
+              {/* Deployed URL from agent */}
+              {message.deployedUrl && (
+                <a
+                  href={message.deployedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 block bg-green-900/40 border border-green-500/40 rounded-xl p-4 hover:bg-green-900/60 transition-colors"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-green-400">🚀</span>
+                    <span className="text-green-400 font-medium text-sm">Live Demo</span>
+                  </div>
+                  <p className="text-white/80 text-sm truncate">{message.deployedUrl}</p>
+                  <p className="text-green-400/70 text-xs mt-1">Tap to open</p>
+                </a>
+              )}
+
+              {/* Document from agent */}
+              {message.agentDocument && (
+                <div className="mt-2 bg-blue-900/40 border border-blue-500/40 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-blue-400">📄</span>
+                    <span className="text-blue-400 font-medium text-sm">{message.agentDocument.title}</span>
+                  </div>
+                  <div className="max-h-[200px] overflow-y-auto">
+                    <pre className="text-white/80 text-sm whitespace-pre-wrap font-sans">
+                      {message.agentDocument.content}
+                    </pre>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(message.agentDocument!.content);
+                    }}
+                    className="mt-2 text-blue-400/70 text-xs hover:text-blue-400 transition-colors"
+                  >
+                    Copy to clipboard
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ))}

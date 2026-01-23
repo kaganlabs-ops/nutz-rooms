@@ -1,10 +1,105 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ensureUser, createThread, addMessages, getThreadMessages, getUserContext, hasRealMemory } from "@/lib/zep";
+import { ensureUser, createThread, addMessages, getThreadMessages, getUserContext } from "@/lib/zep";
 import { anthropic, KAGAN_SYSTEM_PROMPT } from "@/lib/openai";
 import { parseArtifact } from "@/lib/artifacts";
 import { searchGif } from "@/lib/giphy";
-import { findRelevantFacts, formatBrainContext, getKaganBrain } from "@/lib/brain";
+import { findRelevantFacts, formatBrainContext } from "@/lib/brain";
 import { buildSessionContextFromAPI, extractOneThing } from "@/lib/sessionStorage";
+
+// Store for tracking agent builds (module-level for persistence across requests)
+interface AgentBuildEntry {
+  promise: Promise<Response>;
+  status: 'building' | 'complete' | 'error';
+  startTime: number;
+  result?: {
+    deployedUrl?: string;
+    document?: { title: string; content: string; type: string };
+  };
+  error?: string;
+}
+export const agentBuilds = new Map<string, AgentBuildEntry>();
+
+// Detect if USER is asking for something to be built
+// This triggers BEFORE Claude responds so we can inject context
+const detectUserBuildIntent = (userMessage: string): { wantsBuild: boolean; wantsDoc: boolean } => {
+  const lower = userMessage.toLowerCase();
+
+  // User asking for something to SHOW (build)
+  const buildSignals = [
+    "build me",
+    "make me",
+    "create me",
+    "demo",
+    "prototype",
+    "landing page",
+    "app",
+    "game",
+    "something to show",
+    "something i can show",
+    "send me something",
+    "put together a demo",
+    "spin up",
+  ];
+
+  // User asking for something to THINK (document)
+  const docSignals = [
+    "clarity",
+    "help me think",
+    "organize",
+    "priorities",
+    "plan",
+    "what should i focus",
+  ];
+
+  const wantsBuild = buildSignals.some(s => lower.includes(s));
+  const wantsDoc = docSignals.some(s => lower.includes(s));
+
+  return { wantsBuild, wantsDoc };
+};
+
+// Detect if Kagan's response indicates he's committing to create something
+const detectKaganCreateIntent = (text: string): { shouldCreate: boolean; type: 'build' | 'document' | null } => {
+  const lower = text.toLowerCase();
+
+  // Build triggers - Kagan saying he'll build
+  const buildTriggers = [
+    "building that now",
+    "let me build that",
+    "on it, building",
+    "building you",
+    "let me build you",
+    "gonna build",
+    "let me build",
+    "let me make you",
+    "making you a",
+    "let me spin up",
+    "spinning up",
+    "let me create",
+    "creating a prototype",
+    "building a prototype",
+    "let me put together a demo",
+  ];
+
+  // Document triggers - markdown docs
+  const docTriggers = [
+    "let me put together some clarity",
+    "let me organize",
+    "putting together a plan",
+    "let me outline",
+    "writing up",
+    "let me draft",
+  ];
+
+  if (buildTriggers.some(t => lower.includes(t))) {
+    return { shouldCreate: true, type: 'build' };
+  }
+
+  if (docTriggers.some(t => lower.includes(t))) {
+    return { shouldCreate: true, type: 'document' };
+  }
+
+  return { shouldCreate: false, type: null };
+};
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
@@ -214,6 +309,79 @@ CRITICAL:
     }
 
     // ============================================
+    // STEP 4.5: Check if Kagan is committing to create something
+    // If so, call the agent to actually build it
+    // ============================================
+
+    // Check both: user asking for build AND Kagan confirming he'll build
+    const userIntent = detectUserBuildIntent(message);
+    const kaganIntent = detectKaganCreateIntent(rawResponse);
+
+    // Trigger agent if either:
+    // 1. Kagan explicitly says he's building (primary)
+    // 2. User asked for build AND Kagan didn't refuse (fallback)
+    const shouldCallAgent = kaganIntent.shouldCreate ||
+      (userIntent.wantsBuild && !rawResponse.toLowerCase().includes("what kind") && !rawResponse.toLowerCase().includes("tell me more"));
+
+    const createType = kaganIntent.type || (userIntent.wantsBuild ? 'build' : userIntent.wantsDoc ? 'document' : null);
+
+    // Generate a unique build ID if we're going to build
+    const buildId = shouldCallAgent && createType ? `build-${Date.now()}-${Math.random().toString(36).substring(2, 9)}` : null;
+
+    if (shouldCallAgent && createType && buildId) {
+      console.log(`[CHAT] Create intent detected: ${createType} (user: ${userIntent.wantsBuild}, kagan: ${kaganIntent.shouldCreate})`);
+      console.log(`[CHAT] Build ID: ${buildId}`);
+
+      // Build context from conversation
+      const recentContext = messageHistory
+        .slice(-10)
+        .map(m => `${m.role}: ${m.content}`)
+        .join('\n');
+
+      // Fire agent request in background (don't await)
+      // Store the promise so we can track it, but don't block
+      const agentPromise = fetch(new URL('/api/agent', req.url), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          task: createType === 'build'
+            ? 'Build a working prototype/demo based on the conversation. Deploy it and return the URL.'
+            : 'Create a document based on the conversation. Use Kagan\'s principles.',
+          context: recentContext,
+          transcript: messageHistory,
+          buildId, // Pass build ID for tracking
+        }),
+      });
+
+      // Store the promise in module-level map for polling
+      agentBuilds.set(buildId, {
+        promise: agentPromise,
+        status: 'building',
+        startTime: Date.now(),
+      });
+
+      // Handle completion in background
+      agentPromise.then(async (response) => {
+        const data = await response.json();
+        const buildEntry = agentBuilds.get(buildId);
+        if (buildEntry) {
+          buildEntry.status = 'complete';
+          buildEntry.result = {
+            deployedUrl: data.deployedUrl,
+            document: data.document,
+          };
+        }
+      }).catch((err) => {
+        console.error('[CHAT] Agent build failed:', err);
+        const buildEntry = agentBuilds.get(buildId);
+        if (buildEntry) {
+          buildEntry.status = 'error';
+          buildEntry.error = err instanceof Error ? err.message : 'Unknown error';
+        }
+      });
+    }
+
+    // ============================================
     // STEP 5: SAVE AI RESPONSE TO THREAD
     // Zep will automatically extract facts from the conversation!
     // ============================================
@@ -238,6 +406,9 @@ CRITICAL:
       gifUrl,
       oneThing, // Return extracted ONE THING for client to store
       isNewSession, // Tell client if this was a new session
+      // Build tracking - client will poll for result
+      buildId: buildId, // If set, client should poll for result
+      isBuilding: !!buildId, // Flag for UI to show building indicator
     });
   } catch (error) {
     console.error("Chat error:", error);
