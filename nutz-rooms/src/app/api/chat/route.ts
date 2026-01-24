@@ -5,19 +5,7 @@ import { parseArtifact } from "@/lib/artifacts";
 import { searchGif } from "@/lib/giphy";
 import { findRelevantFacts, formatBrainContext } from "@/lib/brain";
 import { buildSessionContextFromAPI, extractOneThing } from "@/lib/sessionStorage";
-
-// Store for tracking agent builds (module-level for persistence across requests)
-interface AgentBuildEntry {
-  promise: Promise<Response>;
-  status: 'building' | 'complete' | 'error';
-  startTime: number;
-  result?: {
-    deployedUrl?: string;
-    document?: { title: string; content: string; type: string };
-  };
-  error?: string;
-}
-export const agentBuilds = new Map<string, AgentBuildEntry>();
+import { setBuildEntry, updateBuildComplete, updateBuildError } from "@/lib/redis";
 
 // Detect if Kagan's response indicates he's committing to create something
 // Agent only triggers when Kagan explicitly says he's building - not on user request
@@ -305,9 +293,15 @@ CRITICAL:
         .map(m => `${m.role}: ${m.content}`)
         .join('\n');
 
-      // Fire agent request in background (don't await)
-      // Store the promise so we can track it, but don't block
-      const agentPromise = fetch(new URL('/api/agent', req.url), {
+      // Store initial build entry in Redis BEFORE firing request
+      await setBuildEntry(buildId, {
+        status: 'building',
+        startTime: Date.now(),
+      });
+
+      // Fire agent request in background (don't await the full response)
+      // Use .then/.catch to update Redis when complete
+      fetch(new URL('/api/agent', req.url), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -316,35 +310,18 @@ CRITICAL:
             : 'Create a document based on the conversation. Use Kagan\'s principles.',
           context: recentContext,
           transcript: messageHistory,
-          buildId, // Pass build ID for tracking
+          buildId,
         }),
-      });
-
-      // Store the promise in module-level map for polling
-      agentBuilds.set(buildId, {
-        promise: agentPromise,
-        status: 'building',
-        startTime: Date.now(),
-      });
-
-      // Handle completion in background
-      agentPromise.then(async (response) => {
+      }).then(async (response) => {
         const data = await response.json();
-        const buildEntry = agentBuilds.get(buildId);
-        if (buildEntry) {
-          buildEntry.status = 'complete';
-          buildEntry.result = {
-            deployedUrl: data.deployedUrl,
-            document: data.document,
-          };
-        }
-      }).catch((err) => {
+        console.log(`[CHAT] Agent completed for ${buildId}:`, data.deployedUrl || data.document?.title || 'no result');
+        await updateBuildComplete(buildId, {
+          deployedUrl: data.deployedUrl,
+          document: data.document,
+        });
+      }).catch(async (err) => {
         console.error('[CHAT] Agent build failed:', err);
-        const buildEntry = agentBuilds.get(buildId);
-        if (buildEntry) {
-          buildEntry.status = 'error';
-          buildEntry.error = err instanceof Error ? err.message : 'Unknown error';
-        }
+        await updateBuildError(buildId, err instanceof Error ? err.message : 'Unknown error');
       });
     }
 

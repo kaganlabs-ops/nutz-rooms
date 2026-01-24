@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { agentBuilds } from "../chat/route";
+import { getBuildEntry } from "@/lib/redis";
 
 export async function GET(req: NextRequest) {
   const buildId = req.nextUrl.searchParams.get("buildId");
@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "buildId required" }, { status: 400 });
   }
 
-  const buildEntry = agentBuilds.get(buildId);
+  const buildEntry = await getBuildEntry(buildId);
 
   if (!buildEntry) {
     return NextResponse.json({ error: "Build not found" }, { status: 404 });
@@ -26,12 +26,10 @@ export async function GET(req: NextRequest) {
     elapsed: Date.now() - buildEntry.startTime,
   };
 
-  if (buildEntry.status === "complete" && buildEntry.result) {
-    response.deployedUrl = buildEntry.result.deployedUrl;
-    response.document = buildEntry.result.document;
-
-    // Clean up after successful retrieval
-    setTimeout(() => agentBuilds.delete(buildId), 60000); // Keep for 1 minute
+  if (buildEntry.status === "complete") {
+    response.deployedUrl = buildEntry.deployedUrl;
+    response.document = buildEntry.document;
+    // Redis TTL handles cleanup automatically (10 min)
   }
 
   if (buildEntry.status === "error") {
