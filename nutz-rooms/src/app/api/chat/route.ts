@@ -19,45 +19,8 @@ interface AgentBuildEntry {
 }
 export const agentBuilds = new Map<string, AgentBuildEntry>();
 
-// Detect if USER is asking for something to be built
-// This triggers BEFORE Claude responds so we can inject context
-const detectUserBuildIntent = (userMessage: string): { wantsBuild: boolean; wantsDoc: boolean } => {
-  const lower = userMessage.toLowerCase();
-
-  // User asking for something to SHOW (build)
-  const buildSignals = [
-    "build me",
-    "make me",
-    "create me",
-    "demo",
-    "prototype",
-    "landing page",
-    "app",
-    "game",
-    "something to show",
-    "something i can show",
-    "send me something",
-    "put together a demo",
-    "spin up",
-  ];
-
-  // User asking for something to THINK (document)
-  const docSignals = [
-    "clarity",
-    "help me think",
-    "organize",
-    "priorities",
-    "plan",
-    "what should i focus",
-  ];
-
-  const wantsBuild = buildSignals.some(s => lower.includes(s));
-  const wantsDoc = docSignals.some(s => lower.includes(s));
-
-  return { wantsBuild, wantsDoc };
-};
-
 // Detect if Kagan's response indicates he's committing to create something
+// Agent only triggers when Kagan explicitly says he's building - not on user request
 const detectKaganCreateIntent = (text: string): { shouldCreate: boolean; type: 'build' | 'document' | null } => {
   const lower = text.toLowerCase();
 
@@ -320,23 +283,20 @@ CRITICAL:
     // If so, call the agent to actually build it
     // ============================================
 
-    // Check both: user asking for build AND Kagan confirming he'll build
-    const userIntent = detectUserBuildIntent(message);
+    // Check if Kagan explicitly commits to building/creating
+    // ONLY trigger when Kagan says he's building - NOT when user just asks
     const kaganIntent = detectKaganCreateIntent(rawResponse);
 
-    // Trigger agent if either:
-    // 1. Kagan explicitly says he's building (primary)
-    // 2. User asked for build AND Kagan didn't refuse (fallback)
-    const shouldCallAgent = kaganIntent.shouldCreate ||
-      (userIntent.wantsBuild && !rawResponse.toLowerCase().includes("what kind") && !rawResponse.toLowerCase().includes("tell me more"));
-
-    const createType = kaganIntent.type || (userIntent.wantsBuild ? 'build' : userIntent.wantsDoc ? 'document' : null);
+    // Only trigger agent when Kagan explicitly says he's building
+    // User asking for a build should prompt Kagan to ASK first, not auto-build
+    const shouldCallAgent = kaganIntent.shouldCreate;
+    const createType = kaganIntent.type;
 
     // Generate a unique build ID if we're going to build
     const buildId = shouldCallAgent && createType ? `build-${Date.now()}-${Math.random().toString(36).substring(2, 9)}` : null;
 
     if (shouldCallAgent && createType && buildId) {
-      console.log(`[CHAT] Create intent detected: ${createType} (user: ${userIntent.wantsBuild}, kagan: ${kaganIntent.shouldCreate})`);
+      console.log(`[CHAT] Create intent detected: ${createType} (kagan: ${kaganIntent.shouldCreate})`);
       console.log(`[CHAT] Build ID: ${buildId}`);
 
       // Build context from conversation
