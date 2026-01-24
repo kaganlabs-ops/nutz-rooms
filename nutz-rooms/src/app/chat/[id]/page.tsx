@@ -235,47 +235,68 @@ export default function ChatPage() {
     }
   };
 
-  // Poll for build status
-  const pollBuildStatus = async (buildId: string, messageIndex: number) => {
+  // Poll for build status - uses buildId to find the correct message
+  const pollBuildStatus = async (buildId: string, _messageIndex: number) => {
     const maxAttempts = 60; // 60 attempts * 2 seconds = 2 minutes max
     let attempts = 0;
 
+    console.log('[BUILD] Starting poll for buildId:', buildId);
+
     const poll = async () => {
       attempts++;
+      console.log('[BUILD] Poll attempt', attempts, 'for buildId:', buildId);
+
       try {
         const res = await fetch(`/api/build-status?buildId=${buildId}`);
+        console.log('[BUILD] Response status:', res.status);
+
+        if (!res.ok) {
+          console.error('[BUILD] Response not OK:', res.status, res.statusText);
+          if (attempts < maxAttempts) {
+            setTimeout(poll, 2000);
+          }
+          return;
+        }
+
         const data = await res.json();
+        console.log('[BUILD] Poll response:', JSON.stringify(data));
 
         if (data.status === 'complete') {
-          // Update the message with the result
-          setMessages((prev) => prev.map((msg, i) =>
-            i === messageIndex
-              ? {
-                  ...msg,
-                  isBuilding: false,
-                  deployedUrl: data.deployedUrl,
-                  agentDocument: data.document,
-                }
-              : msg
-          ));
+          console.log('[BUILD] ✅ Complete! URL:', data.deployedUrl, 'Doc:', data.document?.title);
+          // Update the message that has this buildId
+          setMessages((prev) => {
+            const updated = prev.map((msg) =>
+              msg.buildId === buildId
+                ? {
+                    ...msg,
+                    isBuilding: false,
+                    deployedUrl: data.deployedUrl,
+                    agentDocument: data.document,
+                  }
+                : msg
+            );
+            console.log('[BUILD] Updated messages count:', updated.length);
+            return updated;
+          });
           return; // Done polling
         }
 
         if (data.status === 'error') {
-          console.error('[BUILD] Failed:', data.error);
-          setMessages((prev) => prev.map((msg, i) =>
-            i === messageIndex ? { ...msg, isBuilding: false } : msg
+          console.error('[BUILD] ❌ Failed:', data.error);
+          setMessages((prev) => prev.map((msg) =>
+            msg.buildId === buildId ? { ...msg, isBuilding: false } : msg
           ));
           return; // Done polling
         }
 
         // Still building, poll again
+        console.log('[BUILD] Still building, elapsed:', data.elapsed, 'ms');
         if (attempts < maxAttempts) {
           setTimeout(poll, 2000); // Poll every 2 seconds
         } else {
-          // Timeout
-          setMessages((prev) => prev.map((msg, i) =>
-            i === messageIndex ? { ...msg, isBuilding: false } : msg
+          console.error('[BUILD] ⏰ Timeout after', maxAttempts, 'attempts');
+          setMessages((prev) => prev.map((msg) =>
+            msg.buildId === buildId ? { ...msg, isBuilding: false } : msg
           ));
         }
       } catch (err) {

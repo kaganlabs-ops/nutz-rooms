@@ -284,8 +284,12 @@ CRITICAL:
     const buildId = shouldCallAgent && createType ? `build-${Date.now()}-${Math.random().toString(36).substring(2, 9)}` : null;
 
     if (shouldCallAgent && createType && buildId) {
-      console.log(`[CHAT] Create intent detected: ${createType} (kagan: ${kaganIntent.shouldCreate})`);
+      console.log(`[CHAT] ========================================`);
+      console.log(`[CHAT] CREATE INTENT DETECTED`);
+      console.log(`[CHAT] Type: ${createType}`);
       console.log(`[CHAT] Build ID: ${buildId}`);
+      console.log(`[CHAT] Kagan said: "${rawResponse.slice(0, 200)}..."`);
+      console.log(`[CHAT] ========================================`);
 
       // Build context from conversation
       const recentContext = messageHistory
@@ -294,14 +298,19 @@ CRITICAL:
         .join('\n');
 
       // Store initial build entry in Redis BEFORE firing request
+      console.log(`[CHAT] Setting initial Redis entry for ${buildId}`);
       await setBuildEntry(buildId, {
         status: 'building',
         startTime: Date.now(),
       });
+      console.log(`[CHAT] Redis entry set successfully`);
 
       // Fire agent request in background (don't await the full response)
       // Use .then/.catch to update Redis when complete
-      fetch(new URL('/api/agent', req.url), {
+      const agentUrl = new URL('/api/agent', req.url);
+      console.log(`[CHAT] Calling agent at: ${agentUrl}`);
+
+      fetch(agentUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -313,14 +322,28 @@ CRITICAL:
           buildId,
         }),
       }).then(async (response) => {
+        console.log(`[CHAT] Agent response status for ${buildId}: ${response.status}`);
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`Agent returned ${response.status}: ${errText}`);
+        }
         const data = await response.json();
-        console.log(`[CHAT] Agent completed for ${buildId}:`, data.deployedUrl || data.document?.title || 'no result');
+        console.log(`[CHAT] ========================================`);
+        console.log(`[CHAT] AGENT COMPLETED for ${buildId}`);
+        console.log(`[CHAT] Deployed URL: ${data.deployedUrl || 'none'}`);
+        console.log(`[CHAT] Document: ${data.document?.title || 'none'}`);
+        console.log(`[CHAT] Error: ${data.error || 'none'}`);
+        console.log(`[CHAT] ========================================`);
         await updateBuildComplete(buildId, {
           deployedUrl: data.deployedUrl,
           document: data.document,
         });
+        console.log(`[CHAT] Redis updated to complete for ${buildId}`);
       }).catch(async (err) => {
-        console.error('[CHAT] Agent build failed:', err);
+        console.error(`[CHAT] ========================================`);
+        console.error(`[CHAT] AGENT BUILD FAILED for ${buildId}`);
+        console.error(`[CHAT] Error:`, err);
+        console.error(`[CHAT] ========================================`);
         await updateBuildError(buildId, err instanceof Error ? err.message : 'Unknown error');
       });
     }

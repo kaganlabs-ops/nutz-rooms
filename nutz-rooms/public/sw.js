@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kagan-v1';
+const CACHE_NAME = 'kagan-v2'; // Bumped to force service worker update
 
 // Files to cache for offline use
 const CORE_ASSETS = [
@@ -32,11 +32,22 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - network first, fallback to cache
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
 
-  // Skip API calls - always need fresh data
-  if (event.request.url.includes('/api/')) return;
+  // Skip non-GET requests entirely - let browser handle POST/PUT/DELETE
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  // Skip ALL API calls - never cache, always fresh
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/api')) {
+    return;
+  }
+
+  // Skip external URLs (like Vercel deployments)
+  if (url.origin !== self.location.origin) {
+    return;
+  }
 
   event.respondWith(
     fetch(event.request)
