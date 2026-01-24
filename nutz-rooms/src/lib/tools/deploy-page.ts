@@ -26,7 +26,7 @@ export async function deployPage(input: DeployPageInput): Promise<DeployResult> 
     },
     body: JSON.stringify({
       name: `${name}-demo`,
-      target: 'production',  // Production = public, preview = requires auth
+      target: 'production',  // Production deployments are public by default
       files: [
         {
           file: 'index.html',
@@ -36,12 +36,6 @@ export async function deployPage(input: DeployPageInput): Promise<DeployResult> 
       ],
       projectSettings: {
         framework: null,
-        // Disable all deployment protection for demos
-        deploymentProtection: {
-          standard: 'none',
-          preview: 'none',
-          production: 'none',
-        },
       },
     }),
   });
