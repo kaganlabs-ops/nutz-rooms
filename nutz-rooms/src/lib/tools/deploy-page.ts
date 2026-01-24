@@ -119,9 +119,10 @@ export async function deployPage(input: DeployPageInput): Promise<DeployResult> 
   }
 
   // Append shareable link secret as query param if we got one
+  // Format: x-vercel-protection-bypass=SECRET&x-vercel-set-bypass-cookie=true
   if (shareableSecret) {
-    publicUrl = `${publicUrl}?share=${shareableSecret}`;
-    console.log('[DEPLOY] Added shareable link to URL');
+    publicUrl = `${publicUrl}?x-vercel-protection-bypass=${shareableSecret}&x-vercel-set-bypass-cookie=true`;
+    console.log('[DEPLOY] Added shareable link bypass to URL');
   }
 
   console.log('[DEPLOY] Final public URL:', publicUrl);
