@@ -17,6 +17,7 @@ interface DeployResult {
  */
 export async function deployPage(input: DeployPageInput): Promise<DeployResult> {
   const { name, code } = input;
+  const projectName = `${name}-demo`;
 
   const response = await fetch('https://api.vercel.com/v13/deployments', {
     method: 'POST',
@@ -25,8 +26,8 @@ export async function deployPage(input: DeployPageInput): Promise<DeployResult> 
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      name: `${name}-demo`,
-      target: 'production',  // Production deployments are public by default
+      name: projectName,
+      target: 'production',
       files: [
         {
           file: 'index.html',
@@ -53,8 +54,52 @@ export async function deployPage(input: DeployPageInput): Promise<DeployResult> 
     alias: data.alias,
     name: data.name,
     id: data.id,
+    projectId: data.projectId,
     readyState: data.readyState,
   }, null, 2));
+
+  // Create a shareable link for the deployment URL
+  // This allows anyone with the link to access the deployment without Vercel login
+  let shareableSecret: string | null = null;
+  const deploymentUrl = data.url; // e.g., "project-abc123.vercel.app"
+
+  if (deploymentUrl) {
+    try {
+      console.log('[DEPLOY] Creating shareable link for:', deploymentUrl);
+      const shareableResponse = await fetch(
+        `https://api.vercel.com/aliases/${encodeURIComponent(deploymentUrl)}/protection-bypass`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${process.env.VERCEL_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}),  // No TTL = never expires
+        }
+      );
+
+      if (shareableResponse.ok) {
+        const shareableData = await shareableResponse.json();
+        console.log('[DEPLOY] Shareable link response:', JSON.stringify(shareableData, null, 2));
+        // Extract the shareable link secret from response
+        if (shareableData.protectionBypass) {
+          // Find the shareable-link type bypass
+          const shareableLink = Object.entries(shareableData.protectionBypass).find(
+            ([, value]) => (value as { scope: string }).scope === 'shareable-link'
+          );
+          if (shareableLink) {
+            shareableSecret = shareableLink[0]; // The key is the secret
+            console.log('[DEPLOY] Shareable link secret obtained');
+          }
+        }
+      } else {
+        const shareableError = await shareableResponse.text();
+        console.error('[DEPLOY] Failed to create shareable link:', shareableError);
+      }
+    } catch (err) {
+      console.error('[DEPLOY] Error creating shareable link:', err);
+    }
+  }
 
   // Get the public URL - Vercel returns different formats:
   // - data.url: usually the deployment URL (e.g., "project-abc123.vercel.app")
@@ -71,6 +116,12 @@ export async function deployPage(input: DeployPageInput): Promise<DeployResult> 
   // Ensure https:// prefix
   if (publicUrl && !publicUrl.startsWith('http')) {
     publicUrl = `https://${publicUrl}`;
+  }
+
+  // Append shareable link secret as query param if we got one
+  if (shareableSecret) {
+    publicUrl = `${publicUrl}?share=${shareableSecret}`;
+    console.log('[DEPLOY] Added shareable link to URL');
   }
 
   console.log('[DEPLOY] Final public URL:', publicUrl);

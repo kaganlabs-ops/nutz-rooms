@@ -108,8 +108,12 @@ export async function POST(req: NextRequest) {
   try {
     const { task, context, transcript }: AgentRequest = await req.json();
 
+    console.log("[AGENT] ========================================");
+    console.log("[AGENT] NEW REQUEST");
     console.log("[AGENT] Task:", task);
     console.log("[AGENT] Context length:", context?.length || 0);
+    console.log("[AGENT] Transcript messages:", transcript?.length || 0);
+    console.log("[AGENT] ========================================");
 
     const startTime = Date.now();
 
@@ -130,6 +134,7 @@ Complete this task and return a concise summary I can speak to the user.`;
     let deployedUrl: string | null = null;
 
     // Initial request with all tools
+    console.log("[AGENT] Calling Claude Opus...");
     let response = await anthropic.messages.create({
       model: "claude-opus-4-5-20251101",
       max_tokens: 8192,
@@ -151,6 +156,9 @@ Complete this task and return a concise summary I can speak to the user.`;
       ],
     });
 
+    console.log("[AGENT] Initial response stop_reason:", response.stop_reason);
+    console.log("[AGENT] Initial response content types:", response.content.map(c => c.type));
+
     // Handle tool use loop
     const messages: Anthropic.MessageParam[] = [
       { role: "user", content: userMessage },
@@ -161,6 +169,9 @@ Complete this task and return a concise summary I can speak to the user.`;
 
     while (response.stop_reason === "tool_use" && loopCount < MAX_LOOPS) {
       loopCount++;
+      console.log("[AGENT] ----------------------------------------");
+      console.log("[AGENT] Tool loop iteration:", loopCount);
+
       // Add assistant's response with tool use
       messages.push({
         role: "assistant",
@@ -172,7 +183,8 @@ Complete this task and return a concise summary I can speak to the user.`;
 
       for (const block of response.content) {
         if (block.type === "tool_use") {
-          console.log("[AGENT] Tool use:", block.name, block.input);
+          console.log("[AGENT] Tool use:", block.name);
+          console.log("[AGENT] Tool input keys:", Object.keys(block.input as object));
 
           if (block.name === "web_search") {
             // web_search is handled automatically by the API
