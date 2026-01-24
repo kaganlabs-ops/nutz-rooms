@@ -67,17 +67,26 @@ const detectKaganCreateIntent = (text: string): { shouldCreate: boolean; type: '
     "let me build that",
     "on it, building",
     "building you",
+    "building u ",  // "building u a" variant
     "let me build you",
+    "let me build u",
     "gonna build",
     "let me build",
     "let me make you",
+    "let me make u",
     "making you a",
+    "making u a",
     "let me spin up",
     "spinning up",
     "let me create",
     "creating a prototype",
     "building a prototype",
     "let me put together a demo",
+    "building a chat",  // specific case
+    "building a page",
+    "building a site",
+    "building a website",
+    "building an app",
   ];
 
   // Document triggers - markdown docs

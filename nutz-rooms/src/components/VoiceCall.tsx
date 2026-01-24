@@ -212,20 +212,28 @@ const AGENT_RESEARCH_TRIGGERS = [
 ];
 
 const AGENT_DEPLOY_TRIGGERS = [
-  // Existing
+  // Core triggers
   "let me build",
   "let me spin up",
   "let me create",
   "building you a",
+  "building u a",  // "building u a chat interface"
   "spinning up a",
   "creating a page",
   "deploying now",
   "on it, making",
-  // NEW - catch more build intent
+  // Extended triggers
   "let me make you",
+  "let me make u",
   "making you a",
+  "making u a",
   "building that",
   "building this",
+  "building a chat",
+  "building a page",
+  "building a site",
+  "building a website",
+  "building an app",
   "let me put together a demo",
   "let me put together something",
   "working on your demo",
