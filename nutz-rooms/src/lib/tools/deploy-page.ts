@@ -45,8 +45,37 @@ export async function deployPage(input: DeployPageInput): Promise<DeployResult> 
   }
 
   const data = await response.json();
+
+  // Log full response to debug URL issues
+  console.log('[DEPLOY] Vercel API response:', JSON.stringify({
+    url: data.url,
+    alias: data.alias,
+    name: data.name,
+    id: data.id,
+    readyState: data.readyState,
+  }, null, 2));
+
+  // Get the public URL - Vercel returns different formats:
+  // - data.url: usually the deployment URL (e.g., "project-abc123.vercel.app")
+  // - data.alias: array of aliases if configured
+  // Make sure we have https:// prefix and it's a real public URL
+  let publicUrl = data.url;
+
+  // If it looks like a dashboard URL, construct the correct one
+  if (publicUrl && publicUrl.includes('vercel.com/')) {
+    // Dashboard URL detected, use alias or construct from name
+    publicUrl = data.alias?.[0] || `${data.name}.vercel.app`;
+  }
+
+  // Ensure https:// prefix
+  if (publicUrl && !publicUrl.startsWith('http')) {
+    publicUrl = `https://${publicUrl}`;
+  }
+
+  console.log('[DEPLOY] Final public URL:', publicUrl);
+
   return {
-    url: `https://${data.url}`,
+    url: publicUrl,
     deploymentId: data.id,
   };
 }
