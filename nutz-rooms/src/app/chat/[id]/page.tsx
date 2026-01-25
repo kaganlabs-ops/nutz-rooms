@@ -403,24 +403,24 @@ export default function ChatPage() {
             : 'bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border-blue-500/30'
         }`}>
           <span className={`text-lg ${activeBuild.stage !== 'done' && activeBuild.stage !== 'error' ? 'animate-pulse' : ''}`}>
-            {activeBuild.stage === 'generating' ? '🔨' :
+            {activeBuild.stage === 'generating' ? '🤯' :
              activeBuild.stage === 'deploying' ? '🚀' :
-             activeBuild.stage === 'done' ? '✅' : '❌'}
+             activeBuild.stage === 'done' ? '🔥' : '💀'}
           </span>
           <div className="flex-1 min-w-0">
-            <span className={`text-xs uppercase tracking-wide font-medium ${
-              activeBuild.stage === 'done' ? 'text-green-400/70' :
-              activeBuild.stage === 'error' ? 'text-red-400/70' :
-              'text-blue-400/70'
+            <span className={`text-sm font-medium ${
+              activeBuild.stage === 'done' ? 'text-green-400' :
+              activeBuild.stage === 'error' ? 'text-red-400' :
+              'text-blue-400'
             }`}>
-              {activeBuild.stage === 'generating' ? 'Generating code...' :
-               activeBuild.stage === 'deploying' ? 'Deploying to Vercel...' :
-               activeBuild.stage === 'done' ? 'Build complete!' : 'Build failed'}
+              {activeBuild.stage === 'generating' ? 'u fckn nutz!?' :
+               activeBuild.stage === 'deploying' ? 'vercel!!' :
+               activeBuild.stage === 'done' ? 'LFG' : 'rip'}
             </span>
             <p className="text-xs text-white/50">
-              {activeBuild.stage === 'generating' ? 'Opus is writing your demo (30-60s)' :
-               activeBuild.stage === 'deploying' ? 'Almost there...' :
-               activeBuild.stage === 'done' ? 'Link ready below' : 'Check below for details'}
+              {activeBuild.stage === 'generating' ? 'generating the bb' :
+               activeBuild.stage === 'deploying' ? 'almost there...' :
+               activeBuild.stage === 'done' ? 'link ready below' : 'something broke'}
             </p>
           </div>
           {/* Progress dots */}
