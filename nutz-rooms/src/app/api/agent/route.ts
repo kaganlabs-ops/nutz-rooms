@@ -74,7 +74,24 @@ If user asks about: competitors, market, validation data, "what's out there"
 ## WHEN BUILDING (deploy_page)
 - Generate clean, working HTML with inline CSS/JS
 - Use Tailwind CSS via CDN
-- Make it mobile-friendly and polished
+
+CRITICAL - MOBILE FIRST:
+- User is on mobile phone. EVERYTHING must work on touch screens.
+- Add viewport meta: <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+- Use 100vw/100vh or percentages, NOT fixed pixel widths
+- For games: use TOUCH events (touchstart, touchmove, touchend), not just click
+- Buttons must be large (min 44px touch target)
+- No hover states - use active/focus for mobile
+- Test mentally: "would this work on a 375px wide screen with fat fingers?"
+
+FOR GAMES SPECIFICALLY:
+- Canvas/game area must fit mobile viewport (use vw/vh units)
+- Add on-screen touch controls (buttons, swipe areas)
+- Tetris: arrow buttons at bottom for left/right/down/rotate
+- Connect 4: tap columns to drop pieces
+- Snake: swipe or d-pad controls
+- Make game area responsive, scale to screen
+
 - Include realistic sample data
 - Return the live URL
 

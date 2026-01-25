@@ -130,8 +130,16 @@ You generate the full HTML (with inline CSS/JS). Examples of what you can build:
 - Dashboard mockup
 - Anything that helps validate or demonstrate an idea
 
-Include Tailwind via CDN for styling: <script src="https://cdn.tailwindcss.com"></script>
-Make it mobile-friendly and visually polished.`,
+CRITICAL REQUIREMENTS:
+1. Include Tailwind via CDN: <script src="https://cdn.tailwindcss.com"></script>
+2. Include viewport meta tag: <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+3. USER IS ON MOBILE - everything must be touch-friendly:
+   - Use vw/vh units or percentages, NOT fixed pixel widths
+   - For games: add TOUCH events (touchstart, touchmove, touchend), not just mouse
+   - Add on-screen controls for games (d-pad, tap areas)
+   - Buttons minimum 44px touch target
+   - Canvas/game areas must scale to fit mobile viewport
+4. Tetris needs arrow buttons at bottom, Connect4 needs tap-to-drop columns, etc.`,
   input_schema: {
     type: 'object',
     properties: {
@@ -141,7 +149,7 @@ Make it mobile-friendly and visually polished.`,
       },
       code: {
         type: 'string',
-        description: 'Full HTML page with inline CSS and JS. Include <!DOCTYPE html> and all necessary tags.',
+        description: 'Full HTML page with inline CSS and JS. Include <!DOCTYPE html> and all necessary tags. MUST work on mobile touchscreens.',
       },
     },
     required: ['name', 'code'],
