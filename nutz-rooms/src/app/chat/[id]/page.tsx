@@ -23,6 +23,13 @@ interface Message {
   buildId?: string | null; // For polling build status
 }
 
+// Active build state for pinned banner
+interface ActiveBuild {
+  buildId: string;
+  startTime: number;
+  stage: 'generating' | 'deploying' | 'done' | 'error';
+}
+
 interface Character {
   id: string;
   name: string;
@@ -78,6 +85,7 @@ export default function ChatPage() {
   const [pinnedAction, setPinnedAction] = useState<string | null>(null);
   const [sessionMetadata, setSessionMetadata] = useState<SessionMetadata | null>(null);
   const [sessionInitialized, setSessionInitialized] = useState(false);
+  const [activeBuild, setActiveBuild] = useState<ActiveBuild | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Extract ONE THING from message and return cleaned content
@@ -236,15 +244,27 @@ export default function ChatPage() {
   };
 
   // Poll for build status - uses buildId to find the correct message
-  const pollBuildStatus = async (buildId: string, _messageIndex: number) => {
-    const maxAttempts = 60; // 60 attempts * 2 seconds = 2 minutes max
+  // Uses setInterval for more reliable polling in PWAs (setTimeout can be throttled in background)
+  const pollBuildStatus = (buildId: string, _messageIndex: number) => {
+    const maxAttempts = 90; // 90 attempts * 2 seconds = 3 minutes max
     let attempts = 0;
+    let intervalId: NodeJS.Timeout | null = null;
+    const startTime = Date.now();
 
     console.log('[BUILD] Starting poll for buildId:', buildId);
 
+    // Set active build banner
+    setActiveBuild({ buildId, startTime, stage: 'generating' });
+
     const poll = async () => {
       attempts++;
-      console.log('[BUILD] Poll attempt', attempts, 'for buildId:', buildId);
+      const elapsed = Date.now() - startTime;
+      console.log('[BUILD] Poll attempt', attempts, 'for buildId:', buildId, 'elapsed:', elapsed);
+
+      // Update stage based on time (rough estimate)
+      if (elapsed > 15000 && elapsed < 45000) {
+        setActiveBuild(prev => prev?.buildId === buildId ? { ...prev, stage: 'deploying' } : prev);
+      }
 
       try {
         const res = await fetch(`/api/build-status?buildId=${buildId}`);
@@ -252,8 +272,9 @@ export default function ChatPage() {
 
         if (!res.ok) {
           console.error('[BUILD] Response not OK:', res.status, res.statusText);
-          if (attempts < maxAttempts) {
-            setTimeout(poll, 2000);
+          if (attempts >= maxAttempts && intervalId) {
+            clearInterval(intervalId);
+            setActiveBuild(null);
           }
           return;
         }
@@ -263,6 +284,10 @@ export default function ChatPage() {
 
         if (data.status === 'complete') {
           console.log('[BUILD] ✅ Complete! URL:', data.deployedUrl, 'Doc:', data.document?.title);
+          if (intervalId) clearInterval(intervalId);
+          // Show done briefly then clear
+          setActiveBuild(prev => prev?.buildId === buildId ? { ...prev, stage: 'done' } : prev);
+          setTimeout(() => setActiveBuild(null), 2000);
           // Update the message that has this buildId
           setMessages((prev) => {
             const updated = prev.map((msg) =>
@@ -278,37 +303,44 @@ export default function ChatPage() {
             console.log('[BUILD] Updated messages count:', updated.length);
             return updated;
           });
-          return; // Done polling
+          return;
         }
 
         if (data.status === 'error') {
           console.error('[BUILD] ❌ Failed:', data.error);
+          if (intervalId) clearInterval(intervalId);
+          setActiveBuild(prev => prev?.buildId === buildId ? { ...prev, stage: 'error' } : prev);
+          setTimeout(() => setActiveBuild(null), 3000);
           setMessages((prev) => prev.map((msg) =>
             msg.buildId === buildId ? { ...msg, isBuilding: false } : msg
           ));
-          return; // Done polling
+          return;
         }
 
-        // Still building, poll again
+        // Still building
         console.log('[BUILD] Still building, elapsed:', data.elapsed, 'ms');
-        if (attempts < maxAttempts) {
-          setTimeout(poll, 2000); // Poll every 2 seconds
-        } else {
+        if (attempts >= maxAttempts) {
           console.error('[BUILD] ⏰ Timeout after', maxAttempts, 'attempts');
+          if (intervalId) clearInterval(intervalId);
+          setActiveBuild(null);
           setMessages((prev) => prev.map((msg) =>
             msg.buildId === buildId ? { ...msg, isBuilding: false } : msg
           ));
         }
       } catch (err) {
         console.error('[BUILD] Poll error:', err);
-        if (attempts < maxAttempts) {
-          setTimeout(poll, 2000);
+        if (attempts >= maxAttempts && intervalId) {
+          clearInterval(intervalId);
+          setActiveBuild(null);
         }
       }
     };
 
-    // Start polling after a short delay
-    setTimeout(poll, 1000);
+    // Start polling with setInterval (more reliable than setTimeout chain in PWAs)
+    setTimeout(() => {
+      poll(); // First poll immediately
+      intervalId = setInterval(poll, 2000); // Then every 2 seconds
+    }, 1000);
   };
 
   // Handle clearing ONE THING (e.g., when user completes it)
@@ -361,8 +393,49 @@ export default function ChatPage() {
         )}
       </header>
 
+      {/* Pinned Build Progress Banner */}
+      {activeBuild && (
+        <div className={`border-b px-4 py-3 flex items-center gap-3 ${
+          activeBuild.stage === 'done'
+            ? 'bg-gradient-to-r from-green-900/40 to-emerald-900/40 border-green-500/30'
+            : activeBuild.stage === 'error'
+            ? 'bg-gradient-to-r from-red-900/40 to-rose-900/40 border-red-500/30'
+            : 'bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border-blue-500/30'
+        }`}>
+          <span className={`text-lg ${activeBuild.stage !== 'done' && activeBuild.stage !== 'error' ? 'animate-pulse' : ''}`}>
+            {activeBuild.stage === 'generating' ? '🔨' :
+             activeBuild.stage === 'deploying' ? '🚀' :
+             activeBuild.stage === 'done' ? '✅' : '❌'}
+          </span>
+          <div className="flex-1 min-w-0">
+            <span className={`text-xs uppercase tracking-wide font-medium ${
+              activeBuild.stage === 'done' ? 'text-green-400/70' :
+              activeBuild.stage === 'error' ? 'text-red-400/70' :
+              'text-blue-400/70'
+            }`}>
+              {activeBuild.stage === 'generating' ? 'Generating code...' :
+               activeBuild.stage === 'deploying' ? 'Deploying to Vercel...' :
+               activeBuild.stage === 'done' ? 'Build complete!' : 'Build failed'}
+            </span>
+            <p className="text-xs text-white/50">
+              {activeBuild.stage === 'generating' ? 'Opus is writing your demo (30-60s)' :
+               activeBuild.stage === 'deploying' ? 'Almost there...' :
+               activeBuild.stage === 'done' ? 'Link ready below' : 'Check below for details'}
+            </p>
+          </div>
+          {/* Progress dots */}
+          {activeBuild.stage !== 'done' && activeBuild.stage !== 'error' && (
+            <div className="flex gap-1">
+              <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+              <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+              <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Pinned ONE THING Banner */}
-      {pinnedAction && (
+      {pinnedAction && !activeBuild && (
         <div className="bg-gradient-to-r from-amber-900/40 to-orange-900/40 border-b border-amber-500/30 px-4 py-3 flex items-center gap-2">
           <span className="text-lg">📌</span>
           <div className="flex-1 min-w-0">
@@ -439,17 +512,6 @@ export default function ChatPage() {
                 </div>
               )}
               {message.artifact && <ArtifactCard artifact={message.artifact} />}
-
-              {/* Building indicator - show when buildId exists and not complete */}
-              {message.buildId && !message.deployedUrl && !message.agentDocument && (
-                <div className={`${message.content?.trim() ? 'mt-2' : ''} bg-amber-900/40 border border-amber-500/40 rounded-xl p-4 animate-pulse`}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-amber-400 animate-spin">⚙️</span>
-                    <span className="text-amber-400 font-medium text-sm">Building your demo...</span>
-                  </div>
-                  <p className="text-white/60 text-xs mt-1">This usually takes 10-20 seconds</p>
-                </div>
-              )}
 
               {/* Deployed URL from agent */}
               {message.deployedUrl && (

@@ -405,6 +405,7 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
     status: 'pending' | 'done' | 'error';
     type: 'research' | 'deploy';
     result?: string;
+    deployedUrl?: string;
   } | null>(null);
   // Pending agent result for injection into conversation
   const pendingAgentResult = useRef<string | null>(null);
@@ -551,15 +552,16 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
       }),
     })
       .then(res => res.json())
-      .then(({ result }) => {
+      .then(({ result, deployedUrl }) => {
         console.log('[AGENT] Task completed:', taskId);
         console.log('[AGENT] Result preview:', result?.slice(0, 200));
+        console.log('[AGENT] Deployed URL:', deployedUrl);
         pendingAgentResult.current = result;
         // Also append to zepContextRef so Kagan can see it in context
         if (result) {
           zepContextRef.current = zepContextRef.current + `\n\nAGENT_RESULT:\n${result}`;
         }
-        setAgentTask(prev => prev ? { ...prev, status: 'done', result } : null);
+        setAgentTask(prev => prev ? { ...prev, status: 'done', result, deployedUrl } : null);
       })
       .catch((err) => {
         console.error('[AGENT] Task failed:', err);
@@ -1068,8 +1070,24 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
                     : 'Something went wrong'}
                 </span>
               </div>
-              {/* Show result preview when done */}
-              {agentTask.status === 'done' && agentTask.result && (
+              {/* Show deployed URL when done */}
+              {agentTask.status === 'done' && agentTask.deployedUrl && (
+                <a
+                  href={agentTask.deployedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 block bg-green-800/40 rounded-lg p-2 hover:bg-green-800/60 transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">🚀</span>
+                    <span className="text-xs text-green-400">Live Demo</span>
+                  </div>
+                  <p className="text-xs text-white/70 truncate mt-1">{agentTask.deployedUrl}</p>
+                </a>
+              )}
+              {/* Show result preview when done (for research) */}
+              {agentTask.status === 'done' && agentTask.result && !agentTask.deployedUrl && (
                 <p className="text-xs text-white/50 mt-2 line-clamp-2">
                   {agentTask.result.slice(0, 150)}...
                 </p>
