@@ -403,9 +403,7 @@ export default function ChatPage() {
             : 'bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border-blue-500/30'
         }`}>
           <span className={`text-lg ${activeBuild.stage !== 'done' && activeBuild.stage !== 'error' ? 'animate-pulse' : ''}`}>
-            {activeBuild.stage === 'generating' ? '🤯' :
-             activeBuild.stage === 'deploying' ? '🚀' :
-             activeBuild.stage === 'done' ? '🔥' : '💀'}
+            {activeBuild.stage === 'error' ? '💀' : ''}
           </span>
           <div className="flex-1 min-w-0">
             <span className={`text-sm font-medium ${
