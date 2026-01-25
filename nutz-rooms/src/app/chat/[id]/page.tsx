@@ -416,15 +416,18 @@ export default function ChatPage() {
               </div>
             )}
             <div className="max-w-[75%]">
-              <div
-                className={`rounded-2xl px-4 py-3 ${
-                  message.role === "user"
-                    ? "bg-blue-600 text-white"
-                    : "bg-white/10 text-white"
-                }`}
-              >
-                <p className="whitespace-pre-wrap text-sm">{message.content}</p>
-              </div>
+              {/* Only render text bubble if there's content */}
+              {message.content && message.content.trim() && (
+                <div
+                  className={`rounded-2xl px-4 py-3 ${
+                    message.role === "user"
+                      ? "bg-blue-600 text-white"
+                      : "bg-white/10 text-white"
+                  }`}
+                >
+                  <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                </div>
+              )}
               {message.gifUrl && (
                 <div className="mt-2 rounded-xl overflow-hidden max-w-[280px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -437,9 +440,9 @@ export default function ChatPage() {
               )}
               {message.artifact && <ArtifactCard artifact={message.artifact} />}
 
-              {/* Building indicator */}
-              {message.isBuilding && !message.deployedUrl && (
-                <div className="mt-2 bg-amber-900/40 border border-amber-500/40 rounded-xl p-4 animate-pulse">
+              {/* Building indicator - show when buildId exists and not complete */}
+              {message.buildId && !message.deployedUrl && !message.agentDocument && (
+                <div className={`${message.content?.trim() ? 'mt-2' : ''} bg-amber-900/40 border border-amber-500/40 rounded-xl p-4 animate-pulse`}>
                   <div className="flex items-center gap-2">
                     <span className="text-amber-400 animate-spin">⚙️</span>
                     <span className="text-amber-400 font-medium text-sm">Building your demo...</span>
@@ -454,7 +457,7 @@ export default function ChatPage() {
                   href={message.deployedUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-2 block bg-green-900/40 border border-green-500/40 rounded-xl p-4 hover:bg-green-900/60 transition-colors"
+                  className={`${message.content?.trim() ? 'mt-2' : ''} block bg-green-900/40 border border-green-500/40 rounded-xl p-4 hover:bg-green-900/60 transition-colors`}
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-green-400">🚀</span>
@@ -467,7 +470,7 @@ export default function ChatPage() {
 
               {/* Document from agent */}
               {message.agentDocument && (
-                <div className="mt-2 bg-blue-900/40 border border-blue-500/40 rounded-xl p-4">
+                <div className={`${message.content?.trim() ? 'mt-2' : ''} bg-blue-900/40 border border-blue-500/40 rounded-xl p-4`}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-blue-400">📄</span>
                     <span className="text-blue-400 font-medium text-sm">{message.agentDocument.title}</span>
