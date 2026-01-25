@@ -58,46 +58,33 @@ export async function deployPage(input: DeployPageInput): Promise<DeployResult> 
     readyState: data.readyState,
   }, null, 2));
 
-  // Create a shareable link for the deployment URL
-  // This allows anyone with the link to access the deployment without Vercel login
-  let shareableSecret: string | null = null;
-  const deploymentUrl = data.url; // e.g., "project-abc123.vercel.app"
-
-  if (deploymentUrl) {
+  // Disable SSO protection on the project to make it publicly accessible
+  // Vercel enables "Standard Protection" by default which requires login
+  if (data.projectId) {
     try {
-      console.log('[DEPLOY] Creating shareable link for:', deploymentUrl);
-      const shareableResponse = await fetch(
-        `https://api.vercel.com/aliases/${encodeURIComponent(deploymentUrl)}/protection-bypass`,
+      console.log('[DEPLOY] Disabling SSO protection for project:', data.projectId);
+      const protectionResponse = await fetch(
+        `https://api.vercel.com/v9/projects/${data.projectId}`,
         {
           method: 'PATCH',
           headers: {
             Authorization: `Bearer ${process.env.VERCEL_TOKEN}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({}),  // No TTL = never expires
+          body: JSON.stringify({
+            ssoProtection: null,  // Disable Vercel Authentication completely
+          }),
         }
       );
 
-      if (shareableResponse.ok) {
-        const shareableData = await shareableResponse.json();
-        console.log('[DEPLOY] Shareable link response:', JSON.stringify(shareableData, null, 2));
-        // Extract the shareable link secret from response
-        if (shareableData.protectionBypass) {
-          // Find the shareable-link type bypass
-          const shareableLink = Object.entries(shareableData.protectionBypass).find(
-            ([, value]) => (value as { scope: string }).scope === 'shareable-link'
-          );
-          if (shareableLink) {
-            shareableSecret = shareableLink[0]; // The key is the secret
-            console.log('[DEPLOY] Shareable link secret obtained');
-          }
-        }
+      if (protectionResponse.ok) {
+        console.log('[DEPLOY] SSO protection disabled successfully');
       } else {
-        const shareableError = await shareableResponse.text();
-        console.error('[DEPLOY] Failed to create shareable link:', shareableError);
+        const protectionError = await protectionResponse.text();
+        console.error('[DEPLOY] Failed to disable SSO protection:', protectionError);
       }
     } catch (err) {
-      console.error('[DEPLOY] Error creating shareable link:', err);
+      console.error('[DEPLOY] Error disabling SSO protection:', err);
     }
   }
 
@@ -116,13 +103,6 @@ export async function deployPage(input: DeployPageInput): Promise<DeployResult> 
   // Ensure https:// prefix
   if (publicUrl && !publicUrl.startsWith('http')) {
     publicUrl = `https://${publicUrl}`;
-  }
-
-  // Append shareable link secret as query param if we got one
-  // Format: x-vercel-protection-bypass=SECRET&x-vercel-set-bypass-cookie=true
-  if (shareableSecret) {
-    publicUrl = `${publicUrl}?x-vercel-protection-bypass=${shareableSecret}&x-vercel-set-bypass-cookie=true`;
-    console.log('[DEPLOY] Added shareable link bypass to URL');
   }
 
   console.log('[DEPLOY] Final public URL:', publicUrl);
