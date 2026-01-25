@@ -487,17 +487,24 @@ export default function ChatPage() {
               </div>
             )}
             <div className="max-w-[75%]">
-              {/* Only render text bubble if there's content */}
+              {/* Split assistant messages into multiple bubbles on double newline */}
               {message.content && message.content.trim() && (
-                <div
-                  className={`rounded-2xl px-4 py-3 ${
-                    message.role === "user"
-                      ? "bg-blue-600 text-white"
-                      : "bg-white/10 text-white"
-                  }`}
-                >
-                  <p className="whitespace-pre-wrap text-sm">{message.content}</p>
-                </div>
+                message.role === "assistant" ? (
+                  <div className="space-y-2">
+                    {message.content.split(/\n\n+/).filter(part => part.trim()).map((part, partIndex) => (
+                      <div
+                        key={partIndex}
+                        className="rounded-2xl px-4 py-3 bg-white/10 text-white"
+                      >
+                        <p className="whitespace-pre-wrap text-sm">{part.trim()}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl px-4 py-3 bg-blue-600 text-white">
+                    <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                  </div>
+                )
               )}
               {message.gifUrl && (
                 <div className="mt-2 rounded-xl overflow-hidden max-w-[280px]">
