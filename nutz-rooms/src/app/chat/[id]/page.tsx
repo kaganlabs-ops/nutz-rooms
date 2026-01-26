@@ -102,6 +102,13 @@ const CHARACTERS: Character[] = [
     avatar: "/kagan-avatar.jpg",
   },
   {
+    id: "joko",
+    name: "Joko",
+    fullName: "Joko",
+    title: "AI Character",
+    avatar: "/joko-avatar.mov",
+  },
+  {
     id: "steve-jobs",
     name: "Steve Jobs",
     avatar: "/steve-jobs-frame.jpg",
@@ -144,6 +151,7 @@ export default function ChatPage() {
   const [activeTask, setActiveTask] = useState<ActiveTask | null>(null);
   const [attachedImage, setAttachedImage] = useState<{ url: string; preview: string } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -558,6 +566,9 @@ export default function ChatPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Clear any previous error
+    setUploadError(null);
+
     // Create preview
     const preview = URL.createObjectURL(file);
     setIsUploading(true);
@@ -571,14 +582,24 @@ export default function ChatPage() {
         body: formData,
       });
 
-      if (!res.ok) throw new Error('Upload failed');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `Upload failed (${res.status})`);
+      }
 
       const data = await res.json();
+      if (!data.url) {
+        throw new Error('No URL returned from upload');
+      }
       setAttachedImage({ url: data.url, preview });
       console.log('[UPLOAD] Image attached:', data.url);
     } catch (err) {
       console.error('[UPLOAD] Error:', err);
       URL.revokeObjectURL(preview);
+      const errorMessage = err instanceof Error ? err.message : 'Upload failed';
+      setUploadError(errorMessage);
+      // Clear error after 4 seconds
+      setTimeout(() => setUploadError(null), 4000);
     } finally {
       setIsUploading(false);
       // Reset input so same file can be selected again
@@ -666,13 +687,24 @@ export default function ChatPage() {
       {/* Centered Agent Avatar */}
       <div className="!absolute top-4 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center">
         <div className="w-16 h-16 rounded-full overflow-hidden liquid-glass p-0.5">
-          <Image
-            src={character.avatar}
-            alt={character.name}
-            width={64}
-            height={64}
-            className="w-full h-full object-cover rounded-full"
-          />
+          {character.avatar.endsWith('.mov') || character.avatar.endsWith('.mp4') ? (
+            <video
+              src={character.avatar}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover rounded-full"
+            />
+          ) : (
+            <Image
+              src={character.avatar}
+              alt={character.name}
+              width={64}
+              height={64}
+              className="w-full h-full object-cover rounded-full"
+            />
+          )}
         </div>
         <span className="mt-1 text-sm font-medium text-gray-700/80">{character.name}</span>
       </div>
@@ -965,6 +997,14 @@ export default function ChatPage() {
           <div className="mb-3 text-sm text-gray-600 flex items-center gap-2">
             <span className="w-4 h-4 border-2 border-gray-400/50 border-t-gray-600 rounded-full animate-spin" />
             uploading...
+          </div>
+        )}
+
+        {/* Upload error */}
+        {uploadError && (
+          <div className="mb-3 liquid-glass rounded-xl px-3 py-2 flex items-center gap-2">
+            <span className="text-red-500">upload failed</span>
+            <span className="text-xs text-gray-500">tap + to try again</span>
           </div>
         )}
 

@@ -481,6 +481,21 @@ CRITICAL:
         prompt += `- ${tool.name}: ${tool.description}\n`;
       }
       prompt += '\nWhen user asks to read emails, USE the read_emails tool. When user asks to send email, USE the send_email tool. etc.';
+
+      // Add image tool instructions
+      prompt += `\n\n## IMAGE TOOL RULES - CRITICAL
+When a user attaches/shares an image:
+- FIRST: Just acknowledge and discuss the image (use your vision capability)
+- DO NOT automatically call edit_image, remove_background, upscale_image, or generate_image
+- ONLY use these image tools when the user EXPLICITLY asks for editing/manipulation
+
+EXAMPLES:
+- User sends photo + "what do you think?" → Just respond with your thoughts. NO TOOLS.
+- User sends photo + "remove the background" → USE remove_background tool
+- User sends photo + "make it better" → USE upscale_image or edit_image
+- User sends photo + "edit this to add..." → USE edit_image tool
+
+If unsure, ASK: "want me to edit this or just vibes?"`;
     }
 
     // Add referrals

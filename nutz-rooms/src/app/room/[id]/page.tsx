@@ -50,6 +50,18 @@ const CHARACTERS: Character[] = [
     },
   },
   {
+    id: "joko",
+    name: "Joko",
+    fullName: "Joko",
+    title: "AI Character",
+    avatar: "/joko-avatar.mov",
+    videoSources: {
+      idle: "/joko-avatar.mov",
+      listening: "/joko-avatar.mov",
+      speaking: "/joko-avatar.mov",
+    },
+  },
+  {
     id: "steve-jobs",
     name: "Steve Jobs",
     avatar: "/steve-jobs-frame.jpg",
@@ -426,13 +438,24 @@ export default function RoomPage() {
                       height: size,
                     }}
                   >
-                    <Image
-                      src={character.avatar}
-                      alt={character.name}
-                      width={56}
-                      height={56}
-                      className="w-full h-full object-cover"
-                    />
+                    {character.avatar.endsWith('.mov') || character.avatar.endsWith('.mp4') ? (
+                      <video
+                        src={character.avatar}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Image
+                        src={character.avatar}
+                        alt={character.name}
+                        width={56}
+                        height={56}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
                   </div>
                   {/* Hover name for non-selected */}
                   {!isSelected && (
