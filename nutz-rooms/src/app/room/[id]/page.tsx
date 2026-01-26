@@ -53,7 +53,7 @@ const CHARACTERS: Character[] = [
     id: "joko",
     name: "Joko",
     fullName: "Joko",
-    title: "AI Character",
+    title: "TV host",
     avatar: "/joko-avatar.mov",
     videoSources: {
       idle: "/joko-avatar.mov",
