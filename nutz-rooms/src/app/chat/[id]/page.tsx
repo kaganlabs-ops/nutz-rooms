@@ -826,8 +826,8 @@ export default function ChatPage() {
           >
             <div className="max-w-[80%]">
               {/* Split assistant messages into multiple bubbles on double newline */}
-              {message.content && message.content.trim() && (
-                message.role === "assistant" ? (
+              {message.role === "assistant" ? (
+                message.content && message.content.trim() && (
                   <div className="space-y-2">
                     {message.content.split(/\n\n+/).filter(part => part.trim()).map((part, partIndex) => (
                       <div
@@ -838,7 +838,10 @@ export default function ChatPage() {
                       </div>
                     ))}
                   </div>
-                ) : (
+                )
+              ) : (
+                /* User messages - show image and/or text */
+                (message.content?.trim() || message.imageUrl) && (
                   <div className="space-y-2">
                     {message.imageUrl && (
                       <div className="rounded-2xl overflow-hidden max-w-[200px] liquid-glass p-1">
@@ -850,7 +853,7 @@ export default function ChatPage() {
                         />
                       </div>
                     )}
-                    {message.content && (
+                    {message.content?.trim() && (
                       <div className="rounded-3xl px-4 py-3 liquid-glass-warm text-gray-800">
                         <p className="whitespace-pre-wrap text-sm">{message.content}</p>
                       </div>
@@ -1002,10 +1005,13 @@ export default function ChatPage() {
 
         {/* Upload error */}
         {uploadError && (
-          <div className="mb-3 liquid-glass rounded-xl px-3 py-2 flex items-center gap-2">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="mb-3 liquid-glass rounded-xl px-3 py-2 flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-transform"
+          >
             <span className="text-red-500">upload failed</span>
-            <span className="text-xs text-gray-500">tap + to try again</span>
-          </div>
+            <span className="text-xs text-gray-500">tap to try again</span>
+          </button>
         )}
 
         {/* Input row with + button outside */}
