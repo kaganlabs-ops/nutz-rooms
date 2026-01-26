@@ -1,67 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureUser, createThread, addMessages, getThreadMessages, getUserContext } from "@/lib/zep";
-import { anthropic, KAGAN_SYSTEM_PROMPT } from "@/lib/openai";
 import { parseArtifact } from "@/lib/artifacts";
 import { searchGif } from "@/lib/giphy";
-import { findRelevantFacts, formatBrainContext } from "@/lib/brain";
-import { buildSessionContextFromAPI, extractOneThing } from "@/lib/sessionStorage";
-import { setBuildEntry, updateBuildComplete, updateBuildError } from "@/lib/redis";
-
-// Detect if Kagan's response indicates he's committing to create something
-// Agent only triggers when Kagan explicitly says he's building - not on user request
-const detectKaganCreateIntent = (text: string): { shouldCreate: boolean; type: 'build' | 'document' | null } => {
-  const lower = text.toLowerCase();
-
-  // Build triggers - Kagan saying he'll build
-  const buildTriggers = [
-    "building that now",
-    "let me build that",
-    "on it, building",
-    "building you",
-    "building u ",  // "building u a" variant
-    "let me build you",
-    "let me build u",
-    "gonna build",
-    "let me build",
-    "let me make you",
-    "let me make u",
-    "making you a",
-    "making u a",
-    "let me spin up",
-    "spinning up",
-    "let me create",
-    "creating a prototype",
-    "building a prototype",
-    "let me put together a demo",
-    "building a chat",  // specific case
-    "building a page",
-    "building a site",
-    "building a website",
-    "building an app",
-  ];
-
-  // Document triggers - markdown docs
-  const docTriggers = [
-    "let me put together some clarity",
-    "let me organize",
-    "putting together a plan",
-    "let me outline",
-    "writing up",
-    "let me draft",
-  ];
-
-  if (buildTriggers.some(t => lower.includes(t))) {
-    return { shouldCreate: true, type: 'build' };
-  }
-
-  if (docTriggers.some(t => lower.includes(t))) {
-    return { shouldCreate: true, type: 'document' };
-  }
-
-  return { shouldCreate: false, type: null };
-};
+import { findRelevantFacts } from "@/lib/brain";
+import { extractOneThing } from "@/lib/sessionStorage";
+import { setBuildEntry, updateBuildComplete, updateBuildError, setTaskEntry, updateTaskComplete, updateTaskError } from "@/lib/redis";
+import { createAgent } from "@/lib/agent";
+import { getConnectedApps, initiateConnection } from "@/lib/integrations/composio";
+import { BrainFact } from "@/types";
 
 export async function POST(req: NextRequest) {
+  console.log(`\n\n========== [CHAT-V2] NEW REQUEST ==========`);
   const startTime = Date.now();
 
   try {
@@ -69,7 +18,6 @@ export async function POST(req: NextRequest) {
       message,
       threadId: existingThreadId,
       userId,
-      // Session metadata from client (localStorage)
       sessionMetadata
     } = await req.json();
 
@@ -80,13 +28,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log(`[CHAT] Request from user: ${userId}`);
-    if (sessionMetadata) {
-      console.log(`[CHAT] Session metadata: count=${sessionMetadata.sessionCount}, lastOneThing=${sessionMetadata.lastOneThing || 'none'}`);
-    }
+    console.log(`[CHAT-V2] Request from user: ${userId}`);
 
     // ============================================
-    // STEP 1: Setup user and thread
+    // STEP 1: ZEP SETUP (same as v1)
     // ============================================
 
     await ensureUser(userId);
@@ -96,17 +41,12 @@ export async function POST(req: NextRequest) {
       threadId = await createThread(userId);
     }
 
-    // Add user message to thread FIRST (so Zep can use it for context retrieval)
     await addMessages(threadId, [
       { role: "user", content: message, name: "User" },
     ]);
 
     // ============================================
-    // STEP 2: GET MEMORY CONTEXT
-    // thread.getUserContext() is the KEY method:
-    // - Uses last 2 messages to search the ENTIRE user graph
-    // - Returns pre-formatted context block with user summary + relevant facts
-    // - Works across ALL sessions, not just current thread
+    // STEP 2: MEMORY CONTEXT (same as v1)
     // ============================================
 
     const [memoryContext, threadMessages] = await Promise.all([
@@ -114,203 +54,296 @@ export async function POST(req: NextRequest) {
       getThreadMessages(threadId),
     ]);
 
-    const parallelTime = Date.now() - startTime;
-    console.log(`[CHAT] Memory fetch completed in ${parallelTime}ms`);
-    console.log(`[CHAT] Memory context from Zep:`, memoryContext?.slice(0, 300) || 'none');
+    console.log(`[CHAT-V2] Memory fetch completed in ${Date.now() - startTime}ms`);
 
-    // Get conversation history (last 6 messages as fallback - Zep ingestion takes a few mins)
     const messageHistory: Array<{ role: "user" | "assistant"; content: string }> = [];
     const recentMessages = threadMessages.slice(-6);
     for (const msg of recentMessages) {
       if ((msg.role === "user" || msg.role === "assistant") && msg.content && msg.content.trim()) {
-        messageHistory.push({
-          role: msg.role,
-          content: msg.content,
-        });
+        messageHistory.push({ role: msg.role, content: msg.content });
       }
     }
 
     // ============================================
-    // BUILD CONTEXT: Session + Brain + Zep memory
+    // STEP 3: BRAIN FACTS (same as v1)
     // ============================================
 
-    // Get relevant facts from Kagan's brain based on message
     const relevantBrainFacts = findRelevantFacts(message, 8);
+    const brainFacts: BrainFact[] = relevantBrainFacts.map(fact => ({
+      fact,
+      category: 'general',
+      keywords: [],
+    }));
 
-    // Build system prompt with combined context
-    let systemPrompt = KAGAN_SYSTEM_PROMPT;
-
-    // Add Kagan's brain (shared knowledge about Kagan)
-    if (relevantBrainFacts.length > 0) {
-      systemPrompt += `\n\n${formatBrainContext(relevantBrainFacts)}`;
-    }
-
-    // Check if there's REAL content in Zep memory (not just empty template)
-    const hasUserSummary = memoryContext?.includes('<USER_SUMMARY>') &&
-                           !memoryContext.includes('No other personal or lifestyle details are currently known');
-    const hasRealFacts = memoryContext?.includes('<FACTS>') &&
-                         !memoryContext.match(/<FACTS>\s*<\/FACTS>/) &&
-                         !memoryContext.match(/<FACTS>\s*\n\s*<\/FACTS>/);
-    const hasMemory = hasUserSummary || hasRealFacts;
-
-    console.log(`[CHAT] Memory analysis: hasUserSummary=${hasUserSummary}, hasRealFacts=${hasRealFacts}, hasMemory=${hasMemory}`);
-
-    // Build session context (time since last session, ONE THING, relationship depth)
-    const sessionContext = buildSessionContextFromAPI(sessionMetadata, hasMemory ? memoryContext : null);
-
-    if (sessionContext) {
-      systemPrompt += `\n\n## SESSION CONTEXT\n${sessionContext}`;
-    }
-
-    // Add returning user instructions based on context
-    if (hasMemory || sessionMetadata?.lastOneThing || sessionMetadata?.sessionCount > 1) {
-      systemPrompt += `\n\n## RETURNING USER RULES
-
-You have context about this user above. USE IT - but ONE THING AT A TIME.
-
-CRITICAL: Pick ONE topic to open with. Not everything at once.
-
-BAD: "yo hows the move going? and did u work on that financial model? and are u still tired?"
-GOOD: "yo 👀 hows the move going?"
-
-IF they had a ONE THING last session:
-- Follow up on JUST that: "did u [action item]?"
-- Wait for their response before asking about other stuff
-
-IF session gap is very short (minutes):
-- "back already? 👀"
-
-IF session gap is same day:
-- "hey again"
-
-IF session gap is days:
-- "been a few days. hows [project] going"
-
-IF session gap is week+:
-- "been a minute. whats new with [project]"
-
-IF session count > 10:
-- You know this person well. Be more familiar.
-
-NEVER ask multiple questions in one message.
-NEVER make up memories. If context is empty, you're meeting them fresh.`;
-    }
-
-    // Add memory section
-    if (hasMemory) {
-      systemPrompt += `\n\n## ZEP MEMORY - What I know about this user:
-${memoryContext}
-
-## CRITICAL MEMORY RULES:
-1. USER_SUMMARY = long-term facts about who they are (job, projects, preferences)
-2. FACTS = specific things from recent conversations with dates
-
-IMPORTANT:
-- Only reference things EXPLICITLY in the memory above
-- If they ask "what did we talk about last time" - look at FACTS section for dated items
-- If FACTS section is empty or only has meta-info like "Assistant asked..." - say "im not seeing specifics from our last convo"
-- NEVER make up or hallucinate conversations that aren't in FACTS
-- You can reference USER_SUMMARY for who they are, but NOT for what they said recently
-- If they just say "hey", greet based on USER_SUMMARY (their projects/work)`;
-    } else if (!sessionMetadata?.sessionCount || sessionMetadata.sessionCount <= 1) {
-      systemPrompt += `\n\n## MEMORY:
-NO MEMORY AVAILABLE. This is a new user or I have no context from past conversations.
-
-CRITICAL:
-- Do NOT make up or hallucinate past conversations
-- If user asks "what did I tell you last time" - say "i dont have context from our last convo, whats up?"
-- Be direct: "im not seeing our past convos, fill me in"`;
-    }
-
-    console.log(`[CHAT] Context: ${relevantBrainFacts.length} brain facts, memory: ${hasMemory}, session: ${sessionMetadata ? 'yes' : 'no'}`);
+    console.log(`[CHAT-V2] Context: ${brainFacts.length} brain facts, memory: ${!!memoryContext}`);
 
     // ============================================
-    // STEP 3: CALL CLAUDE
+    // FAST PATH: Instant response for build requests
     // ============================================
 
-    const claudeStartTime = Date.now();
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1000,
-      system: systemPrompt,
-      messages: [...messageHistory, { role: "user", content: message }],
+    // Skip fast path for image/video/audio generation (let agent use FAL tools)
+    // Also skip for image editing keywords (realistic, 3d, icon, logo, etc.)
+    const isMediaGeneration = /\b(generate|create|make)\s+(an?\s+)?(image|picture|photo|video|audio|music|song|icon|logo|illustration|artwork)\b/i.test(message)
+      || /\b(realistic|hyper.?realistic|3d|transparent|edit.*image|remove.*background)\b/i.test(message);
+    console.log(`[CHAT-V2] isMediaGeneration=${isMediaGeneration} for message: "${message}"`);
+
+    const buildMatch = message.toLowerCase().match(/(?:build|make|create)\s+(?:me\s+)?(?:a\s+)?(.+?)(?:\s+app|\s+game|\s+demo|\s+tool|\s+page)?$/i);
+    console.log(`[CHAT-V2] buildMatch=${!!buildMatch}, skipping fast path=${isMediaGeneration}`);
+    if (buildMatch && !isMediaGeneration) {
+      const thing = buildMatch[1].replace(/\s+(app|game|demo|tool|page|for\s+.*)$/i, '').trim();
+      const fastBuildId = `build-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const fastResponse = `building u ${thing}`;
+
+      console.log(`[CHAT-V2] FAST PATH: Build detected for "${thing}", ID: ${fastBuildId}`);
+
+      // Save to Zep
+      await addMessages(threadId, [
+        { role: "assistant", content: fastResponse, name: "Kagan" },
+      ]);
+
+      // Start build in background
+      await setBuildEntry(fastBuildId, { status: 'building', startTime: Date.now() });
+
+      const recentContext = messageHistory.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
+      fetch(new URL('/api/agent', req.url), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          task: 'Build a working prototype/demo based on the conversation. Deploy it and return the URL.',
+          context: `${recentContext}\nuser: ${message}`,
+          transcript: [...messageHistory, { role: 'user', content: message }],
+          buildId: fastBuildId,
+        }),
+      }).then(async (res) => {
+        if (!res.ok) throw new Error(`Agent returned ${res.status}`);
+        const data = await res.json();
+        await updateBuildComplete(fastBuildId, { deployedUrl: data.deployedUrl, document: data.document });
+      }).catch(async (err) => {
+        await updateBuildError(fastBuildId, err instanceof Error ? err.message : 'Unknown error');
+      });
+
+      // Return immediately
+      return NextResponse.json({
+        response: fastResponse,
+        threadId,
+        artifact: null,
+        gifUrl: null,
+        oneThing: null,
+        isNewSession,
+        buildId: fastBuildId,
+        isBuilding: true,
+      });
+    }
+
+    // ============================================
+    // FAST PATH: Integration requests (email, calendar)
+    // ============================================
+
+    const integrationPatterns: { pattern: RegExp; app: string; action: string }[] = [
+      { pattern: /\b(read|check|show|get)\s+(my\s+)?(email|mail|inbox)/i, app: 'gmail', action: 'read emails' },
+      { pattern: /\b(send|write|compose)\s+(an?\s+)?(email|mail)/i, app: 'gmail', action: 'send emails' },
+      { pattern: /\b(read|check|show|get)\s+(my\s+)?(calendar|events|schedule)/i, app: 'googlecalendar', action: 'check calendar' },
+      { pattern: /\b(create|add|schedule)\s+(a\s+)?(meeting|event|appointment)/i, app: 'googlecalendar', action: 'create events' },
+    ];
+
+    for (const { pattern, app, action } of integrationPatterns) {
+      if (pattern.test(message)) {
+        console.log(`[CHAT-V2] Integration pattern matched: ${app} for "${action}", userId=${userId}`);
+        const connectedApps = await getConnectedApps(userId);
+        console.log(`[CHAT-V2] Connected apps for ${userId}:`, connectedApps);
+
+        if (!connectedApps.includes(app)) {
+          console.log(`[CHAT-V2] Integration needed: ${app} for "${action}" - not in connected apps`);
+
+          try {
+            const { redirectUrl: authUrl } = await initiateConnection(userId, app);
+            const response = `to ${action}, u need to connect ${app === 'gmail' ? 'Gmail' : 'Google Calendar'} first\n\ntap here to connect: ${authUrl}`;
+
+            await addMessages(threadId, [
+              { role: "assistant", content: response, name: "Kagan" },
+            ]);
+
+            return NextResponse.json({
+              response,
+              threadId,
+              artifact: null,
+              gifUrl: null,
+              oneThing: null,
+              isNewSession,
+              buildId: null,
+              isBuilding: false,
+              needsAuth: { app, authUrl },
+            });
+          } catch (err) {
+            console.error(`[CHAT-V2] Failed to get auth URL for ${app}:`, err);
+            // Fall through to normal agent call
+          }
+        } else {
+          console.log(`[CHAT-V2] ✅ ${app} IS connected! Proceeding to agent with tool access.`);
+        }
+        break;
+      }
+    }
+
+    // ============================================
+    // STEP 4: AGENT CALL WITH TOOL DETECTION
+    // If tools detected → return immediately, execute in background
+    // If no tools → return response directly
+    // ============================================
+
+    console.log(`[CHAT-V2] ========== AGENT CALL ==========`);
+    console.log(`[CHAT-V2] 🤖 Calling agent with message: "${message}"`);
+
+    const agent = createAgent('kagan', userId);
+    const agentResponse = await agent.chat(message, {
+      history: messageHistory,
+      zepContext: memoryContext,
+      brainFacts,
+      sessionMetadata: sessionMetadata || null,
+      returnEarlyOnTools: true, // Return early when tools are detected
     });
 
-    const claudeTime = Date.now() - claudeStartTime;
-    console.log(`[CHAT] Claude responded in ${claudeTime}ms`);
+    // Check if tools were detected (agent returned early)
+    if (agentResponse.pendingTools && agentResponse.pendingTools.length > 0 && agentResponse.continueExecution) {
+      const taskId = `task-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const pendingTools = agentResponse.pendingTools;
 
-    const textBlock = response.content.find((block) => block.type === "text");
-    const rawResponse = textBlock?.type === "text" ? textBlock.text : "";
+      // Determine task type from tools
+      const taskType = pendingTools.some(t => t.includes('image') || t.includes('background')) ? 'image' :
+                       pendingTools.some(t => t.includes('video')) ? 'video' :
+                       pendingTools.some(t => t.includes('music') || t.includes('audio')) ? 'audio' :
+                       pendingTools.some(t => t.includes('email') || t.includes('mail')) ? 'email' : 'other';
 
-    // Parse artifacts from response
+      console.log(`[CHAT-V2] 🔧 Tools detected: ${pendingTools.join(', ')}, switching to async. taskId: ${taskId}`);
+
+      // Create task entry
+      await setTaskEntry(taskId, {
+        status: 'running',
+        type: taskType,
+        startTime: Date.now(),
+        description: `using ${pendingTools[0]}...`,
+      });
+
+      // Execute tools in background (fire and forget)
+      agentResponse.continueExecution().then(async (finalResponse) => {
+        console.log(`[CHAT-V2] ✅ Tools completed for task ${taskId}`);
+
+        // Extract media URLs from tool results
+        let imageUrl: string | undefined;
+        let videoUrl: string | undefined;
+        let audioUrl: string | undefined;
+
+        if (finalResponse.toolResults?.length) {
+          for (const tr of finalResponse.toolResults) {
+            const result = tr.result as { success?: boolean; data?: Record<string, unknown> };
+            if (result?.success && result?.data) {
+              if (result.data.imageUrl) imageUrl = result.data.imageUrl as string;
+              if (result.data.videoUrl) videoUrl = result.data.videoUrl as string;
+              if (result.data.audioUrl) audioUrl = result.data.audioUrl as string;
+            }
+          }
+        }
+
+        // Update task with result
+        await updateTaskComplete(taskId, {
+          text: finalResponse.text,
+          imageUrl,
+          videoUrl,
+          audioUrl,
+          data: { toolResults: finalResponse.toolResults },
+        });
+
+        // Save full response to Zep
+        if (finalResponse.text?.trim()) {
+          try {
+            await addMessages(threadId, [
+              { role: "assistant", content: finalResponse.text, name: "Kagan" },
+            ]);
+          } catch (err) {
+            console.error('[CHAT-V2] Failed to save async response to Zep:', err);
+          }
+        }
+      }).catch(async (err) => {
+        console.error(`[CHAT-V2] ❌ Tool execution failed for task ${taskId}:`, err);
+        await updateTaskError(taskId, err instanceof Error ? err.message : 'Tool execution failed');
+      });
+
+      // Return immediately so user can keep chatting (banner handles progress, no chat message needed)
+      return NextResponse.json({
+        response: '',
+        threadId,
+        artifact: null,
+        gifUrl: null,
+        imageUrl: null,
+        oneThing: null,
+        isNewSession,
+        buildId: null,
+        isBuilding: false,
+        taskId,
+        taskType,
+      });
+    }
+
+    // No tools - direct response
+    console.log(`[CHAT-V2] ⚡ No tools, direct response in ${Date.now() - startTime}ms`);
+
+    // Extract image URL from tool results (FAL generate_image)
+    let imageUrl: string | null = null;
+    if (agentResponse.toolResults?.length) {
+      for (const tr of agentResponse.toolResults) {
+        const result = tr.result as { success?: boolean; data?: { imageUrl?: string } };
+        if (result?.success && result?.data?.imageUrl) {
+          imageUrl = result.data.imageUrl;
+          console.log(`[CHAT-V2] 🖼️ Extracted image URL:`, imageUrl);
+          break;
+        }
+      }
+    }
+
+    const rawResponse = agentResponse.text;
+
+    // ============================================
+    // STEP 5: ARTIFACT PARSING (same as v1)
+    // ============================================
+
     const { text: textWithGifMarkers, artifact } = parseArtifact(rawResponse);
 
-    // Process GIF markers [GIF: search term] -> actual gif URLs
+    // ============================================
+    // STEP 6: GIF HANDLING (same as v1)
+    // ============================================
+
     let responseText = textWithGifMarkers;
     const gifMatch = textWithGifMarkers.match(/\[GIF:\s*([^\]]+)\]/i);
     let gifUrl: string | null = null;
     if (gifMatch) {
       const searchTerm = gifMatch[1].trim();
       gifUrl = await searchGif(searchTerm);
-      // Remove the GIF marker from text, but keep some text if it becomes empty
-      const textWithoutGif = textWithGifMarkers.replace(gifMatch[0], '').trim();
-      responseText = textWithoutGif || ""; // Allow empty text when there's a GIF
+      responseText = textWithGifMarkers.replace(gifMatch[0], '').trim() || "";
     }
 
     // ============================================
-    // STEP 4: Extract ONE THING from response
+    // STEP 7: ONE THING (from agent or fallback)
     // ============================================
 
-    const oneThing = extractOneThing(rawResponse);
-    if (oneThing) {
-      console.log(`[CHAT] ONE THING extracted: "${oneThing}"`);
-    }
+    const oneThing = agentResponse.oneThing || extractOneThing(rawResponse);
 
     // ============================================
-    // STEP 4.5: Check if Kagan is committing to create something
-    // If so, call the agent to actually build it
+    // STEP 8: BUILD TRIGGERS (same as v1)
     // ============================================
 
-    // Check if Kagan explicitly commits to building/creating
-    // ONLY trigger when Kagan says he's building - NOT when user just asks
-    const kaganIntent = detectKaganCreateIntent(rawResponse);
+    const { shouldBuild, type: createType } = agentResponse.buildIntent;
+    const buildId = shouldBuild && createType
+      ? `build-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+      : null;
 
-    // Only trigger agent when Kagan explicitly says he's building
-    // User asking for a build should prompt Kagan to ASK first, not auto-build
-    const shouldCallAgent = kaganIntent.shouldCreate;
-    const createType = kaganIntent.type;
+    if (shouldBuild && createType && buildId) {
+      console.log(`[CHAT-V2] BUILD INTENT: ${createType}, ID: ${buildId}`);
 
-    // Generate a unique build ID if we're going to build
-    const buildId = shouldCallAgent && createType ? `build-${Date.now()}-${Math.random().toString(36).substring(2, 9)}` : null;
+      const recentContext = messageHistory.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
 
-    if (shouldCallAgent && createType && buildId) {
-      console.log(`[CHAT] ========================================`);
-      console.log(`[CHAT] CREATE INTENT DETECTED`);
-      console.log(`[CHAT] Type: ${createType}`);
-      console.log(`[CHAT] Build ID: ${buildId}`);
-      console.log(`[CHAT] Kagan said: "${rawResponse.slice(0, 200)}..."`);
-      console.log(`[CHAT] ========================================`);
+      await setBuildEntry(buildId, { status: 'building', startTime: Date.now() });
 
-      // Build context from conversation
-      const recentContext = messageHistory
-        .slice(-10)
-        .map(m => `${m.role}: ${m.content}`)
-        .join('\n');
-
-      // Store initial build entry in Redis BEFORE firing request
-      console.log(`[CHAT] Setting initial Redis entry for ${buildId}`);
-      await setBuildEntry(buildId, {
-        status: 'building',
-        startTime: Date.now(),
-      });
-      console.log(`[CHAT] Redis entry set successfully`);
-
-      // Fire agent request in background (don't await the full response)
-      // Use .then/.catch to update Redis when complete
-      const agentUrl = new URL('/api/agent', req.url);
-      console.log(`[CHAT] Calling agent at: ${agentUrl}`);
-
-      fetch(agentUrl, {
+      fetch(new URL('/api/agent', req.url), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -321,67 +354,52 @@ CRITICAL:
           transcript: messageHistory,
           buildId,
         }),
-      }).then(async (response) => {
-        console.log(`[CHAT] Agent response status for ${buildId}: ${response.status}`);
-        if (!response.ok) {
-          const errText = await response.text();
-          throw new Error(`Agent returned ${response.status}: ${errText}`);
-        }
-        const data = await response.json();
-        console.log(`[CHAT] ========================================`);
-        console.log(`[CHAT] AGENT COMPLETED for ${buildId}`);
-        console.log(`[CHAT] Deployed URL: ${data.deployedUrl || 'none'}`);
-        console.log(`[CHAT] Document: ${data.document?.title || 'none'}`);
-        console.log(`[CHAT] Error: ${data.error || 'none'}`);
-        console.log(`[CHAT] ========================================`);
-        await updateBuildComplete(buildId, {
-          deployedUrl: data.deployedUrl,
-          document: data.document,
-        });
-        console.log(`[CHAT] Redis updated to complete for ${buildId}`);
+      }).then(async (res) => {
+        if (!res.ok) throw new Error(`Agent returned ${res.status}`);
+        const data = await res.json();
+        await updateBuildComplete(buildId, { deployedUrl: data.deployedUrl, document: data.document });
       }).catch(async (err) => {
-        console.error(`[CHAT] ========================================`);
-        console.error(`[CHAT] AGENT BUILD FAILED for ${buildId}`);
-        console.error(`[CHAT] Error:`, err);
-        console.error(`[CHAT] ========================================`);
         await updateBuildError(buildId, err instanceof Error ? err.message : 'Unknown error');
       });
     }
 
     // ============================================
-    // STEP 5: SAVE AI RESPONSE TO THREAD
-    // Zep will automatically extract facts from the conversation!
+    // STEP 9: SAVE TO ZEP (same as v1)
     // ============================================
 
-    if (responseText && responseText.trim()) {
+    if (responseText?.trim()) {
       try {
-        await addMessages(threadId, [
-          { role: "assistant", content: responseText, name: "Kagan" },
-        ]);
+        await addMessages(threadId, [{ role: "assistant", content: responseText, name: "Kagan" }]);
       } catch (err) {
-        console.error('[CHAT] Save failed:', err);
+        console.error('[CHAT-V2] Save failed:', err);
       }
     }
 
-    const totalTime = Date.now() - startTime;
-    console.log(`[CHAT] Total request time: ${totalTime}ms`);
+    console.log(`[CHAT-V2] Total: ${Date.now() - startTime}ms`);
+
+    // ============================================
+    // RETURN SAME FORMAT AS V1
+    // ============================================
 
     return NextResponse.json({
       response: responseText,
       threadId,
       artifact,
       gifUrl,
-      oneThing, // Return extracted ONE THING for client to store
-      isNewSession, // Tell client if this was a new session
-      // Build tracking - client will poll for result
-      buildId: buildId, // If set, client should poll for result
-      isBuilding: !!buildId, // Flag for UI to show building indicator
+      imageUrl,
+      oneThing,
+      isNewSession,
+      buildId,
+      isBuilding: !!buildId,
     });
+
   } catch (error) {
-    console.error("Chat error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("[CHAT-V2] ❌ ERROR:", error);
+    if (error instanceof Error) {
+      console.error("[CHAT-V2] Stack:", error.stack);
+    }
     return NextResponse.json(
-      { error: `Failed to process chat: ${errorMessage}` },
+      { error: `Failed to process chat: ${error instanceof Error ? error.message : "Unknown error"}` },
       { status: 500 }
     );
   }

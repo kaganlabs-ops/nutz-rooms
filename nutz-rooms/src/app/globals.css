@@ -27,3 +27,109 @@ html, body {
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
+/* Liquid Glass / iOS 26 Glassmorphism - Layered approach */
+.liquid-glass {
+  position: relative;
+  isolation: isolate;
+  background: rgba(221, 221, 221, 0.24);
+  box-shadow: 2px 4px 16px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+/* Outer distort layer */
+.liquid-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: rgba(238, 238, 238, 0.001);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Inner highlight layer */
+.liquid-glass::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: rgba(238, 238, 238, 0.001);
+  border-top: 1px solid rgba(255, 255, 255, 0.5);
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(0.5px);
+  -webkit-backdrop-filter: blur(0.5px);
+}
+
+.liquid-glass-dark {
+  position: relative;
+  isolation: isolate;
+  background: rgba(0, 0, 0, 0.2);
+  box-shadow: 2px 4px 16px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.liquid-glass-dark::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: rgba(238, 238, 238, 0.001);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.liquid-glass-dark::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* User message bubble - warm tint */
+.liquid-glass-warm {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(135deg, rgba(255, 180, 100, 0.28), rgba(255, 140, 70, 0.24));
+  box-shadow: 2px 4px 16px rgba(255, 150, 80, 0.12);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.liquid-glass-warm::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: rgba(238, 238, 238, 0.001);
+  border: 1px solid rgba(255, 200, 150, 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.liquid-glass-warm::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.5);
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+}

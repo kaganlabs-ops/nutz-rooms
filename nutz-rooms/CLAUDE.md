@@ -197,3 +197,85 @@ curl -X POST http://localhost:3000/api/agent \
   -H "Content-Type: application/json" \
   -d '{"task":"Research workout tracking apps","context":"User wants to build gym app"}'
 ```
+
+## Phase 6: Modular Architecture
+
+### Core Flow
+```
+User message → /api/chat → Skills injection → Claude → Response
+                              ↓
+                         (if build trigger)
+                              ↓
+                        /api/agent → Tools → Deploy/Document
+```
+
+### Key Files
+```
+src/lib/agent/
+├── index.ts           # Agent class (chat, voiceChat, tool loop)
+├── tool-registry.ts   # Register and execute tools
+└── skill-loader.ts    # Load skills from markdown
+
+src/lib/creators/
+└── kagan.ts           # CreatorConfig for Kagan
+
+src/lib/skills/
+├── business/          # pitch-deck, fundraising, business-model, go-to-market
+├── development/       # react-nextjs
+├── design/            # ui-ux
+└── content/           # landing-page, copywriting
+
+src/lib/tools/
+├── index.ts           # Register all tools
+└── deploy-page.ts     # Vercel deployment
+
+src/lib/integrations/
+├── fal.ts             # FAL AI (images, video, audio)
+└── composio.ts        # 50+ apps (Gmail, Calendar, Notion, etc.)
+
+src/types/
+└── index.ts           # All contracts (Tool, Skill, CreatorConfig, etc.)
+```
+
+### Adding a Creator
+1. Create `src/lib/creators/{name}.ts`
+2. Export `CreatorConfig` matching `types/index.ts`
+3. Define: personality, skills, tools, referrals
+4. Agent loads it automatically
+
+### Adding a Skill
+1. Create `src/lib/skills/{category}/{name}.md`
+2. Frontmatter: name, slug, description, triggers
+3. Content: expertise in creator's voice
+4. Auto-injects when message matches triggers
+
+### Adding a Tool
+1. Add to `src/lib/tools/index.ts`
+2. Match `Tool` contract from `types/index.ts`
+3. Register with `toolRegistry.register()`
+4. Available to agent immediately
+
+### Environment Variables
+```
+# Core
+ANTHROPIC_API_KEY=
+ZEP_API_KEY=
+OPENAI_API_KEY=
+ELEVENLABS_API_KEY=
+
+# Integrations
+FAL_KEY=              # Image/video generation
+COMPOSIO_API_KEY=     # 50+ app connections
+VERCEL_TOKEN=         # Page deployment
+REDIS_URL=            # Build status tracking
+```
+
+### Success Metrics
+- Onboarding: < 1 hour to publish
+- Tool reliability: > 95% (top 10)
+- Delegation accuracy: > 90%
+- D30 retention: > 40%
+
+## Current Status
+
+See `docs/PLAN.md` for execution status.

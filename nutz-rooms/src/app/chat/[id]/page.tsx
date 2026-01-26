@@ -1,6 +1,48 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+
+// Web Speech API types
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+  isFinal: boolean;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: Event) => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  stop(): void;
+  abort(): void;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: new () => SpeechRecognition;
+  }
+}
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import ArtifactCard from "@/components/ArtifactCard";
@@ -17,10 +59,14 @@ interface Message {
   content: string;
   artifact?: Artifact | null;
   gifUrl?: string | null;
+  imageUrl?: string | null; // Generated images from FAL
+  videoUrl?: string | null; // Generated videos
+  audioUrl?: string | null; // Generated audio/music
   deployedUrl?: string | null;
   agentDocument?: { title: string; content: string; type: string } | null;
   isBuilding?: boolean; // Shows building indicator
   buildId?: string | null; // For polling build status
+  taskId?: string | null; // For polling async task status
 }
 
 // Active build state for pinned banner
@@ -28,6 +74,15 @@ interface ActiveBuild {
   buildId: string;
   startTime: number;
   stage: 'generating' | 'deploying' | 'done' | 'error';
+}
+
+// Active task state for async tool execution
+interface ActiveTask {
+  taskId: string;
+  type: 'image' | 'video' | 'audio' | 'email' | 'other';
+  description: string;
+  startTime: number;
+  status: 'running' | 'complete' | 'error';
 }
 
 interface Character {
@@ -86,7 +141,13 @@ export default function ChatPage() {
   const [sessionMetadata, setSessionMetadata] = useState<SessionMetadata | null>(null);
   const [sessionInitialized, setSessionInitialized] = useState(false);
   const [activeBuild, setActiveBuild] = useState<ActiveBuild | null>(null);
+  const [activeTask, setActiveTask] = useState<ActiveTask | null>(null);
+  const [attachedImage, setAttachedImage] = useState<{ url: string; preview: string } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   // Extract ONE THING from message and return cleaned content
   const extractOneThing = useCallback((content: string): { cleanContent: string; oneThing: string | null } => {
@@ -107,6 +168,17 @@ export default function ChatPage() {
     }
 
     return { cleanContent: content, oneThing: null };
+  }, []);
+
+  // Strip URLs from build messages (the deployed URL will be shown as a card)
+  const stripUrlsFromBuildMessage = useCallback((content: string): string => {
+    // Remove Vercel URLs and common link patterns
+    return content
+      .replace(/https?:\/\/[^\s]+\.vercel\.app[^\s]*/gi, '')
+      .replace(/here'?s?\s*(the\s*)?(link|url|demo)[:\s]*/gi, '')
+      .replace(/check\s*it\s*out\s*(at)?[:\s]*/gi, '')
+      .replace(/\n{3,}/g, '\n\n') // Clean up extra newlines
+      .trim();
   }, []);
 
   // Initialize user ID and session metadata from localStorage
@@ -157,19 +229,33 @@ export default function ChatPage() {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!input.trim() || isLoading || !userId) return;
+    if ((!input.trim() && !attachedImage) || isLoading || !userId) return;
 
     const userMessage = input.trim();
+    const imageToSend = attachedImage;
+
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+    setAttachedImage(null);
+
+    // Show user message with attached image preview
+    setMessages((prev) => [...prev, {
+      role: "user",
+      content: userMessage,
+      imageUrl: imageToSend?.preview || null,
+    }]);
     setIsLoading(true);
 
     try {
+      // Include image URL in message if attached
+      const messageWithImage = imageToSend
+        ? `${userMessage}\n\n[Attached image: ${imageToSend.url}]`
+        : userMessage;
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: userMessage,
+          message: messageWithImage,
           threadId,
           userId,
           characterId,
@@ -180,6 +266,8 @@ export default function ChatPage() {
             lastOneThingDate: sessionMetadata.lastOneThingDate,
             sessionCount: sessionMetadata.sessionCount,
           } : null,
+          // Also send image URL separately for tools
+          attachedImageUrl: imageToSend?.url || null,
         }),
       });
 
@@ -216,21 +304,30 @@ export default function ChatPage() {
       } : null);
 
       const newMessageIndex = messages.length + 1; // +1 for user message we just added
+      // If this is a build message, strip URLs from content (they'll show as cards)
+      const finalContent = data.buildId ? stripUrlsFromBuildMessage(cleanContent) : cleanContent;
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: cleanContent,
+          content: finalContent,
           artifact: data.artifact,
           gifUrl: data.gifUrl,
+          imageUrl: data.imageUrl,
           isBuilding: data.isBuilding,
           buildId: data.buildId,
+          taskId: data.taskId,
         },
       ]);
 
       // If building, start polling for result
       if (data.buildId) {
         pollBuildStatus(data.buildId, newMessageIndex);
+      }
+
+      // If async task started, start polling for result
+      if (data.taskId) {
+        pollTaskStatus(data.taskId, data.taskType || 'other', data.response || 'working...');
       }
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -343,6 +440,104 @@ export default function ChatPage() {
     }, 1000);
   };
 
+  // Poll for async task status (image/video/audio generation)
+  const pollTaskStatus = (taskId: string, taskType: string, description: string) => {
+    const maxAttempts = 120; // 120 attempts * 2 seconds = 4 minutes max
+    let attempts = 0;
+    let intervalId: NodeJS.Timeout | null = null;
+    const startTime = Date.now();
+
+    console.log('[TASK] Starting poll for taskId:', taskId, 'type:', taskType);
+
+    // Set active task banner
+    setActiveTask({
+      taskId,
+      type: taskType as ActiveTask['type'],
+      description,
+      startTime,
+      status: 'running',
+    });
+
+    const poll = async () => {
+      attempts++;
+      const elapsed = Date.now() - startTime;
+      console.log('[TASK] Poll attempt', attempts, 'for taskId:', taskId, 'elapsed:', elapsed);
+
+      try {
+        const res = await fetch(`/api/task-status?taskId=${taskId}`);
+        console.log('[TASK] Response status:', res.status);
+
+        if (!res.ok) {
+          console.error('[TASK] Response not OK:', res.status, res.statusText);
+          if (attempts >= maxAttempts && intervalId) {
+            clearInterval(intervalId);
+            setActiveTask(null);
+          }
+          return;
+        }
+
+        const data = await res.json();
+        console.log('[TASK] Poll response:', JSON.stringify(data));
+
+        if (data.status === 'complete') {
+          console.log('[TASK] Complete! Result:', data.result);
+          if (intervalId) clearInterval(intervalId);
+
+          // Update banner briefly then clear
+          setActiveTask(prev => prev?.taskId === taskId ? { ...prev, status: 'complete' } : prev);
+          setTimeout(() => setActiveTask(null), 2000);
+
+          // Update the message that has this taskId with the result
+          setMessages((prev) => {
+            const updated = prev.map((msg) =>
+              msg.taskId === taskId
+                ? {
+                    ...msg,
+                    // Update content if agent returned text (for email confirmations, etc.)
+                    content: data.result?.text || msg.content,
+                    imageUrl: data.result?.imageUrl || msg.imageUrl,
+                    videoUrl: data.result?.videoUrl || msg.videoUrl,
+                    audioUrl: data.result?.audioUrl || msg.audioUrl,
+                  }
+                : msg
+            );
+            console.log('[TASK] Updated messages with result');
+            return updated;
+          });
+          return;
+        }
+
+        if (data.status === 'error') {
+          console.error('[TASK] Failed:', data.error);
+          if (intervalId) clearInterval(intervalId);
+          setActiveTask(prev => prev?.taskId === taskId ? { ...prev, status: 'error' } : prev);
+          setTimeout(() => setActiveTask(null), 3000);
+          return;
+        }
+
+        // Still running
+        console.log('[TASK] Still running, elapsed:', data.elapsed, 'ms');
+        if (attempts >= maxAttempts) {
+          console.error('[TASK] Timeout after', maxAttempts, 'attempts');
+          if (intervalId) clearInterval(intervalId);
+          setActiveTask(null);
+        }
+      } catch (err) {
+        console.error('[TASK] Poll error:', err);
+        if (attempts >= maxAttempts && intervalId) {
+          clearInterval(intervalId);
+          setActiveTask(null);
+        }
+      }
+    };
+
+    // Start polling
+    setTimeout(() => {
+      poll();
+      intervalId = setInterval(poll, 2000);
+    }, 1000);
+  };
+
   // Handle clearing ONE THING (e.g., when user completes it)
   const handleClearOneThing = () => {
     setPinnedAction(null);
@@ -358,114 +553,236 @@ export default function ChatPage() {
     }
   };
 
+  // Handle image upload
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Create preview
+    const preview = URL.createObjectURL(file);
+    setIsUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error('Upload failed');
+
+      const data = await res.json();
+      setAttachedImage({ url: data.url, preview });
+      console.log('[UPLOAD] Image attached:', data.url);
+    } catch (err) {
+      console.error('[UPLOAD] Error:', err);
+      URL.revokeObjectURL(preview);
+    } finally {
+      setIsUploading(false);
+      // Reset input so same file can be selected again
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  // Clear attached image
+  const clearAttachedImage = () => {
+    if (attachedImage?.preview) {
+      URL.revokeObjectURL(attachedImage.preview);
+    }
+    setAttachedImage(null);
+  };
+
+  // Voice input toggle
+  const toggleVoiceInput = () => {
+    if (isRecording) {
+      // Stop recording
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+    } else {
+      // Start recording
+      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognitionAPI) {
+        alert("Voice input not supported in this browser");
+        return;
+      }
+
+      const recognition = new SpeechRecognitionAPI();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        let transcript = "";
+        for (let i = 0; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        setInput(transcript);
+      };
+
+      recognition.onerror = () => {
+        setIsRecording(false);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+      setIsRecording(true);
+    }
+  };
+
   return (
-    <div className="h-[100dvh] bg-black text-white flex flex-col fixed inset-0">
-      {/* Header */}
-      <header className="border-b border-white/10 p-4 flex items-center gap-3">
-        <button
-          onClick={() => router.push(`/room/${characterId}`)}
-          className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <div className="w-10 h-10 rounded-full overflow-hidden">
+    <div className="h-[100dvh] text-white flex flex-col fixed inset-0 overflow-hidden">
+      {/* Gradient Background - iOS 26 style */}
+      <div className="absolute inset-0 bg-gradient-to-br from-pink-300 via-purple-300 to-orange-200" />
+      <div className="absolute inset-0 bg-gradient-to-t from-orange-300/50 via-transparent to-pink-400/30" />
+
+      {/* Back button - top left */}
+      <button
+        onClick={() => router.push(`/room/${characterId}`)}
+        className="!absolute top-4 left-4 z-30 w-10 h-10 rounded-full liquid-glass flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+      >
+        <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+
+      {/* Settings button - top right */}
+      <button
+        onClick={() => router.push('/settings/connections')}
+        className="!absolute top-4 right-4 z-30 w-10 h-10 rounded-full liquid-glass flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+        title="Connected Apps"
+      >
+        <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      </button>
+
+      {/* Centered Agent Avatar */}
+      <div className="!absolute top-4 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center">
+        <div className="w-16 h-16 rounded-full overflow-hidden liquid-glass p-0.5">
           <Image
             src={character.avatar}
             alt={character.name}
-            width={40}
-            height={40}
-            className="w-full h-full object-cover"
+            width={64}
+            height={64}
+            className="w-full h-full object-cover rounded-full"
           />
         </div>
-        <div className="flex-1">
-          <h1 className="font-semibold">{character.fullName || character.name}</h1>
-          {character.title && (
-            <p className="text-xs text-white/50">{character.title}</p>
-          )}
+        <span className="mt-1 text-sm font-medium text-gray-700/80">{character.name}</span>
+      </div>
+
+      {/* Session indicator (dev only) */}
+      {sessionMetadata && process.env.NODE_ENV === 'development' && (
+        <div className="absolute top-4 right-16 z-30 text-xs text-gray-600/50">
+          S#{sessionMetadata.sessionCount}
         </div>
-        {/* Session indicator (dev only) */}
-        {sessionMetadata && process.env.NODE_ENV === 'development' && (
-          <div className="text-xs text-white/30">
-            S#{sessionMetadata.sessionCount}
+      )}
+
+      {/* Floating Banners Container - positioned below avatar */}
+      <div className="absolute top-24 left-4 right-4 z-20 space-y-2">
+        {/* Pinned Build Progress Banner */}
+        {activeBuild && (
+          <div className="liquid-glass rounded-2xl px-4 py-3 flex items-center gap-3">
+            <span className={`text-lg ${activeBuild.stage !== 'done' && activeBuild.stage !== 'error' ? 'animate-pulse' : ''}`}>
+              {activeBuild.stage === 'error' ? '💀' : ''}
+            </span>
+            <div className="flex-1 min-w-0">
+              <span className={`text-sm font-medium ${
+                activeBuild.stage === 'done' ? 'text-green-700' :
+                activeBuild.stage === 'error' ? 'text-red-700' :
+                'text-blue-700'
+              }`}>
+                {activeBuild.stage === 'generating' ? 'u fckn nutz!?' :
+                 activeBuild.stage === 'deploying' ? 'vercel!!' :
+                 activeBuild.stage === 'done' ? 'LFG' : 'rip'}
+              </span>
+              <p className="text-xs text-gray-600">
+                {activeBuild.stage === 'generating' ? 'generating the bb' :
+                 activeBuild.stage === 'deploying' ? 'almost there...' :
+                 activeBuild.stage === 'done' ? 'link ready below' : 'something broke'}
+              </p>
+            </div>
+            {activeBuild.stage !== 'done' && activeBuild.stage !== 'error' && (
+              <div className="flex gap-1">
+                <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+            )}
           </div>
         )}
-      </header>
 
-      {/* Pinned Build Progress Banner */}
-      {activeBuild && (
-        <div className={`border-b px-4 py-3 flex items-center gap-3 ${
-          activeBuild.stage === 'done'
-            ? 'bg-gradient-to-r from-green-900/40 to-emerald-900/40 border-green-500/30'
-            : activeBuild.stage === 'error'
-            ? 'bg-gradient-to-r from-red-900/40 to-rose-900/40 border-red-500/30'
-            : 'bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border-blue-500/30'
-        }`}>
-          <span className={`text-lg ${activeBuild.stage !== 'done' && activeBuild.stage !== 'error' ? 'animate-pulse' : ''}`}>
-            {activeBuild.stage === 'error' ? '💀' : ''}
-          </span>
-          <div className="flex-1 min-w-0">
-            <span className={`text-sm font-medium ${
-              activeBuild.stage === 'done' ? 'text-green-400' :
-              activeBuild.stage === 'error' ? 'text-red-400' :
-              'text-blue-400'
-            }`}>
-              {activeBuild.stage === 'generating' ? 'u fckn nutz!?' :
-               activeBuild.stage === 'deploying' ? 'vercel!!' :
-               activeBuild.stage === 'done' ? 'LFG' : 'rip'}
+        {/* Pinned Task Progress Banner */}
+        {activeTask && !activeBuild && (
+          <div className="liquid-glass rounded-2xl px-4 py-3 flex items-center gap-3">
+            <span className={`text-lg ${activeTask.status === 'running' ? 'animate-pulse' : ''}`}>
+              {activeTask.status === 'error' ? '💀' :
+               activeTask.type === 'image' ? '🎨' :
+               activeTask.type === 'video' ? '🎬' :
+               activeTask.type === 'audio' ? '🎵' :
+               activeTask.type === 'email' ? '📧' : '⚙️'}
             </span>
-            <p className="text-xs text-white/50">
-              {activeBuild.stage === 'generating' ? 'generating the bb' :
-               activeBuild.stage === 'deploying' ? 'almost there...' :
-               activeBuild.stage === 'done' ? 'link ready below' : 'something broke'}
-            </p>
-          </div>
-          {/* Progress dots */}
-          {activeBuild.stage !== 'done' && activeBuild.stage !== 'error' && (
-            <div className="flex gap-1">
-              <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-              <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-              <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+            <div className="flex-1 min-w-0">
+              <span className={`text-sm font-medium ${
+                activeTask.status === 'complete' ? 'text-green-700' :
+                activeTask.status === 'error' ? 'text-red-700' :
+                'text-purple-700'
+              }`}>
+                {activeTask.status === 'complete' ? 'done!' :
+                 activeTask.status === 'error' ? 'rip' :
+                 activeTask.description}
+              </span>
+              <p className="text-xs text-gray-600">
+                {activeTask.status === 'complete' ? 'check it out below' :
+                 activeTask.status === 'error' ? 'something broke' :
+                 'u can keep chatting'}
+              </p>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Pinned ONE THING Banner */}
-      {pinnedAction && !activeBuild && (
-        <div className="bg-gradient-to-r from-amber-900/40 to-orange-900/40 border-b border-amber-500/30 px-4 py-3 flex items-center gap-2">
-          <span className="text-lg">📌</span>
-          <div className="flex-1 min-w-0">
-            <span className="text-xs text-amber-400/70 uppercase tracking-wide font-medium">ONE THING</span>
-            <p className="text-sm text-white/90 truncate">{pinnedAction}</p>
+            {activeTask.status === 'running' && (
+              <div className="flex gap-1">
+                <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+            )}
           </div>
-          <button
-            onClick={handleClearOneThing}
-            className="text-white/40 hover:text-white/70 transition-colors p-1"
-            aria-label="Dismiss"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      )}
+        )}
+
+        {/* Pinned ONE THING Banner */}
+        {pinnedAction && !activeBuild && !activeTask && (
+          <div className="liquid-glass-warm rounded-2xl px-4 py-3 flex items-center gap-2">
+            <span className="text-lg">📌</span>
+            <div className="flex-1 min-w-0">
+              <span className="text-xs text-amber-800 uppercase tracking-wide font-medium">ONE THING</span>
+              <p className="text-sm text-gray-700 truncate">{pinnedAction}</p>
+            </div>
+            <button
+              onClick={handleClearOneThing}
+              className="text-gray-500 hover:text-gray-700 transition-colors p-1"
+              aria-label="Dismiss"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Top fade gradient - content fades as it scrolls under header */}
+      <div className="absolute top-0 left-0 right-0 h-28 z-15 pointer-events-none bg-gradient-to-b from-pink-300 via-pink-300/80 to-transparent" />
 
       {/* Messages */}
-      <main className="flex-1 overflow-y-auto p-4 space-y-4">
+      <main className="relative z-10 flex-1 overflow-y-auto pt-28 pb-24 px-4 space-y-3">
         {messages.length === 0 && (
-          <div className="text-center text-white/40 mt-10">
-            <div className="w-20 h-20 rounded-full overflow-hidden mx-auto mb-4">
-              <Image
-                src={character.avatar}
-                alt={character.name}
-                width={80}
-                height={80}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <p className="text-lg mb-2">Start a conversation with {character.name}</p>
+          <div className="text-center text-gray-600/70 mt-16">
+            <p className="text-lg mb-2">Start a conversation</p>
             <p className="text-sm">Ask anything about startups, building products, or getting advice.</p>
           </div>
         )}
@@ -475,18 +792,7 @@ export default function ChatPage() {
             key={i}
             className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
           >
-            {message.role === "assistant" && (
-              <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0">
-                <Image
-                  src={character.avatar}
-                  alt={character.name}
-                  width={32}
-                  height={32}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-            <div className="max-w-[75%]">
+            <div className="max-w-[80%]">
               {/* Split assistant messages into multiple bubbles on double newline */}
               {message.content && message.content.trim() && (
                 message.role === "assistant" ? (
@@ -494,25 +800,72 @@ export default function ChatPage() {
                     {message.content.split(/\n\n+/).filter(part => part.trim()).map((part, partIndex) => (
                       <div
                         key={partIndex}
-                        className="rounded-2xl px-4 py-3 bg-white/10 text-white"
+                        className="rounded-3xl px-4 py-3 liquid-glass text-gray-800"
                       >
                         <p className="whitespace-pre-wrap text-sm">{part.trim()}</p>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="rounded-2xl px-4 py-3 bg-blue-600 text-white">
-                    <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                  <div className="space-y-2">
+                    {message.imageUrl && (
+                      <div className="rounded-2xl overflow-hidden max-w-[200px] liquid-glass p-1">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={message.imageUrl}
+                          alt="Attached"
+                          className="w-full h-auto rounded-xl"
+                        />
+                      </div>
+                    )}
+                    {message.content && (
+                      <div className="rounded-3xl px-4 py-3 liquid-glass-warm text-gray-800">
+                        <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                      </div>
+                    )}
                   </div>
                 )
               )}
               {message.gifUrl && (
-                <div className="mt-2 rounded-xl overflow-hidden max-w-[280px]">
+                <div className="mt-2 rounded-2xl overflow-hidden max-w-[280px] liquid-glass p-1">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={message.gifUrl}
                     alt="GIF"
-                    className="w-full h-auto"
+                    className="w-full h-auto rounded-xl"
+                  />
+                </div>
+              )}
+              {message.role === "assistant" && message.imageUrl && (
+                <div className="mt-2 rounded-2xl overflow-hidden max-w-[320px] liquid-glass p-1">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={message.imageUrl}
+                    alt="Generated image"
+                    className="w-full h-auto rounded-xl"
+                  />
+                </div>
+              )}
+              {message.videoUrl && (
+                <div className="mt-2 rounded-2xl overflow-hidden max-w-[320px] liquid-glass p-1">
+                  <video
+                    src={message.videoUrl}
+                    controls
+                    className="w-full h-auto rounded-xl"
+                    playsInline
+                  />
+                </div>
+              )}
+              {message.audioUrl && (
+                <div className="mt-2 rounded-2xl overflow-hidden max-w-[320px] liquid-glass p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-purple-600">🎵</span>
+                    <span className="text-sm text-gray-700">Generated audio</span>
+                  </div>
+                  <audio
+                    src={message.audioUrl}
+                    controls
+                    className="w-full"
                   />
                 </div>
               )}
@@ -524,26 +877,26 @@ export default function ChatPage() {
                   href={message.deployedUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`${message.content?.trim() ? 'mt-2' : ''} block bg-green-900/40 border border-green-500/40 rounded-xl p-4 hover:bg-green-900/60 transition-colors`}
+                  className={`${message.content?.trim() ? 'mt-2' : ''} block liquid-glass rounded-2xl p-4 hover:scale-[1.02] transition-transform`}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-green-400">🚀</span>
-                    <span className="text-green-400 font-medium text-sm">Live Demo</span>
+                    <span>🚀</span>
+                    <span className="text-green-700 font-medium text-sm">Live Demo</span>
                   </div>
-                  <p className="text-white/80 text-sm truncate">{message.deployedUrl}</p>
-                  <p className="text-green-400/70 text-xs mt-1">Tap to open</p>
+                  <p className="text-gray-700 text-sm truncate">{message.deployedUrl}</p>
+                  <p className="text-green-600/70 text-xs mt-1">Tap to open</p>
                 </a>
               )}
 
               {/* Document from agent */}
               {message.agentDocument && (
-                <div className={`${message.content?.trim() ? 'mt-2' : ''} bg-blue-900/40 border border-blue-500/40 rounded-xl p-4`}>
+                <div className={`${message.content?.trim() ? 'mt-2' : ''} liquid-glass rounded-2xl p-4`}>
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-blue-400">📄</span>
-                    <span className="text-blue-400 font-medium text-sm">{message.agentDocument.title}</span>
+                    <span>📄</span>
+                    <span className="text-blue-700 font-medium text-sm">{message.agentDocument.title}</span>
                   </div>
                   <div className="max-h-[200px] overflow-y-auto">
-                    <pre className="text-white/80 text-sm whitespace-pre-wrap font-sans">
+                    <pre className="text-gray-700 text-sm whitespace-pre-wrap font-sans">
                       {message.agentDocument.content}
                     </pre>
                   </div>
@@ -551,7 +904,7 @@ export default function ChatPage() {
                     onClick={() => {
                       navigator.clipboard.writeText(message.agentDocument!.content);
                     }}
-                    className="mt-2 text-blue-400/70 text-xs hover:text-blue-400 transition-colors"
+                    className="mt-2 text-blue-600/70 text-xs hover:text-blue-700 transition-colors"
                   >
                     Copy to clipboard
                   </button>
@@ -563,20 +916,11 @@ export default function ChatPage() {
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0">
-              <Image
-                src={character.avatar}
-                alt={character.name}
-                width={32}
-                height={32}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="bg-white/10 rounded-2xl px-4 py-3">
+            <div className="liquid-glass rounded-3xl px-4 py-3">
               <div className="flex gap-1">
-                <span className="w-2 h-2 bg-white/50 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                <span className="w-2 h-2 bg-white/50 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <span className="w-2 h-2 bg-white/50 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                <span className="w-2 h-2 bg-gray-500/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-2 h-2 bg-gray-500/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-2 h-2 bg-gray-500/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
             </div>
           </div>
@@ -585,26 +929,93 @@ export default function ChatPage() {
         <div ref={messagesEndRef} />
       </main>
 
-      {/* Input */}
-      <footer className="border-t border-white/10 p-4 safe-area-bottom">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-            placeholder={`Message ${character.name}...`}
-            className="flex-1 bg-white/10 rounded-full px-4 py-3 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
-          />
+      {/* Glassmorphic Input - Fixed above bottom */}
+      <footer className="absolute bottom-6 left-4 right-4 z-20 safe-area-bottom">
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageSelect}
+          className="hidden"
+        />
+
+        {/* Attached image preview - floating above input */}
+        {attachedImage && (
+          <div className="mb-3 relative inline-block">
+            <div className="liquid-glass rounded-2xl p-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={attachedImage.preview}
+                alt="Attached"
+                className="h-20 w-auto rounded-xl object-cover"
+              />
+            </div>
+            <button
+              onClick={clearAttachedImage}
+              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500/80 backdrop-blur-sm rounded-full flex items-center justify-center text-white text-xs border border-red-400/50"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Upload progress */}
+        {isUploading && (
+          <div className="mb-3 text-sm text-gray-600 flex items-center gap-2">
+            <span className="w-4 h-4 border-2 border-gray-400/50 border-t-gray-600 rounded-full animate-spin" />
+            uploading...
+          </div>
+        )}
+
+        {/* Input row with + button outside */}
+        <div className="flex items-center gap-2">
+          {/* Plus button - OUTSIDE the message bar */}
           <button
-            onClick={sendMessage}
-            disabled={isLoading || !input.trim()}
-            className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading || isUploading}
+            className="w-10 h-10 rounded-full liquid-glass disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center flex-shrink-0 hover:scale-105 active:scale-95"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
           </button>
+
+          {/* Liquid glass input bar */}
+          <div className="flex-1 liquid-glass rounded-full flex items-center gap-1 px-4 py-2">
+            {/* Text input */}
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+              placeholder="iMessage"
+              className="flex-1 bg-transparent py-1 text-gray-800 placeholder:text-gray-500/70 focus:outline-none text-sm"
+            />
+
+            {/* Mic/Send button - inside the bar on right */}
+            <button
+              onClick={input.trim() || attachedImage ? sendMessage : toggleVoiceInput}
+              disabled={isLoading}
+              className={`w-8 h-8 rounded-full transition-all flex items-center justify-center flex-shrink-0 ${
+                isRecording
+                  ? "bg-red-500 animate-pulse"
+                  : input.trim() || attachedImage
+                  ? "bg-blue-500 hover:bg-blue-600"
+                  : "hover:bg-white/30"
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              {input.trim() || attachedImage ? (
+                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                </svg>
+              ) : (
+                <svg className={`w-5 h-5 ${isRecording ? 'text-white' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
       </footer>
     </div>

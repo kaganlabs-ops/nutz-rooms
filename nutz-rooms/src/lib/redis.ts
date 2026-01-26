@@ -88,3 +88,70 @@ export async function updateBuildError(buildId: string, error: string): Promise<
     });
   }
 }
+
+// ============================================
+// TASK STORAGE (for async tool execution)
+// ============================================
+
+export interface TaskEntry {
+  status: 'running' | 'complete' | 'error';
+  type: 'image' | 'email' | 'video' | 'audio' | 'other';
+  startTime: number;
+  description: string; // e.g., "Generating image..."
+  result?: {
+    imageUrl?: string;
+    videoUrl?: string;
+    audioUrl?: string;
+    text?: string;
+    data?: unknown;
+  };
+  error?: string;
+}
+
+const TASK_KEY_PREFIX = 'task:';
+const taskMemoryStore = new Map<string, TaskEntry>();
+
+export async function setTaskEntry(taskId: string, entry: TaskEntry): Promise<void> {
+  console.log(`[REDIS] setTaskEntry: ${taskId}, status: ${entry.status}, hasRedis: ${!!redis}`);
+  if (redis) {
+    await redis.set(`${TASK_KEY_PREFIX}${taskId}`, JSON.stringify(entry), { ex: 300 }); // 5 min TTL
+  } else {
+    console.warn('[REDIS] No credentials, using in-memory fallback for task');
+    taskMemoryStore.set(taskId, entry);
+  }
+}
+
+export async function getTaskEntry(taskId: string): Promise<TaskEntry | null> {
+  console.log(`[REDIS] getTaskEntry: ${taskId}, hasRedis: ${!!redis}`);
+  if (redis) {
+    const data = await redis.get(`${TASK_KEY_PREFIX}${taskId}`);
+    console.log(`[REDIS] getTaskEntry result: ${data ? 'found' : 'not found'}`);
+    if (!data) return null;
+    return typeof data === 'string' ? JSON.parse(data) : data as TaskEntry;
+  } else {
+    const entry = taskMemoryStore.get(taskId) || null;
+    console.log(`[REDIS] getTaskEntry (memory): ${entry ? 'found' : 'not found'}`);
+    return entry;
+  }
+}
+
+export async function updateTaskComplete(
+  taskId: string,
+  result: TaskEntry['result']
+): Promise<void> {
+  const entry = await getTaskEntry(taskId);
+  if (entry) {
+    entry.status = 'complete';
+    entry.result = result;
+    await setTaskEntry(taskId, entry);
+  }
+}
+
+export async function updateTaskError(taskId: string, error: string): Promise<void> {
+  const entry = await getTaskEntry(taskId);
+  if (entry) {
+    entry.status = 'error';
+    entry.error = error;
+    await setTaskEntry(taskId, entry);
+  }
+}
