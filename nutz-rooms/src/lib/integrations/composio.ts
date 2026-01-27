@@ -79,7 +79,7 @@ export interface ConnectionResult {
   connectionId: string;
 }
 
-export async function initiateConnection(userId: string, appName: string): Promise<ConnectionResult> {
+export async function initiateConnection(userId: string, appName: string, callbackUrl?: string): Promise<ConnectionResult> {
   try {
     const composio = getComposio();
 
@@ -92,13 +92,22 @@ export async function initiateConnection(userId: string, appName: string): Promi
       );
     }
 
-    console.log(`[COMPOSIO] Initiating connection for app=${appName}, userId=${userId}, authConfigId=${authConfigId}`);
+    console.log(`[COMPOSIO] Initiating connection for app=${appName}, userId=${userId}, authConfigId=${authConfigId}, callback=${callbackUrl}`);
 
     // SDK types don't match runtime API - using type assertion
-    const connection = await composio.connectedAccounts.create({
+    const connectionParams: Record<string, unknown> = {
       auth_config: { id: authConfigId },
       connection: { entity_id: userId },
-    } as Parameters<typeof composio.connectedAccounts.create>[0]);
+    };
+
+    // Add redirect URL if provided
+    if (callbackUrl) {
+      connectionParams.redirect_url = callbackUrl;
+    }
+
+    const connection = await composio.connectedAccounts.create(
+      connectionParams as unknown as Parameters<typeof composio.connectedAccounts.create>[0]
+    );
 
     console.log('[COMPOSIO] Connection response:', JSON.stringify(connection, null, 2));
 

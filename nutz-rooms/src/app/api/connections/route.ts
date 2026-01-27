@@ -42,7 +42,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { redirectUrl } = await initiateConnection(userId, appName);
+    // Build callback URL based on request origin
+    const origin = req.headers.get('origin') || req.nextUrl.origin;
+    const callbackUrl = `${origin}/api/connections/callback?status=success`;
+
+    const { redirectUrl } = await initiateConnection(userId, appName, callbackUrl);
 
     return NextResponse.json({ redirectUrl });
   } catch (error) {

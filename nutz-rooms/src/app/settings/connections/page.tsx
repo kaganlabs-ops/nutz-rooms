@@ -149,6 +149,7 @@ function ConnectionsContent() {
       const data = await res.json();
 
       if (data.redirectUrl) {
+        // Navigate to OAuth - will redirect back after completion
         window.location.href = data.redirectUrl;
       } else {
         setToast({ type: "error", message: data.error || "Failed to start connection" });
