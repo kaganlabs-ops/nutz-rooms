@@ -127,7 +127,7 @@ export async function initiateConnection(userId: string, appName: string): Promi
   }
 }
 
-export async function getConnectedApps(_userId: string): Promise<string[]> {
+export async function getConnectedApps(userId: string): Promise<string[]> {
   try {
     const apiKey = process.env.COMPOSIO_API_KEY;
     if (!apiKey) {
@@ -135,10 +135,11 @@ export async function getConnectedApps(_userId: string): Promise<string[]> {
       return [];
     }
 
-    // Query ALL connections (not filtered by entity_id since Composio stores them as "default")
-    const response = await fetch('https://backend.composio.dev/api/v1/connectedAccounts?page=1&pageSize=50', {
-      headers: { 'x-api-key': apiKey },
-    });
+    // Filter by entity_id (userId) to only get THIS user's connections
+    const response = await fetch(
+      `https://backend.composio.dev/api/v1/connectedAccounts?page=1&pageSize=50&user_uuid=${encodeURIComponent(userId)}`,
+      { headers: { 'x-api-key': apiKey } }
+    );
 
     if (!response.ok) {
       console.error('[COMPOSIO] Failed to fetch connections:', response.status);
@@ -148,7 +149,7 @@ export async function getConnectedApps(_userId: string): Promise<string[]> {
     const data = await response.json();
     const items = data.items || [];
 
-    // Extract unique active app names
+    // Extract unique active app names for THIS user
     const activeApps = new Set<string>();
     for (const conn of items) {
       if (conn.status === 'ACTIVE' && conn.appName) {
@@ -157,7 +158,7 @@ export async function getConnectedApps(_userId: string): Promise<string[]> {
     }
 
     const result = Array.from(activeApps);
-    console.log('[COMPOSIO] Active connected apps:', result);
+    console.log(`[COMPOSIO] Active connected apps for ${userId}:`, result);
     return result;
   } catch (err) {
     console.error(`[COMPOSIO] Failed to get connections:`, err);
@@ -182,16 +183,16 @@ export async function disconnectApp(_userId: string, connectionId: string): Prom
 async function executeComposioAction(
   actionName: string,
   params: Record<string, unknown>,
-  _entityId: string
+  entityId: string
 ): Promise<ToolResult> {
   try {
     const composio = getComposio();
 
-    console.log(`[COMPOSIO] Executing action: ${actionName}`, params);
+    console.log(`[COMPOSIO] Executing action: ${actionName} for user: ${entityId}`, params);
 
-    // Use SDK's tools.execute method
+    // Use SDK's tools.execute method with the actual user's entity_id
     const result = await composio.tools.execute(actionName, {
-      user_id: 'default',
+      user_id: entityId,
       arguments: params,
     });
 
