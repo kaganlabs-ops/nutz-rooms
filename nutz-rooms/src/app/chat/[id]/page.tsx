@@ -163,7 +163,7 @@ export default function ChatPage() {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   // Auth state
-  const { user, isLoggedIn } = useAuth();
+  const { user, isLoggedIn, loading: authLoading } = useAuth();
 
   // Extract ONE THING from message and return cleaned content
   const extractOneThing = useCallback((content: string): { cleanContent: string; oneThing: string | null } => {
@@ -199,11 +199,13 @@ export default function ChatPage() {
 
   // Initialize user ID and session metadata
   useEffect(() => {
-    if (typeof window !== "undefined" && !sessionInitialized) {
+    // Wait for auth to finish loading before determining userId
+    if (typeof window !== "undefined" && !sessionInitialized && !authLoading) {
       // Prefer Supabase user ID if logged in, otherwise use anonymous localStorage ID
       let effectiveUserId: string;
       if (isLoggedIn && user) {
         effectiveUserId = user.id;
+        console.log('[SESSION] Using Supabase userId:', effectiveUserId);
       } else {
         let storedUserId = localStorage.getItem("nutz-user-id");
         if (!storedUserId) {
@@ -211,6 +213,7 @@ export default function ChatPage() {
           localStorage.setItem("nutz-user-id", storedUserId);
         }
         effectiveUserId = storedUserId;
+        console.log('[SESSION] Using anonymous userId:', effectiveUserId);
       }
       setUserId(effectiveUserId);
 
@@ -240,7 +243,7 @@ export default function ChatPage() {
 
       setSessionInitialized(true);
     }
-  }, [sessionInitialized]);
+  }, [sessionInitialized, authLoading, isLoggedIn, user]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

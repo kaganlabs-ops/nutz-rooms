@@ -94,20 +94,16 @@ export async function initiateConnection(userId: string, appName: string, callba
 
     console.log(`[COMPOSIO] Initiating connection for app=${appName}, userId=${userId}, authConfigId=${authConfigId}, callback=${callbackUrl}`);
 
-    // SDK types don't match runtime API - using type assertion
-    const connectionParams: Record<string, unknown> = {
+    // Use proper SDK types - auth_config.id and connection.user_id
+    const connectionParams = {
       auth_config: { id: authConfigId },
-      connection: { entity_id: userId },
+      connection: {
+        user_id: userId,
+        ...(callbackUrl ? { callback_url: callbackUrl } : {}),
+      },
     };
 
-    // Add redirect URL if provided
-    if (callbackUrl) {
-      connectionParams.redirect_url = callbackUrl;
-    }
-
-    const connection = await composio.connectedAccounts.create(
-      connectionParams as unknown as Parameters<typeof composio.connectedAccounts.create>[0]
-    );
+    const connection = await composio.connectedAccounts.create(connectionParams);
 
     console.log('[COMPOSIO] Connection response:', JSON.stringify(connection, null, 2));
 
@@ -144,9 +140,9 @@ export async function getConnectedApps(userId: string): Promise<string[]> {
       return [];
     }
 
-    // Filter by entity_id (userId) to only get THIS user's connections
+    // Filter by entityId (userId) to only get THIS user's connections
     const response = await fetch(
-      `https://backend.composio.dev/api/v1/connectedAccounts?page=1&pageSize=50&user_uuid=${encodeURIComponent(userId)}`,
+      `https://backend.composio.dev/api/v1/connectedAccounts?page=1&pageSize=50&entityId=${encodeURIComponent(userId)}`,
       { headers: { 'x-api-key': apiKey } }
     );
 
@@ -201,7 +197,7 @@ async function executeComposioAction(
 
     // Use SDK's tools.execute method with the actual user's entity_id
     const result = await composio.tools.execute(actionName, {
-      user_id: entityId,
+      entity_id: entityId,
       arguments: params,
     });
 
