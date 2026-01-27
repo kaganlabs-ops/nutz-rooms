@@ -53,6 +53,8 @@ import {
   incrementSessionCount,
   type SessionMetadata,
 } from "@/lib/sessionStorage";
+import { useAuth } from "@/hooks/useAuth";
+import { UnlockAgentsModal } from "@/components/UnlockAgentsModal";
 
 interface Message {
   role: "user" | "assistant";
@@ -153,9 +155,15 @@ export default function ChatPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [unlockModalReason, setUnlockModalReason] = useState<'agent' | 'oauth'>('agent');
+  const [pendingAgentId, setPendingAgentId] = useState<string | undefined>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  // Auth state
+  const { user, isLoggedIn } = useAuth();
 
   // Extract ONE THING from message and return cleaned content
   const extractOneThing = useCallback((content: string): { cleanContent: string; oneThing: string | null } => {
@@ -189,19 +197,25 @@ export default function ChatPage() {
       .trim();
   }, []);
 
-  // Initialize user ID and session metadata from localStorage
+  // Initialize user ID and session metadata
   useEffect(() => {
     if (typeof window !== "undefined" && !sessionInitialized) {
-      // Get or create user ID
-      let storedUserId = localStorage.getItem("nutz-user-id");
-      if (!storedUserId) {
-        storedUserId = `user-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-        localStorage.setItem("nutz-user-id", storedUserId);
+      // Prefer Supabase user ID if logged in, otherwise use anonymous localStorage ID
+      let effectiveUserId: string;
+      if (isLoggedIn && user) {
+        effectiveUserId = user.id;
+      } else {
+        let storedUserId = localStorage.getItem("nutz-user-id");
+        if (!storedUserId) {
+          storedUserId = `anon-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+          localStorage.setItem("nutz-user-id", storedUserId);
+        }
+        effectiveUserId = storedUserId;
       }
-      setUserId(storedUserId);
+      setUserId(effectiveUserId);
 
       // Get session metadata (contains lastOneThing, sessionCount, etc.)
-      const metadata = getSessionMetadata(storedUserId);
+      const metadata = getSessionMetadata(effectiveUserId);
       setSessionMetadata(metadata);
 
       // Load last ONE THING if exists
@@ -211,7 +225,7 @@ export default function ChatPage() {
       }
 
       // Increment session count for new session
-      const newCount = incrementSessionCount(storedUserId);
+      const newCount = incrementSessionCount(effectiveUserId);
       console.log('[SESSION] Session count:', newCount);
 
       // Update local metadata with new count
@@ -684,6 +698,30 @@ export default function ChatPage() {
     }
   };
 
+  // Trigger unlock modal for agent switch (called when user wants to switch to another agent)
+  const handleAgentSwitch = (targetAgentId: string) => {
+    if (!isLoggedIn) {
+      // Show unlock modal
+      setUnlockModalReason('agent');
+      setPendingAgentId(targetAgentId);
+      setShowUnlockModal(true);
+    } else {
+      // Already logged in, navigate directly
+      router.push(`/room/${targetAgentId}`);
+    }
+  };
+
+  // Trigger unlock modal for OAuth tools (called when user tries to use Gmail, Calendar, etc.)
+  const handleOAuthRequired = (appName: string) => {
+    if (!isLoggedIn) {
+      setUnlockModalReason('oauth');
+      setShowUnlockModal(true);
+    } else {
+      // Already logged in, proceed with OAuth flow
+      router.push('/settings/connections');
+    }
+  };
+
   return (
     <div className="h-[100dvh] text-white flex flex-col fixed inset-0 overflow-hidden">
       {/* Gradient Background - iOS 26 style */}
@@ -1100,6 +1138,14 @@ export default function ChatPage() {
           </div>
         </div>
       </footer>
+
+      {/* Unlock Agents Modal - triggered on referral or OAuth */}
+      <UnlockAgentsModal
+        isOpen={showUnlockModal}
+        onClose={() => setShowUnlockModal(false)}
+        reason={unlockModalReason}
+        targetAgentId={pendingAgentId}
+      />
     </div>
   );
 }
