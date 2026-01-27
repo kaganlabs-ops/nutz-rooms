@@ -2,6 +2,8 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { UnlockAgentsModal } from "@/components/UnlockAgentsModal";
 
 interface AppCategory {
   [key: string]: string[];
@@ -57,24 +59,31 @@ const priorityApps = ["gmail", "googlecalendar", "notion", "twitter", "github", 
 function ConnectionsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user, isLoggedIn } = useAuth();
   const [userId, setUserId] = useState<string | null>(null);
   const [connected, setConnected] = useState<string[]>([]);
   const [available, setAvailable] = useState<AppCategory>({});
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [pendingApp, setPendingApp] = useState<string | null>(null);
 
-  // Get userId from localStorage
+  // Get userId - prefer Supabase if logged in
   useEffect(() => {
-    const storedUserId = localStorage.getItem("nutz-user-id");
-    if (storedUserId) {
-      setUserId(storedUserId);
+    if (isLoggedIn && user) {
+      setUserId(user.id);
     } else {
-      const newUserId = `user-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      localStorage.setItem("nutz-user-id", newUserId);
-      setUserId(newUserId);
+      const storedUserId = localStorage.getItem("nutz-user-id");
+      if (storedUserId) {
+        setUserId(storedUserId);
+      } else {
+        const newUserId = `anon-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+        localStorage.setItem("nutz-user-id", newUserId);
+        setUserId(newUserId);
+      }
     }
-  }, []);
+  }, [isLoggedIn, user]);
 
   // Check URL params for success/error
   useEffect(() => {
@@ -120,6 +129,14 @@ function ConnectionsContent() {
 
   const handleConnect = async (appName: string) => {
     if (!userId) return;
+
+    // If not logged in, show unlock modal instead
+    if (!isLoggedIn) {
+      setPendingApp(appName);
+      setShowUnlockModal(true);
+      return;
+    }
+
     setConnecting(appName);
 
     try {
@@ -173,9 +190,20 @@ function ConnectionsContent() {
         </button>
 
         <h1 className="text-2xl font-bold mb-2">Connected Apps</h1>
-        <p className="text-gray-400 mb-8">
+        <p className="text-gray-400 mb-4">
           Connect your apps to let Kagan help with emails, calendar, and more.
         </p>
+
+        {/* Sign in prompt for anonymous users */}
+        {!isLoggedIn && (
+          <button
+            onClick={() => setShowUnlockModal(true)}
+            className="w-full mb-6 p-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl text-white font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+          >
+            <span>🔐</span>
+            Sign in to save your connections
+          </button>
+        )}
 
         {toast && (
           <div
@@ -284,6 +312,14 @@ function ConnectionsContent() {
           </div>
         )}
       </div>
+
+      {/* Unlock Modal - shown when anonymous user tries to connect */}
+      <UnlockAgentsModal
+        isOpen={showUnlockModal}
+        onClose={() => setShowUnlockModal(false)}
+        reason="oauth"
+        targetApp={pendingApp || undefined}
+      />
     </div>
   );
 }
