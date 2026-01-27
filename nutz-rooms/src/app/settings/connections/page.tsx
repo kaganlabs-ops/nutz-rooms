@@ -194,6 +194,16 @@ function ConnectionsContent() {
           Connect your apps to let Kagan help with emails, calendar, and more.
         </p>
 
+        {/* Debug: Show auth status */}
+        <div className="mb-4 p-3 bg-gray-800 rounded-lg text-sm">
+          <span className="text-gray-400">Status: </span>
+          {isLoggedIn ? (
+            <span className="text-green-400">Logged in as {user?.email}</span>
+          ) : (
+            <span className="text-yellow-400">Anonymous ({userId?.slice(0, 15)}...)</span>
+          )}
+        </div>
+
         {/* Sign in prompt for anonymous users */}
         {!isLoggedIn && (
           <button
