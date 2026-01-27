@@ -561,7 +561,7 @@ export default function ChatPage() {
     }
   };
 
-  // Handle image upload
+  // Handle image upload with timeout and retry
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -573,33 +573,61 @@ export default function ChatPage() {
     const preview = URL.createObjectURL(file);
     setIsUploading(true);
 
+    const uploadWithTimeout = async (attempt: number = 1): Promise<string> => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        console.log(`[UPLOAD] Attempt ${attempt}, file size: ${(file.size / 1024).toFixed(1)}KB`);
+
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || `Upload failed (${res.status})`);
+        }
+
+        const data = await res.json();
+        if (!data.url) {
+          throw new Error('No URL returned from upload');
+        }
+
+        return data.url;
+      } catch (err) {
+        clearTimeout(timeoutId);
+
+        // Retry once on timeout or network error
+        if (attempt < 2 && (err instanceof Error && (err.name === 'AbortError' || err.message.includes('network')))) {
+          console.log(`[UPLOAD] Retrying after error:`, err);
+          return uploadWithTimeout(attempt + 1);
+        }
+
+        throw err;
+      }
+    };
+
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || `Upload failed (${res.status})`);
-      }
-
-      const data = await res.json();
-      if (!data.url) {
-        throw new Error('No URL returned from upload');
-      }
-      setAttachedImage({ url: data.url, preview });
-      console.log('[UPLOAD] Image attached:', data.url);
+      const url = await uploadWithTimeout();
+      setAttachedImage({ url, preview });
+      console.log('[UPLOAD] Image attached:', url);
     } catch (err) {
       console.error('[UPLOAD] Error:', err);
       URL.revokeObjectURL(preview);
-      const errorMessage = err instanceof Error ? err.message : 'Upload failed';
+      const errorMessage = err instanceof Error
+        ? (err.name === 'AbortError' ? 'Upload timed out' : err.message)
+        : 'Upload failed';
       setUploadError(errorMessage);
-      // Clear error after 4 seconds
-      setTimeout(() => setUploadError(null), 4000);
+      // Clear error after 5 seconds
+      setTimeout(() => setUploadError(null), 5000);
     } finally {
       setIsUploading(false);
       // Reset input so same file can be selected again
