@@ -416,11 +416,11 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
   const zepContextRef = useRef<string>("");
   // Track last Kagan message for commitment extraction context
   const lastKaganMessageRef = useRef<string>("");
-  // Agent task state for research/execution
+  // Agent task state for research/execution/image
   const [agentTask, setAgentTask] = useState<{
     id: string;
     status: 'pending' | 'done' | 'error';
-    type: 'research' | 'deploy';
+    type: 'research' | 'deploy' | 'image';
     result?: string;
     deployedUrl?: string;
   } | null>(null);
@@ -545,15 +545,20 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
   };
 
   // Fire off agent task (non-blocking - conversation continues)
-  const triggerAgentTask = async (type: 'research' | 'deploy', context: string) => {
+  const triggerAgentTask = async (type: 'research' | 'deploy' | 'image', context: string) => {
     const taskId = `agent-${Date.now()}`;
     setAgentTask({ id: taskId, status: 'pending', type });
     console.log('[AGENT] Triggering', type, 'task:', taskId);
 
     // Build task description based on type
-    const taskDescription = type === 'research'
-      ? 'Research competitors and market for this idea. Find 3-5 relevant players, their pricing, and identify gaps/opportunities.'
-      : 'Build and deploy a page to help validate or demonstrate this idea. Could be a landing page, interactive demo, game prototype, or whatever fits best. Make it look good and work on mobile.';
+    let taskDescription: string;
+    if (type === 'research') {
+      taskDescription = 'Research competitors and market for this idea. Find 3-5 relevant players, their pricing, and identify gaps/opportunities.';
+    } else if (type === 'image') {
+      taskDescription = 'Generate an image based on the user request. Use FAL AI to create a high-quality image matching their description.';
+    } else {
+      taskDescription = 'Build and deploy a page to help validate or demonstrate this idea. Could be a landing page, interactive demo, game prototype, or whatever fits best. Make it look good and work on mobile.';
+    }
 
     // NON-BLOCKING - conversation continues while this runs
     fetch('/api/agent', {
@@ -1066,7 +1071,9 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
           <div className="w-full max-w-md px-4 mb-2">
             <div className={`px-4 py-3 rounded-xl border transition-all ${
               agentTask.status === 'pending'
-                ? (agentTask.type === 'research' ? 'bg-purple-900/40 border-purple-500/40' : 'bg-blue-900/40 border-blue-500/40')
+                ? (agentTask.type === 'research' ? 'bg-purple-900/40 border-purple-500/40'
+                  : agentTask.type === 'image' ? 'bg-pink-900/40 border-pink-500/40'
+                  : 'bg-blue-900/40 border-blue-500/40')
                 : agentTask.status === 'done'
                 ? 'bg-green-900/40 border-green-500/40'
                 : 'bg-red-900/40 border-red-500/40'
@@ -1074,16 +1081,16 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
               <div className="flex items-center gap-2">
                 <span className={`text-lg ${agentTask.status === 'pending' ? 'animate-pulse' : ''}`}>
                   {agentTask.status === 'pending'
-                    ? (agentTask.type === 'research' ? '🔍' : '🔨')
+                    ? (agentTask.type === 'research' ? '🔍' : agentTask.type === 'image' ? '🎨' : '🔨')
                     : agentTask.status === 'done'
                     ? '✓'
                     : '⚠️'}
                 </span>
                 <span className="text-sm text-white/80">
                   {agentTask.status === 'pending'
-                    ? (agentTask.type === 'research' ? 'Researching...' : 'Building...')
+                    ? (agentTask.type === 'research' ? 'Researching...' : agentTask.type === 'image' ? 'Generating image...' : 'Building...')
                     : agentTask.status === 'done'
-                    ? (agentTask.type === 'research' ? 'Research done' : 'Built & deployed')
+                    ? (agentTask.type === 'research' ? 'Research done' : agentTask.type === 'image' ? 'Image ready' : 'Built & deployed')
                     : 'Something went wrong'}
                 </span>
               </div>
