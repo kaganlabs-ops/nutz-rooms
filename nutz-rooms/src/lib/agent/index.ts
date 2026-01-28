@@ -2,8 +2,26 @@ import Anthropic from '@anthropic-ai/sdk';
 import { toolRegistry, registerAllTools } from '@/lib/tools';
 import { skillLoader } from '@/lib/agent/skill-loader';
 import { kaganConfig } from '@/lib/creators/kagan';
+import { mikeConfig } from '@/lib/creators/mike';
+import { sarahConfig } from '@/lib/creators/sarah';
 import { getConnectedApps } from '@/lib/integrations/composio';
 import { ChatOptions, ChatResponse, CreatorConfig, BrainFact, SessionMetadata } from '@/types';
+
+// All available creators
+const CREATORS: Record<string, CreatorConfig> = {
+  kagan: kaganConfig,
+  mike: mikeConfig,
+  sarah: sarahConfig,
+};
+
+// Export for use by other modules
+export function getCreatorConfig(creatorId: string): CreatorConfig {
+  return CREATORS[creatorId] || CREATORS.kagan;
+}
+
+export function getAllCreatorIds(): string[] {
+  return Object.keys(CREATORS);
+}
 
 // Initialize tools on module load
 let initialized = false;
@@ -24,18 +42,20 @@ export class Agent {
   constructor(creatorId: string, userId: string) {
     this.creatorId = creatorId;
     this.userId = userId;
-    this.config = this.getCreatorConfig(creatorId);
+    this.config = this.getCreatorConfigById(creatorId);
     this.anthropic = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY!,
     });
+    console.log(`[AGENT] Created agent for creator: ${creatorId}, user: ${userId}`);
   }
 
-  private getCreatorConfig(id: string): CreatorConfig {
-    // For now, only Kagan is supported
-    if (id === 'kagan') {
-      return kaganConfig;
+  private getCreatorConfigById(id: string): CreatorConfig {
+    const config = CREATORS[id];
+    if (!config) {
+      console.warn(`[AGENT] Unknown creator: ${id}, falling back to kagan`);
+      return CREATORS.kagan;
     }
-    throw new Error(`Unknown creator: ${id}`);
+    return config;
   }
 
   /**
@@ -417,7 +437,7 @@ export class Agent {
 
     // Add brain facts
     if (brainFacts && brainFacts.length > 0) {
-      prompt += '\n\n## KAGAN\'S BRAIN (shared knowledge)\n';
+      prompt += `\n\n## ${this.config.name.toUpperCase()}'S BRAIN (shared knowledge)\n`;
       for (const fact of brainFacts) {
         prompt += `- ${fact.fact}\n`;
       }
@@ -441,7 +461,7 @@ You have context about this user above. USE IT - but ONE THING AT A TIME.
 CRITICAL: Pick ONE topic to open with. Not everything at once.
 
 BAD: "yo hows the move going? and did u work on that financial model? and are u still tired?"
-GOOD: "yo 👀 hows the move going?"
+GOOD: "yo hows the move going"
 
 IF they had a ONE THING last session:
 - Follow up on JUST that: "did u [action item]?"
@@ -500,11 +520,19 @@ If unsure, ASK: "want me to edit this or just vibes?"`;
 
     // Add referrals
     if (this.config.referrals.length > 0) {
-      prompt += '\n\n## REFERRALS\n';
-      prompt += 'If the user asks about topics outside your expertise, refer them to:\n';
+      prompt += '\n\n## YOUR FRIENDS (mention naturally when relevant)\n';
+      prompt += 'These are friends you can mention when the topic fits:\n';
       for (const ref of this.config.referrals) {
         prompt += `- ${ref.name}: ${ref.specialty}\n`;
       }
+      prompt += `
+IMPORTANT - HOW REFERRALS WORK:
+- Mention your friend naturally in conversation (like "my friend mike" or "this guy mike")
+- Ask if they want to connect ("want me to hook u up?")
+- If they say yes, just acknowledge it ("bet, connecting u" or "cool, here u go")
+- DO NOT send emails or take any action - the system shows a contact card automatically
+- DO NOT use send_email tool for introductions to these friends
+- Treat them as friends, not "agents" or "services"`;
     }
 
     return prompt;
@@ -686,3 +714,45 @@ If unsure, ASK: "want me to edit this or just vibes?"`;
 export function createAgent(creatorId: string, userId: string): Agent {
   return new Agent(creatorId, userId);
 }
+
+// ============================================
+// NEW ARCHITECTURE EXPORTS (Phase 1)
+// ============================================
+// These are the new lean prompt and tools from the refactoring plan.
+// They will replace the existing architecture in Phase 2+.
+
+// New lean prompt
+export { getKaganPrompt, KAGAN_PERSONALITY } from './prompts/kagan-personality';
+
+// New tools
+export {
+  GET_KNOWLEDGE_TOOL,
+  getKnowledge,
+  formatKnowledgeResult,
+  handleGetKnowledge,
+  type KnowledgeResult,
+} from './tools/get-knowledge';
+
+export {
+  REFER_TO_AGENT_TOOL,
+  referToAgent,
+  handleReferToAgent,
+  getAvailableAgents,
+  AGENTS,
+  type Agent as AgentInfo,
+  type ReferralResult,
+} from './tools/refer-to-agent';
+
+export {
+  CORE_TOOLS,
+  getCoreToolDefinitions,
+  executeTool,
+  hasTool,
+  getToolNames,
+  getToolsForUser,
+} from './tools/registry';
+
+// New knowledge structure
+export { STORIES, getStory, getStoryKeys, type Story } from './knowledge/stories';
+export { FACTS, getFactCategories, getFactsForCategory, searchFacts, type FactCategory } from './knowledge/facts';
+export { BELIEFS, getAllBeliefs, getBelief, searchBeliefs, type Belief } from './knowledge/beliefs';

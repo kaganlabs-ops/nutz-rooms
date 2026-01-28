@@ -2,6 +2,10 @@ import { NextRequest } from "next/server";
 import { anthropic, KAGAN_VOICE_PROMPT } from "@/lib/openai";
 import { getUserMemoryFromThread, hasRealMemory } from "@/lib/zep";
 import { findRelevantFacts, formatBrainContext, getKaganBrain } from "@/lib/brain";
+import { getKaganPrompt } from "@/lib/agent/prompts/kagan-personality";
+
+// Feature flag for new prompts (set in Vercel env)
+const USE_NEW_PROMPTS = process.env.USE_NEW_PROMPTS === 'true';
 
 // CORS headers for ElevenLabs
 const corsHeaders = {
@@ -102,8 +106,12 @@ export async function POST(req: NextRequest) {
     const simpleMessages = ['hey', 'hi', 'hello', 'yo', 'sup', 'whats up', "what's up", 'how are you', 'good morning', 'good evening'];
     const isSimpleMessage = simpleMessages.some(s => userMessage.toLowerCase().trim() === s || userMessage.toLowerCase().trim().startsWith(s + ' '));
 
-    // Build system prompt
-    let systemPrompt = KAGAN_VOICE_PROMPT;
+    // Build system prompt - use new lean prompt if feature flag is enabled
+    let systemPrompt = USE_NEW_PROMPTS
+      ? getKaganPrompt('voice')  // New: ~350 words
+      : KAGAN_VOICE_PROMPT;      // Old: ~460 lines
+
+    console.log(`[VOICE] Using ${USE_NEW_PROMPTS ? 'NEW' : 'OLD'} prompt (${systemPrompt.length} chars)`);
 
     // For simple greetings, just use cached brain (instant)
     // For real questions, fetch user memory in parallel with brain
