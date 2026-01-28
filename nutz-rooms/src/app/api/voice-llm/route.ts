@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { openai, KAGAN_VOICE_PROMPT } from "@/lib/openai";
+import { anthropic, KAGAN_VOICE_PROMPT } from "@/lib/openai";
 import { getUserMemoryFromThread, hasRealMemory } from "@/lib/zep";
 import { findRelevantFacts, formatBrainContext, getKaganBrain } from "@/lib/brain";
 
@@ -145,18 +145,15 @@ export async function POST(req: NextRequest) {
     console.log(`[VOICE] Stream mode: ${stream}, prompt length: ${systemPrompt.length}`);
 
     if (stream) {
-      // Streaming response for ElevenLabs using GPT-4o-mini
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+      // Streaming response for ElevenLabs using Claude (same as chat)
+      const response = await anthropic.messages.stream({
+        model: "claude-sonnet-4-20250514",
         max_tokens: 150,
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...chatMessages,
-        ],
-        stream: true,
+        system: systemPrompt,
+        messages: chatMessages,
       });
 
-      // Create a streaming response in OpenAI format
+      // Create a streaming response in OpenAI format (ElevenLabs expects this)
       const encoder = new TextEncoder();
       let fullResponse = "";
 
@@ -165,22 +162,25 @@ export async function POST(req: NextRequest) {
           const id = `chatcmpl-${Date.now()}`;
 
           try {
-            for await (const chunk of response) {
-              const content = chunk.choices[0]?.delta?.content || "";
-              if (content) {
-                fullResponse += content;
-                const outChunk = {
-                  id,
-                  object: "chat.completion.chunk",
-                  created: Math.floor(Date.now() / 1000),
-                  model: "gpt-4o-mini",
-                  choices: [{
-                    index: 0,
-                    delta: { content },
-                    finish_reason: null,
-                  }],
-                };
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify(outChunk)}\n\n`));
+            for await (const event of response) {
+              if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+                const content = event.delta.text || "";
+                if (content) {
+                  fullResponse += content;
+                  // Convert to OpenAI format for ElevenLabs
+                  const outChunk = {
+                    id,
+                    object: "chat.completion.chunk",
+                    created: Math.floor(Date.now() / 1000),
+                    model: "claude-sonnet-4",
+                    choices: [{
+                      index: 0,
+                      delta: { content },
+                      finish_reason: null,
+                    }],
+                  };
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify(outChunk)}\n\n`));
+                }
               }
             }
 
@@ -192,7 +192,7 @@ export async function POST(req: NextRequest) {
               id,
               object: "chat.completion.chunk",
               created: Math.floor(Date.now() / 1000),
-              model: "gpt-4o-mini",
+              model: "claude-sonnet-4",
               choices: [{
                 index: 0,
                 delta: {},
@@ -218,23 +218,23 @@ export async function POST(req: NextRequest) {
         },
       });
     } else {
-      // Non-streaming response
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+      // Non-streaming response using Claude
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
         max_tokens: 150,
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...chatMessages,
-        ],
+        system: systemPrompt,
+        messages: chatMessages,
       });
 
-      const content = response.choices[0]?.message?.content || "";
+      // Extract text from Claude's response format
+      const content = response.content[0]?.type === 'text' ? response.content[0].text : "";
 
+      // Return in OpenAI format for ElevenLabs compatibility
       return Response.json({
         id: `chatcmpl-${Date.now()}`,
         object: "chat.completion",
         created: Math.floor(Date.now() / 1000),
-        model: "gpt-4o-mini",
+        model: "claude-sonnet-4",
         choices: [{
           index: 0,
           message: { role: "assistant", content },

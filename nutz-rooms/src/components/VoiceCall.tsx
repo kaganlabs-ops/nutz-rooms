@@ -64,9 +64,9 @@ function getOpeningMessage(
   if (metadata?.lastOneThing) {
     const cleanedAction = cleanOneThingForFollowUp(metadata.lastOneThing);
     return pick([
-      `yo! so did u ${cleanedAction}`,
-      `alright lets hear it. did u ${cleanedAction}`,
-      `first things first. did u ${cleanedAction}`,
+      `yo! so did you ${cleanedAction}`,
+      `alright lets hear it. did you ${cleanedAction}`,
+      `first things first. did you ${cleanedAction}`,
     ]);
   }
 
@@ -76,7 +76,7 @@ function getOpeningMessage(
       "already missed me? thats cute",
       "cant stay away huh",
       "back so fast? alright whats going on",
-      "wow that was quick. u good?",
+      "wow that was quick. you good?",
     ]);
   }
 
@@ -140,8 +140,8 @@ function getOpeningMessage(
   if (userMemory && timeSince === 'few_days') {
     return pick([
       "been a few days. whats new",
-      "yo! havent heard from u in a bit. whats going on",
-      "there u are. whats up",
+      "yo! havent heard from you in a bit",
+      "there you are. whats up",
     ]);
   }
 
@@ -149,7 +149,7 @@ function getOpeningMessage(
   if (userMemory && timeSince === 'week_plus') {
     return pick([
       "look who remembered i exist",
-      "thought u forgot about me",
+      "thought you forgot about me",
       "been a minute. whats going on",
       "long time. whats new",
     ]);
@@ -159,16 +159,16 @@ function getOpeningMessage(
   if (timeSince === 'week_plus') {
     return pick([
       "look who remembered i exist",
-      "thought u forgot about me. whats up",
+      "thought you forgot about me. whats up",
     ]);
   }
 
   // Priority 9: Loyal user (10+ sessions) — familiar tone
   if (sessionCount >= 10) {
     return pick([
-      "yo. the usual?",
-      "alright whats on ur mind today",
-      "hey. whats going on",
+      "yo",
+      "hey whats good",
+      "yo whats up",
     ]);
   }
 
@@ -176,16 +176,16 @@ function getOpeningMessage(
   if (userMemory) {
     return pick([
       "yo whats up",
-      "hey. whats going on",
-      "yo. whats on ur mind",
+      "hey",
+      "yo whats good",
     ]);
   }
 
   // Default: New user — simple opener
   return pick([
     "yo whats up",
-    "hey. whats going on",
-    "yo. what can i help u with",
+    "hey whats good",
+    "yo",
   ]);
 }
 
@@ -240,11 +240,28 @@ const AGENT_DEPLOY_TRIGGERS = [
   "got you, building",
 ];
 
-const checkForAgentTrigger = (text: string): { triggered: boolean; type: 'research' | 'deploy' } => {
+// Image generation triggers (FAL)
+const AGENT_IMAGE_TRIGGERS = [
+  "let me generate",
+  "generating an image",
+  "generating a picture",
+  "let me make you an image",
+  "let me create an image",
+  "making you an image",
+  "creating an image",
+  "on it, generating",
+  "got you, generating",
+];
+
+const checkForAgentTrigger = (text: string): { triggered: boolean; type: 'research' | 'deploy' | 'image' } => {
   const lower = text.toLowerCase();
 
   if (AGENT_DEPLOY_TRIGGERS.some(trigger => lower.includes(trigger))) {
     return { triggered: true, type: 'deploy' };
+  }
+
+  if (AGENT_IMAGE_TRIGGERS.some(trigger => lower.includes(trigger))) {
+    return { triggered: true, type: 'image' };
   }
 
   if (AGENT_RESEARCH_TRIGGERS.some(trigger => lower.includes(trigger))) {

@@ -1,27 +1,26 @@
 import { NextRequest } from "next/server";
-import { KAGAN_VOICE_PROMPT } from "@/lib/openai";
 
 const AGENT_ID = "agent_1001kefsejbwfs38hagtrp87e3zw"; // Kagan's agent ID
 
 export async function POST(req: NextRequest) {
   const apiKey = process.env.ELEVENLABS_API_KEY;
+  const customLlmUrl = process.env.CUSTOM_LLM_URL; // e.g., https://your-app.vercel.app/api/voice-llm
 
   if (!apiKey) {
     return Response.json({ error: "ELEVENLABS_API_KEY not configured" }, { status: 500 });
   }
 
-  // Add user_id and zep_context variables to the system prompt
-  const updatedPrompt = `${KAGAN_VOICE_PROMPT}
+  if (!customLlmUrl) {
+    return Response.json({
+      error: "CUSTOM_LLM_URL not configured. Set it to your deployed URL + /api/voice-llm"
+    }, { status: 500 });
+  }
 
-## MEMORY CONTEXT
+  // Minimal prompt - just pass through dynamic variables
+  // The actual prompt is handled by our custom LLM endpoint
+  const minimalPrompt = `user_id: {{user_id}}
 
-user_id: {{user_id}}
-
-The following is context from previous conversations with this user. Use it to remember what they've told you before:
-
-{{zep_context}}
-
-Use this memory naturally - reference their projects, interests, and what they mentioned before. Don't say "I remember you said..." - just reference it like you naturally recall.`;
+{{zep_context}}`;
 
   try {
     const response = await fetch(`https://api.elevenlabs.io/v1/convai/agents/${AGENT_ID}`, {
@@ -32,8 +31,12 @@ Use this memory naturally - reference their projects, interests, and what they m
       },
       body: JSON.stringify({
         prompt: {
-          prompt: updatedPrompt,
-          llm: "gpt-4o-mini",
+          prompt: minimalPrompt,
+          llm: "custom",
+          custom_llm: {
+            url: customLlmUrl,
+            model_id: "claude-sonnet-4",
+          },
           temperature: 0.7,
           max_tokens: 150,
         },
@@ -51,8 +54,9 @@ Use this memory naturally - reference their projects, interests, and what they m
       success: true,
       agentId: AGENT_ID,
       agentName: result.name,
-      promptLength: updatedPrompt.length,
-      promptPreview: updatedPrompt.slice(-500), // Show the memory context part
+      mode: "custom_llm",
+      customLlmUrl,
+      note: "Agent now uses Claude via custom LLM endpoint",
     });
   } catch (error) {
     console.error("Error updating agent:", error);
