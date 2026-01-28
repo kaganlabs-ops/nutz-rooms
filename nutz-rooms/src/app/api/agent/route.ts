@@ -1,10 +1,97 @@
 import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { deployPage, DEPLOY_PAGE_TOOL } from "@/lib/tools/deploy-page";
+import { generateImage, generateVideo, generateMusic, removeBackground, upscaleImage } from "@/lib/integrations/fal";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
+
+// FAL tool definitions
+const GENERATE_IMAGE_TOOL: Anthropic.Tool = {
+  name: "generate_image",
+  description: "Generate an image from a text description. Use for any image request: dog pictures, logos, mockups, art, social media images, anything visual.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      prompt: {
+        type: "string",
+        description: "What to generate - be detailed and specific",
+      },
+      style: {
+        type: "string",
+        enum: ["realistic", "illustration", "logo", "3d", "anime", "painting"],
+        description: "Style of the image",
+      },
+      aspect_ratio: {
+        type: "string",
+        enum: ["1:1", "16:9", "9:16", "4:3"],
+        description: "Aspect ratio (default 1:1)",
+      },
+    },
+    required: ["prompt"],
+  },
+};
+
+const GENERATE_VIDEO_TOOL: Anthropic.Tool = {
+  name: "generate_video",
+  description: "Generate a short video from a text description.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      prompt: {
+        type: "string",
+        description: "What to generate in the video",
+      },
+    },
+    required: ["prompt"],
+  },
+};
+
+const GENERATE_MUSIC_TOOL: Anthropic.Tool = {
+  name: "generate_music",
+  description: "Generate music from a text description (genre, mood, instruments).",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      prompt: {
+        type: "string",
+        description: "Describe the music (genre, mood, instruments)",
+      },
+    },
+    required: ["prompt"],
+  },
+};
+
+const REMOVE_BACKGROUND_TOOL: Anthropic.Tool = {
+  name: "remove_background",
+  description: "Remove the background from an image.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      image_url: {
+        type: "string",
+        description: "URL of the image to process",
+      },
+    },
+    required: ["image_url"],
+  },
+};
+
+const UPSCALE_IMAGE_TOOL: Anthropic.Tool = {
+  name: "upscale_image",
+  description: "Upscale and enhance image quality.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      image_url: {
+        type: "string",
+        description: "URL of the image to upscale",
+      },
+    },
+    required: ["image_url"],
+  },
+};
 
 // Tool definition for creating markdown documents
 const CREATE_DOCUMENT_TOOL: Anthropic.Tool = {
@@ -40,27 +127,36 @@ The document will be shown to the user as an artifact they can copy/save.`,
 
 const AGENT_SYSTEM_PROMPT = `You are Kagan's execution engine. You DO things, not just talk about them.
 
-You have THREE tools to choose from based on what the user needs:
+You have these tools:
 
-1. **deploy_page** - Use this when user wants something to SHOW or DEMO
-   - Working prototypes, apps, games, tools
-   - Landing pages for validation
-   - Interactive demos
-   - Anything they can open in a browser and use
+1. **generate_image** - Generate ANY image: dogs, cats, logos, art, mockups, anything visual
+   - User says "picture", "image", "photo", "draw", "generate" → USE THIS
+   - Be detailed in prompts for better results
 
-2. **create_document** - Use this when user wants to THINK or PLAN
-   - Clarity docs (ONE THING, parking lot)
-   - MVP scope (what's in, what's out)
-   - Action plans with deadlines
-   - Meeting prep, outreach scripts
-   - Any planning/thinking deliverable
+2. **generate_video** - Generate short videos from descriptions
 
-3. **web_search** - Use this for research
-   - Competitor analysis
-   - Market research
-   - Finding information
+3. **generate_music** - Generate music (describe genre, mood, instruments)
+
+4. **remove_background** - Remove background from an image
+
+5. **upscale_image** - Enhance image quality
+
+6. **deploy_page** - Build working prototypes, apps, games, landing pages
+
+7. **create_document** - Create planning docs, clarity docs, outreach scripts
+
+8. **web_search** - Research competitors, market, find information
 
 ## DECIDING WHICH TOOL TO USE
+
+If user says: "picture", "image", "photo", "draw", "generate an image", "make me a", "dog", "cat", "logo"
+→ Use generate_image (this is the most common request!)
+
+If user says: "video", "animation", "clip"
+→ Use generate_video
+
+If user says: "music", "song", "beat", "audio"
+→ Use generate_music
 
 If user says: "demo", "show", "prototype", "app", "game", "page", "tool", "build me"
 → Use deploy_page (working code they can open)
@@ -149,6 +245,9 @@ Complete this task and return a concise summary I can speak to the user.`;
     // Track created artifacts
     let createdDocument: CreatedDocument | null = null;
     let deployedUrl: string | null = null;
+    let generatedImageUrl: string | null = null;
+    let generatedVideoUrl: string | null = null;
+    let generatedAudioUrl: string | null = null;
 
     // Initial request with all tools
     console.log("[AGENT] Calling Claude Opus...");
@@ -164,6 +263,11 @@ Complete this task and return a concise summary I can speak to the user.`;
         },
         DEPLOY_PAGE_TOOL as Anthropic.Tool,
         CREATE_DOCUMENT_TOOL,
+        GENERATE_IMAGE_TOOL,
+        GENERATE_VIDEO_TOOL,
+        GENERATE_MUSIC_TOOL,
+        REMOVE_BACKGROUND_TOOL,
+        UPSCALE_IMAGE_TOOL,
       ],
       messages: [
         {
@@ -251,6 +355,119 @@ Complete this task and return a concise summary I can speak to the user.`;
                 message: "Document created successfully",
               }),
             });
+          } else if (block.name === "generate_image") {
+            // Handle image generation
+            try {
+              const input = block.input as { prompt: string; style?: string; aspect_ratio?: string };
+              console.log("[AGENT] Generating image:", input.prompt);
+              const imageUrl = await generateImage(input.prompt, {
+                style: input.style,
+                aspectRatio: input.aspect_ratio as '1:1' | '16:9' | '9:16' | '4:3' | undefined,
+              });
+              console.log("[AGENT] Image generated:", imageUrl);
+              generatedImageUrl = imageUrl;
+              toolResults.push({
+                type: "tool_result",
+                tool_use_id: block.id,
+                content: JSON.stringify({ success: true, imageUrl }),
+              });
+            } catch (err) {
+              console.error("[AGENT] Image generation failed:", err);
+              toolResults.push({
+                type: "tool_result",
+                tool_use_id: block.id,
+                content: JSON.stringify({ success: false, error: err instanceof Error ? err.message : "Image generation failed" }),
+                is_error: true,
+              });
+            }
+          } else if (block.name === "generate_video") {
+            // Handle video generation
+            try {
+              const input = block.input as { prompt: string };
+              console.log("[AGENT] Generating video:", input.prompt);
+              const videoUrl = await generateVideo(input.prompt);
+              console.log("[AGENT] Video generated:", videoUrl);
+              generatedVideoUrl = videoUrl;
+              toolResults.push({
+                type: "tool_result",
+                tool_use_id: block.id,
+                content: JSON.stringify({ success: true, videoUrl }),
+              });
+            } catch (err) {
+              console.error("[AGENT] Video generation failed:", err);
+              toolResults.push({
+                type: "tool_result",
+                tool_use_id: block.id,
+                content: JSON.stringify({ success: false, error: err instanceof Error ? err.message : "Video generation failed" }),
+                is_error: true,
+              });
+            }
+          } else if (block.name === "generate_music") {
+            // Handle music generation
+            try {
+              const input = block.input as { prompt: string };
+              console.log("[AGENT] Generating music:", input.prompt);
+              const audioUrl = await generateMusic(input.prompt);
+              console.log("[AGENT] Music generated:", audioUrl);
+              generatedAudioUrl = audioUrl;
+              toolResults.push({
+                type: "tool_result",
+                tool_use_id: block.id,
+                content: JSON.stringify({ success: true, audioUrl }),
+              });
+            } catch (err) {
+              console.error("[AGENT] Music generation failed:", err);
+              toolResults.push({
+                type: "tool_result",
+                tool_use_id: block.id,
+                content: JSON.stringify({ success: false, error: err instanceof Error ? err.message : "Music generation failed" }),
+                is_error: true,
+              });
+            }
+          } else if (block.name === "remove_background") {
+            // Handle background removal
+            try {
+              const input = block.input as { image_url: string };
+              console.log("[AGENT] Removing background from:", input.image_url);
+              const imageUrl = await removeBackground(input.image_url);
+              console.log("[AGENT] Background removed:", imageUrl);
+              generatedImageUrl = imageUrl;
+              toolResults.push({
+                type: "tool_result",
+                tool_use_id: block.id,
+                content: JSON.stringify({ success: true, imageUrl }),
+              });
+            } catch (err) {
+              console.error("[AGENT] Background removal failed:", err);
+              toolResults.push({
+                type: "tool_result",
+                tool_use_id: block.id,
+                content: JSON.stringify({ success: false, error: err instanceof Error ? err.message : "Background removal failed" }),
+                is_error: true,
+              });
+            }
+          } else if (block.name === "upscale_image") {
+            // Handle image upscaling
+            try {
+              const input = block.input as { image_url: string };
+              console.log("[AGENT] Upscaling image:", input.image_url);
+              const imageUrl = await upscaleImage(input.image_url);
+              console.log("[AGENT] Image upscaled:", imageUrl);
+              generatedImageUrl = imageUrl;
+              toolResults.push({
+                type: "tool_result",
+                tool_use_id: block.id,
+                content: JSON.stringify({ success: true, imageUrl }),
+              });
+            } catch (err) {
+              console.error("[AGENT] Image upscaling failed:", err);
+              toolResults.push({
+                type: "tool_result",
+                tool_use_id: block.id,
+                content: JSON.stringify({ success: false, error: err instanceof Error ? err.message : "Image upscaling failed" }),
+                is_error: true,
+              });
+            }
           }
         }
       }
@@ -274,6 +491,11 @@ Complete this task and return a concise summary I can speak to the user.`;
           },
           DEPLOY_PAGE_TOOL as Anthropic.Tool,
           CREATE_DOCUMENT_TOOL,
+          GENERATE_IMAGE_TOOL,
+          GENERATE_VIDEO_TOOL,
+          GENERATE_MUSIC_TOOL,
+          REMOVE_BACKGROUND_TOOL,
+          UPSCALE_IMAGE_TOOL,
         ],
         messages,
       });
@@ -302,6 +524,9 @@ Complete this task and return a concise summary I can speak to the user.`;
       // Include artifacts created by agent
       deployedUrl,
       document: createdDocument,
+      imageUrl: generatedImageUrl,
+      videoUrl: generatedVideoUrl,
+      audioUrl: generatedAudioUrl,
     });
   } catch (error) {
     console.error("[AGENT] Error:", error);
