@@ -576,6 +576,7 @@ export default function RoomPage() {
           width: nutzSize,
           height: nutzSize,
           opacity: nutzInitialized ? 1 : 0,
+          WebkitTouchCallout: "none", // Prevent iOS image menu
         }}
         onMouseDown={(e) => {
           handleNutzMouseDown(e);
@@ -583,16 +584,20 @@ export default function RoomPage() {
         }}
         onMouseUp={handleNutzLongPressEnd}
         onMouseLeave={handleNutzLongPressEnd}
-        onTouchStart={handleNutzLongPressStart}
+        onTouchStart={(e) => {
+          e.preventDefault(); // Prevent iOS image menu
+          handleNutzLongPressStart();
+        }}
         onTouchEnd={handleNutzLongPressEnd}
         onTouchCancel={handleNutzLongPressEnd}
+        onContextMenu={(e) => e.preventDefault()} // Prevent context menu
       >
         <Image
           src="/nutz-button.png"
           alt="Nutz"
           width={400}
           height={400}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-contain pointer-events-none"
           draggable={false}
         />
       </div>
