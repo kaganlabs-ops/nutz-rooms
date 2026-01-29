@@ -12,18 +12,24 @@ import { BELIEFS, searchBeliefs, type Belief } from "../knowledge/beliefs";
 
 export const GET_KNOWLEDGE_TOOL: Anthropic.Tool = {
   name: "get_knowledge",
-  description: `Retrieve Kagan's personal knowledge - stories, facts, beliefs.
-Call this when you want to share a personal story or experience that's relevant to what the user is going through.
+  description: `Retrieve SPECIFIC details about Kagan's experiences - only for deep dives.
 
-Examples of when to call:
-- User struggling with early traction → query "early traction" or "few users"
-- User scared about money → query "money" or "broke"
-- User perfectioning forever → query "perfect" or "mvp"
-- User asking about cofounders → query "cofounder" or "ronnie"
-- User asking about Gorillas → query "gorillas"
-- User needs motivation to start → query "start" or "beginning"
+IMPORTANT: You already know the key stories from your personality:
+- Gorillas founding (living room, -5k euros, flyers in mailboxes, 10% conversion, Ronnie)
+- Current projects (Gatna Pilates, Sugar)
+- Background (water polo, Istanbul-China bike, Bain)
 
-The tool returns stories, facts, and beliefs matching your query.`,
+DO NOT call this tool for:
+- Basic questions about Gorillas or your background (you already know it)
+- General startup advice (use your personality)
+- Simple conversations
+
+ONLY call this tool when user asks for SPECIFIC details you don't have, like:
+- Exact metrics from a specific fundraising round
+- Names of specific team members
+- Specific dates or timelines
+
+Most conversations don't need this tool. Just respond from your personality.`,
   input_schema: {
     type: "object" as const,
     properties: {

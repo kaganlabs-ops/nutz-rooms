@@ -159,21 +159,16 @@ Kagan can now DO things, not just advise. Works in both **chat** and **voice**.
 4. Conversation continues (non-blocking)
 5. Result arrives, shown in UI
 
-### Trigger Detection
+### How Claude Decides (No Triggers)
 
-**Build triggers** (→ deploy_page):
-- "gonna build", "let me build", "building you"
-- "let me make you", "let me spin up"
-- "html prototype", "let me create"
+**DEPRECATED**: Build/document/research triggers removed in Phase 7.
 
-**Document triggers** (→ create_document):
-- "let me put together some clarity"
-- "let me organize", "putting together a plan"
-- "let me outline", "let me draft"
+Now Claude sees all tools and decides when to use them:
+- `deploy_page` - Claude uses when user wants something built
+- `create_document` - Claude uses when user needs a doc/plan
+- `web_search` - Claude uses when research is needed
 
-**Research triggers** (→ web_search):
-- "let me look into that"
-- "let me research", "checking now"
+No keyword detection. Claude decides based on context.
 
 ### Environment Variables
 ```
@@ -198,32 +193,68 @@ curl -X POST http://localhost:3000/api/agent \
   -d '{"task":"Research workout tracking apps","context":"User wants to build gym app"}'
 ```
 
-## Phase 6: Modular Architecture
+## Phase 7: Lean Architecture (CURRENT)
+
+### Principle: Claude Decides Everything
+
+No routing code. No keyword detection. No intent classification.
+Claude sees tools and context, decides what to do.
 
 ### Core Flow
 ```
-User message → /api/chat → Skills injection → Claude → Response
-                              ↓
-                         (if build trigger)
-                              ↓
-                        /api/agent → Tools → Deploy/Document
+User message → /api/chat → Agent with tools → Claude decides → Response
 ```
+
+### What Was Deleted
+- Build detection regex (keyword matching for "build me X")
+- Integration patterns (keyword matching for email/calendar)
+- `detectBuildIntent()` method (substring matching in Claude's response)
+- Fire-and-forget `/api/agent` calls based on response analysis
+- `get_knowledge` tool from Kagan (stories are in personality prompt now)
+
+### Why get_knowledge Was Removed
+- Stories were duplicated (in prompt AND in tool)
+- Claude called tool unnecessarily, making responses async
+- Empty response initially, user had to wait for task completion
+- Now Claude responds directly from personality prompt
+
+### How It Works Now
+1. **Personality prompt has all key stories** - Gorillas, Ronnie, fundraising, etc.
+2. **Tools are for ACTIONS** - deploy_page, web_search, send_email, generate_image
+3. **Claude responds directly** - no unnecessary tool calls for conversations
+4. **Tools trigger async only when needed** - image generation, email, deployment
+
+### Kagan's Tools
+- `web_search` - Research
+- `deploy_page` - Build and deploy working code
+- `create_document` - Generate markdown docs
+- `refer_to_agent` - Connect to Mike/Sarah
+- FAL tools - Image/video generation
+- Composio tools - Gmail, Calendar, etc. (when connected)
+
+Note: `get_knowledge` was removed - stories are in personality prompt.
 
 ### Key Files
 ```
 src/lib/agent/
-├── index.ts           # Agent class (chat, voiceChat, tool loop)
-├── tool-registry.ts   # Register and execute tools
-└── skill-loader.ts    # Load skills from markdown
+├── index.ts                    # Agent class (chat, voiceChat, tool loop)
+├── prompts/kagan-personality.ts  # ONE lean prompt (~400 words)
+├── skill-loader.ts             # Load skills from markdown
+├── knowledge/                  # stories.ts, facts.ts, beliefs.ts (for reference)
+└── tools/                      # refer-to-agent.ts
 
 src/lib/creators/
-└── kagan.ts           # CreatorConfig for Kagan
+├── kagan.ts           # CreatorConfig for Kagan
+├── mike.ts            # CreatorConfig for Mike
+└── sarah.ts           # CreatorConfig for Sarah
 
 src/lib/skills/
 ├── business/          # pitch-deck, fundraising, business-model, go-to-market
 ├── development/       # react-nextjs
 ├── design/            # ui-ux
-└── content/           # landing-page, copywriting
+├── content/           # landing-page, copywriting
+├── fitness/           # workout, nutrition, recovery
+└── mindfulness/       # meditation, breathwork, stress
 
 src/lib/tools/
 ├── index.ts           # Register all tools

@@ -3,9 +3,8 @@ import { ensureUser, createThread, addMessages, getThreadMessages, getUserContex
 import { parseArtifact } from "@/lib/artifacts";
 import { searchGif } from "@/lib/giphy";
 import { extractOneThing } from "@/lib/sessionStorage";
-import { setBuildEntry, updateBuildComplete, updateBuildError, setTaskEntry, updateTaskComplete, updateTaskError } from "@/lib/redis";
+import { setTaskEntry, updateTaskComplete, updateTaskError } from "@/lib/redis";
 import { createAgent } from "@/lib/agent";
-import { getConnectedApps, initiateConnection } from "@/lib/integrations/composio";
 import { BrainFact } from "@/types";
 
 export async function POST(req: NextRequest) {
@@ -74,122 +73,7 @@ export async function POST(req: NextRequest) {
     console.log(`[CHAT-V2] Context ready, memory: ${!!memoryContext}`);
 
     // ============================================
-    // FAST PATH: Instant response for build requests
-    // ============================================
-
-    // Skip fast path for image/video/audio generation (let agent use FAL tools)
-    // Also skip for image editing keywords (realistic, 3d, icon, logo, etc.)
-    const isMediaGeneration = /\b(generate|create|make)\s+(an?\s+)?(image|picture|photo|video|audio|music|song|icon|logo|illustration|artwork)\b/i.test(message)
-      || /\b(realistic|hyper.?realistic|3d|transparent|edit.*image|remove.*background)\b/i.test(message);
-
-    // Skip fast path for fitness-related "build" phrases (build muscle, build strength, etc.)
-    const isFitnessBuild = /\b(build|gain|grow)\s+(muscle|strength|mass|endurance|stamina)\b/i.test(message);
-
-    console.log(`[CHAT-V2] isMediaGeneration=${isMediaGeneration}, isFitnessBuild=${isFitnessBuild} for message: "${message}"`);
-
-    const buildMatch = message.toLowerCase().match(/(?:build|make|create)\s+(?:me\s+)?(?:a\s+)?(.+?)(?:\s+app|\s+game|\s+demo|\s+tool|\s+page)?$/i);
-    console.log(`[CHAT-V2] buildMatch=${!!buildMatch}, skipping fast path=${isMediaGeneration || isFitnessBuild}`);
-    if (buildMatch && !isMediaGeneration && !isFitnessBuild) {
-      const thing = buildMatch[1].replace(/\s+(app|game|demo|tool|page|for\s+.*)$/i, '').trim();
-      const fastBuildId = `build-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      const fastResponse = `building u ${thing}`;
-
-      console.log(`[CHAT-V2] FAST PATH: Build detected for "${thing}", ID: ${fastBuildId}`);
-
-      // Save to Zep
-      await addMessages(threadId, [
-        { role: "assistant", content: fastResponse, name: "Kagan" },
-      ]);
-
-      // Start build in background
-      await setBuildEntry(fastBuildId, { status: 'building', startTime: Date.now() });
-
-      const recentContext = messageHistory.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
-      fetch(new URL('/api/agent', req.url), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          task: 'Build a working prototype/demo based on the conversation. Deploy it and return the URL.',
-          context: `${recentContext}\nuser: ${message}`,
-          transcript: [...messageHistory, { role: 'user', content: message }],
-          buildId: fastBuildId,
-        }),
-      }).then(async (res) => {
-        if (!res.ok) throw new Error(`Agent returned ${res.status}`);
-        const data = await res.json();
-        await updateBuildComplete(fastBuildId, { deployedUrl: data.deployedUrl, document: data.document });
-      }).catch(async (err) => {
-        await updateBuildError(fastBuildId, err instanceof Error ? err.message : 'Unknown error');
-      });
-
-      // Return immediately
-      return NextResponse.json({
-        response: fastResponse,
-        threadId,
-        artifact: null,
-        gifUrl: null,
-        oneThing: null,
-        isNewSession,
-        buildId: fastBuildId,
-        isBuilding: true,
-      });
-    }
-
-    // ============================================
-    // FAST PATH: Integration requests (email, calendar)
-    // ============================================
-
-    const integrationPatterns: { pattern: RegExp; app: string; action: string }[] = [
-      { pattern: /\b(read|check|show|get)\s+(my\s+)?(email|mail|inbox)/i, app: 'gmail', action: 'read emails' },
-      { pattern: /\b(send|write|compose)\s+(an?\s+)?(email|mail)/i, app: 'gmail', action: 'send emails' },
-      { pattern: /\b(read|check|show|get)\s+(my\s+)?(calendar|events|schedule)/i, app: 'googlecalendar', action: 'check calendar' },
-      { pattern: /\b(create|add|schedule)\s+(a\s+)?(meeting|event|appointment)/i, app: 'googlecalendar', action: 'create events' },
-    ];
-
-    for (const { pattern, app, action } of integrationPatterns) {
-      if (pattern.test(message)) {
-        console.log(`[CHAT-V2] Integration pattern matched: ${app} for "${action}", userId=${userId}`);
-        const connectedApps = await getConnectedApps(userId);
-        console.log(`[CHAT-V2] Connected apps for ${userId}:`, connectedApps);
-
-        if (!connectedApps.includes(app)) {
-          console.log(`[CHAT-V2] Integration needed: ${app} for "${action}" - not in connected apps`);
-
-          try {
-            const { redirectUrl: authUrl } = await initiateConnection(userId, app);
-            const response = `to ${action}, u need to connect ${app === 'gmail' ? 'Gmail' : 'Google Calendar'} first\n\ntap here to connect: ${authUrl}`;
-
-            await addMessages(threadId, [
-              { role: "assistant", content: response, name: "Kagan" },
-            ]);
-
-            return NextResponse.json({
-              response,
-              threadId,
-              artifact: null,
-              gifUrl: null,
-              oneThing: null,
-              isNewSession,
-              buildId: null,
-              isBuilding: false,
-              needsAuth: { app, authUrl },
-            });
-          } catch (err) {
-            console.error(`[CHAT-V2] Failed to get auth URL for ${app}:`, err);
-            // Fall through to normal agent call
-          }
-        } else {
-          console.log(`[CHAT-V2] ✅ ${app} IS connected! Proceeding to agent with tool access.`);
-        }
-        break;
-      }
-    }
-
-    // ============================================
-    // Referral detection removed - agent handles referrals via refer_to_agent tool
-
-    // ============================================
-    // STEP 5: AGENT CALL WITH TOOL DETECTION
+    // AGENT CALL - Claude decides everything
     // If tools detected → return immediately, execute in background
     // If no tools → return response directly
     // ============================================
@@ -331,43 +215,7 @@ export async function POST(req: NextRequest) {
     const oneThing = agentResponse.oneThing || extractOneThing(rawResponse);
 
     // ============================================
-    // STEP 8: BUILD TRIGGERS (same as v1)
-    // ============================================
-
-    const { shouldBuild, type: createType } = agentResponse.buildIntent;
-    const buildId = shouldBuild && createType
-      ? `build-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
-      : null;
-
-    if (shouldBuild && createType && buildId) {
-      console.log(`[CHAT-V2] BUILD INTENT: ${createType}, ID: ${buildId}`);
-
-      const recentContext = messageHistory.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
-
-      await setBuildEntry(buildId, { status: 'building', startTime: Date.now() });
-
-      fetch(new URL('/api/agent', req.url), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          task: createType === 'build'
-            ? 'Build a working prototype/demo based on the conversation. Deploy it and return the URL.'
-            : 'Create a document based on the conversation. Use Kagan\'s principles.',
-          context: recentContext,
-          transcript: messageHistory,
-          buildId,
-        }),
-      }).then(async (res) => {
-        if (!res.ok) throw new Error(`Agent returned ${res.status}`);
-        const data = await res.json();
-        await updateBuildComplete(buildId, { deployedUrl: data.deployedUrl, document: data.document });
-      }).catch(async (err) => {
-        await updateBuildError(buildId, err instanceof Error ? err.message : 'Unknown error');
-      });
-    }
-
-    // ============================================
-    // STEP 9: SAVE TO ZEP
+    // SAVE TO ZEP
     // ============================================
 
     if (responseText?.trim()) {
@@ -392,8 +240,8 @@ export async function POST(req: NextRequest) {
       imageUrl,
       oneThing,
       isNewSession,
-      buildId,
-      isBuilding: !!buildId,
+      buildId: null,
+      isBuilding: false,
       referral: null,
     });
 

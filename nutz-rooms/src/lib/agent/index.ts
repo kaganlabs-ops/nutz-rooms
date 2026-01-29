@@ -225,14 +225,11 @@ export class Agent {
     // Extract ONE THING if present
     const oneThing = this.extractOneThing(finalText);
 
-    // Detect build intent
-    const buildIntent = this.detectBuildIntent(finalText);
-
     return {
       text: finalText,
       toolResults,
       oneThing,
-      buildIntent,
+      buildIntent: { shouldBuild: false, type: null },
       stopReason,
     };
   }
@@ -351,13 +348,12 @@ export class Agent {
     }
 
     const oneThing = this.extractOneThing(finalText);
-    const buildIntent = this.detectBuildIntent(finalText);
 
     return {
       text: finalText,
       toolResults,
       oneThing,
-      buildIntent,
+      buildIntent: { shouldBuild: false, type: null },
       stopReason,
     };
   }
@@ -419,13 +415,12 @@ export class Agent {
     }
 
     const oneThing = this.extractOneThing(finalText);
-    const buildIntent = this.detectBuildIntent(finalText);
 
     return {
       text: finalText,
       toolResults,
       oneThing,
-      buildIntent,
+      buildIntent: { shouldBuild: false, type: null },
       stopReason: response.stop_reason || 'end_turn',
     };
   }
@@ -656,60 +651,6 @@ IMPORTANT - HOW REFERRALS WORK:
     }
 
     return null;
-  }
-
-  /**
-   * Detect if response indicates build intent
-   */
-  private detectBuildIntent(text: string): { shouldBuild: boolean; type: 'build' | 'document' | null } {
-    const lower = text.toLowerCase();
-
-    const buildTriggers = [
-      'building that now',
-      'let me build that',
-      'on it, building',
-      'building you',
-      'building u ',
-      'let me build you',
-      'let me build u',
-      'gonna build',
-      'let me build',
-      'let me make you',
-      'let me make u',
-      'making you a',
-      'making u a',
-      'let me spin up',
-      'spinning up',
-      'let me create',
-      'creating a prototype',
-      'building a prototype',
-      'i can build that',
-      'ya i can build',
-      'yeah i can build',
-      'lemme build',
-      'on it building',
-      'building it now',
-      'building rn',
-    ];
-
-    const docTriggers = [
-      'let me put together some clarity',
-      'let me organize',
-      'putting together a plan',
-      'let me outline',
-      'writing up',
-      'let me draft',
-    ];
-
-    if (buildTriggers.some(t => lower.includes(t))) {
-      return { shouldBuild: true, type: 'build' };
-    }
-
-    if (docTriggers.some(t => lower.includes(t))) {
-      return { shouldBuild: true, type: 'document' };
-    }
-
-    return { shouldBuild: false, type: null };
   }
 
   /**

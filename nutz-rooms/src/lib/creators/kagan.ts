@@ -65,8 +65,7 @@ export const kaganConfig: CreatorConfig = {
     'web_search',
     'deploy_page',
     'create_document',
-    // Knowledge & referral (Phase 2)
-    'get_knowledge',
+    // Referral (knowledge is in personality prompt now)
     'refer_to_agent',
     // FAL tools
     'generate_image',
