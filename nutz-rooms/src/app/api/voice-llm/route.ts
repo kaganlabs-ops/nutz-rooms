@@ -2,8 +2,8 @@ import { NextRequest } from "next/server";
 import { anthropic } from "@/lib/openai";
 import { getKaganPrompt } from "@/lib/agent";
 import { getUserMemoryFromThread, hasRealMemory } from "@/lib/zep";
-import { findRelevantFacts, formatBrainContext, getKaganBrain } from "@/lib/brain";
-// Voice now uses the lean prompt with voice mode (no emojis, full words)
+// Voice uses the lean prompt with voice mode (no emojis, full words)
+// Brain.ts removed - knowledge is in the prompt
 
 // CORS headers for ElevenLabs
 const corsHeaders = {
@@ -109,41 +109,23 @@ export async function POST(req: NextRequest) {
 
     console.log(`[VOICE] Using lean voice prompt (${systemPrompt.length} chars)`);
 
-    // For simple greetings, just use cached brain (instant)
-    // For real questions, fetch user memory in parallel with brain
+    // For simple greetings, skip memory lookup (faster)
+    // For real questions, fetch user memory
     if (isSimpleMessage) {
-      // Just preload cache (instant)
-      getKaganBrain();
       console.log(`[VOICE] Simple greeting - skipping memory lookup`);
     } else if (userId) {
-      // Parallel fetch: brain cache (instant) + user memory (async)
-      const [_brainPreload, userMemoryContext] = await Promise.all([
-        Promise.resolve(getKaganBrain()),
-        getUserMemoryFromThread(userId),
-      ]);
-
-      // Get relevant brain facts based on user's message
-      const relevantBrainFacts = findRelevantFacts(userMessage, 5);
-
-      // Add Kagan's brain context (shared knowledge)
-      if (relevantBrainFacts.length > 0) {
-        systemPrompt += `\n\n${formatBrainContext(relevantBrainFacts)}`;
-      }
+      // Fetch user memory from Zep
+      const userMemoryContext = await getUserMemoryFromThread(userId);
 
       // Add user's personal memory (pre-formatted from Zep)
       if (hasRealMemory(userMemoryContext)) {
         systemPrompt += `\n\n## USER MEMORY:\n${userMemoryContext}`;
-        console.log(`[VOICE] Context: ${relevantBrainFacts.length} brain facts, user memory: ${userMemoryContext?.length || 0} chars`);
+        console.log(`[VOICE] User memory: ${userMemoryContext?.length || 0} chars`);
       } else {
-        console.log(`[VOICE] Context: ${relevantBrainFacts.length} brain facts, no user memory`);
+        console.log(`[VOICE] No user memory found`);
       }
     } else {
-      // No userId - just use brain facts without user memory
-      const relevantBrainFacts = findRelevantFacts(userMessage, 5);
-      if (relevantBrainFacts.length > 0) {
-        systemPrompt += `\n\n${formatBrainContext(relevantBrainFacts)}`;
-      }
-      console.log(`[VOICE] No userId - using ${relevantBrainFacts.length} brain facts only`);
+      console.log(`[VOICE] No userId - skipping memory`);
     }
 
     console.log(`[VOICE] Stream mode: ${stream}, prompt length: ${systemPrompt.length}`);

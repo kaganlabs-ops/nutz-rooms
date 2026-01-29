@@ -2,9 +2,10 @@
 // Run with: cd /Users/kagan/nutz-rooms && export $(grep -v '^#' .env.local | xargs) && npx tsx scripts/test-kagan-experience.ts
 
 import OpenAI from "openai";
-import { KAGAN_VOICE_PROMPT } from "../src/lib/openai";
+import { getKaganPrompt } from "../src/lib/agent/prompts/kagan-personality";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const KAGAN_VOICE_PROMPT = getKaganPrompt('voice');
 
 interface TestResult {
   reply: string;

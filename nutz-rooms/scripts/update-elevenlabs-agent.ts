@@ -4,7 +4,9 @@
  * Run with: npx ts-node scripts/update-elevenlabs-agent.ts
  */
 
-import { KAGAN_VOICE_PROMPT } from "../src/lib/openai";
+import { getKaganPrompt } from "../src/lib/agent/prompts/kagan-personality";
+
+const KAGAN_VOICE_PROMPT = getKaganPrompt('voice');
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
 const AGENT_ID = "agent_1001kefsejbwfs38hagtrp87e3zw"; // Kagan's agent ID from room page

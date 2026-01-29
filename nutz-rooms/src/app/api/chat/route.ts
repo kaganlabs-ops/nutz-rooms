@@ -2,12 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureUser, createThread, addMessages, getThreadMessages, getUserContext } from "@/lib/zep";
 import { parseArtifact } from "@/lib/artifacts";
 import { searchGif } from "@/lib/giphy";
-import { findRelevantFacts } from "@/lib/brain";
 import { extractOneThing } from "@/lib/sessionStorage";
 import { setBuildEntry, updateBuildComplete, updateBuildError, setTaskEntry, updateTaskComplete, updateTaskError } from "@/lib/redis";
 import { createAgent } from "@/lib/agent";
 import { getConnectedApps, initiateConnection } from "@/lib/integrations/composio";
-import { detectConversationalReferral } from "@/lib/agent/conversational-referral";
 import { BrainFact } from "@/types";
 
 export async function POST(req: NextRequest) {
@@ -67,17 +65,13 @@ export async function POST(req: NextRequest) {
     }
 
     // ============================================
-    // STEP 3: BRAIN FACTS (same as v1)
+    // STEP 3: CONTEXT (lean architecture - no brain.ts)
     // ============================================
 
-    const relevantBrainFacts = findRelevantFacts(message, 8);
-    const brainFacts: BrainFact[] = relevantBrainFacts.map(fact => ({
-      fact,
-      category: 'general',
-      keywords: [],
-    }));
+    // Brain facts removed - knowledge now comes from prompt + tools
+    const brainFacts: BrainFact[] = [];
 
-    console.log(`[CHAT-V2] Context: ${brainFacts.length} brain facts, memory: ${!!memoryContext}`);
+    console.log(`[CHAT-V2] Context ready, memory: ${!!memoryContext}`);
 
     // ============================================
     // FAST PATH: Instant response for build requests
@@ -192,42 +186,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ============================================
-    // STEP 4: CHECK FOR REFERRAL ACCEPTANCE (before agent call)
-    // If user accepted a referral offer, skip agent and return card
-    // ============================================
-
-    const conversationForReferral = [
-      ...messageHistory,
-      { role: 'user' as const, content: message }
-    ];
-    const earlyReferral = detectConversationalReferral(conversationForReferral, creatorId);
-
-    if (earlyReferral) {
-      console.log(`[CHAT-V2] 🔀 Referral accepted! ${creatorId} → ${earlyReferral.creatorId}`);
-
-      // Brief acknowledgment in the creator's style
-      const referralAck = creatorId === 'kagan' ? 'bet, here u go' :
-                          creatorId === 'mike' ? 'here u go bro' :
-                          creatorId === 'sarah' ? 'here you go' : 'connecting you';
-
-      // Save acknowledgment to Zep
-      await addMessages(threadId, [
-        { role: "assistant", content: referralAck, name: creatorId.charAt(0).toUpperCase() + creatorId.slice(1) },
-      ]);
-
-      return NextResponse.json({
-        response: referralAck,
-        threadId,
-        artifact: null,
-        gifUrl: null,
-        imageUrl: null,
-        oneThing: null,
-        isNewSession,
-        buildId: null,
-        isBuilding: false,
-        referral: earlyReferral,
-      });
-    }
+    // Referral detection removed - agent handles referrals via refer_to_agent tool
 
     // ============================================
     // STEP 5: AGENT CALL WITH TOOL DETECTION
