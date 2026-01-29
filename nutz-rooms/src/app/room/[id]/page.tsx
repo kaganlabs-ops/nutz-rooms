@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import VoiceCall from "@/components/VoiceCall";
 import { HomeScreen } from "@/components/HomeScreen";
+import { OnboardingModal } from "@/components/OnboardingModal";
 
 type VideoState = "idle" | "listening" | "speaking";
 
@@ -153,7 +154,13 @@ export default function RoomPage() {
   const [showVoiceCall, setShowVoiceCall] = useState(false);
   const [micError, setMicError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Long-press detection for NUTZ button
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const longPressTriggered = useRef(false);
+  const LONG_PRESS_DURATION = 3000; // 3 seconds
 
   // Initialize or retrieve user ID from localStorage (same as chat page)
   useEffect(() => {
@@ -265,6 +272,32 @@ export default function RoomPage() {
     }
     setIsDragging(false);
   }, [isDragging, nutzPosition, nutzSize]);
+
+  // Long-press handlers for NUTZ button - opens creator onboarding
+  const handleNutzLongPressStart = useCallback(() => {
+    longPressTriggered.current = false;
+    longPressTimer.current = setTimeout(() => {
+      longPressTriggered.current = true;
+      setShowOnboarding(true);
+      // Haptic feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    }, LONG_PRESS_DURATION);
+  }, []);
+
+  const handleNutzLongPressEnd = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  // Handle onboarding completion
+  const handleOnboardingComplete = useCallback((config: { name: string }) => {
+    console.log("[ONBOARDING] Created new agent:", config.name);
+    // In the future: reload creators, navigate to new agent, etc.
+  }, []);
 
   const handleSendMessage = () => {
     // Navigate to chat page for this character
@@ -533,7 +566,7 @@ export default function RoomPage() {
         )}
       </div>
 
-      {/* Draggable Nutz Button */}
+      {/* Draggable Nutz Button - Long-press (3s) to create agent */}
       <div
         className="absolute z-30 cursor-grab active:cursor-grabbing select-none transition-[width,height] duration-75"
         style={{
@@ -544,7 +577,15 @@ export default function RoomPage() {
           height: nutzSize,
           opacity: nutzInitialized ? 1 : 0,
         }}
-        onMouseDown={handleNutzMouseDown}
+        onMouseDown={(e) => {
+          handleNutzMouseDown(e);
+          handleNutzLongPressStart();
+        }}
+        onMouseUp={handleNutzLongPressEnd}
+        onMouseLeave={handleNutzLongPressEnd}
+        onTouchStart={handleNutzLongPressStart}
+        onTouchEnd={handleNutzLongPressEnd}
+        onTouchCancel={handleNutzLongPressEnd}
       >
         <Image
           src="/nutz-button.png"
@@ -570,6 +611,13 @@ export default function RoomPage() {
           onClose={() => setShowVoiceCall(false)}
         />
       )}
+
+      {/* Creator Onboarding Modal - triggered by long-pressing NUTZ button */}
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        onComplete={handleOnboardingComplete}
+      />
     </div>
   );
 }
