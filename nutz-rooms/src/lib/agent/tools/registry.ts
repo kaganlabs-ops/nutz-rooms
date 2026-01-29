@@ -6,7 +6,6 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
-import { GET_KNOWLEDGE_TOOL, handleGetKnowledge } from "./get-knowledge";
 import { REFER_TO_AGENT_TOOL, handleReferToAgent, type ReferralResult } from "./refer-to-agent";
 
 // Re-export types
@@ -31,10 +30,6 @@ interface ToolEntry {
  * Core tools that are always available
  */
 export const CORE_TOOLS: Record<string, ToolEntry> = {
-  get_knowledge: {
-    definition: GET_KNOWLEDGE_TOOL,
-    handler: (input) => handleGetKnowledge(input as { query: string; type?: string }),
-  },
   refer_to_agent: {
     definition: REFER_TO_AGENT_TOOL,
     handler: (input) => handleReferToAgent(input as { agent_id: string; reason?: string }),

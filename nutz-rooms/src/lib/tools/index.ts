@@ -5,7 +5,6 @@ import { firecrawlTools } from '@/lib/integrations/firecrawl';
 import { slidesTools } from '@/lib/integrations/slides';
 import { Tool, ToolResult } from '@/types';
 import { deployPage } from '@/lib/tools/deploy-page';
-import { handleGetKnowledge } from '@/lib/agent/tools/get-knowledge';
 import { handleReferToAgent } from '@/lib/agent/tools/refer-to-agent';
 
 // ============================================
@@ -86,33 +85,8 @@ const createDocumentTool: Tool = {
 };
 
 // ============================================
-// KNOWLEDGE & REFERRAL TOOLS (Phase 2)
+// REFERRAL TOOLS
 // ============================================
-
-const getKnowledgeTool: Tool = {
-  name: 'get_knowledge',
-  description: `Retrieve your personal knowledge - stories, facts, beliefs.
-Call this when you want to share a personal story or experience relevant to what the user is going through.
-
-When to call:
-- User struggling with early traction → query "early traction" or "few users"
-- User scared about money → query "money" or "broke"
-- User perfectioning forever → query "perfect" or "mvp"
-- User asking about cofounders → query "cofounder" or "ronnie"
-- User asking about Gorillas → query "gorillas"
-- User needs motivation → query "start" or "beginning"`,
-  parameters: {
-    query: { type: 'string', description: 'What knowledge to retrieve (e.g. "early traction", "money", "cofounder")', required: true },
-    type: { type: 'string', description: 'Type of knowledge: story, fact, belief, or all (default: all)', required: false, enum: ['story', 'fact', 'belief', 'all'] },
-  },
-  execute: async (params): Promise<ToolResult> => {
-    const result = handleGetKnowledge({
-      query: params.query as string,
-      type: params.type as string | undefined
-    });
-    return { success: true, data: { knowledge: result } };
-  },
-};
 
 const referToAgentTool: Tool = {
   name: 'refer_to_agent',
@@ -147,8 +121,7 @@ export function registerAllTools(): void {
   toolRegistry.register(deployPageTool);
   toolRegistry.register(createDocumentTool);
 
-  // Knowledge & referral tools (Phase 2)
-  toolRegistry.register(getKnowledgeTool);
+  // Referral tool
   toolRegistry.register(referToAgentTool);
 
   // FAL tools (image, video, audio)
