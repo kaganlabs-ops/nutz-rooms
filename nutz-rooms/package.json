@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "test:agents": "npx ts-node tests/agents/test-agents.ts",
+    "test:voice": "npx ts-node tests/agents/test-voice.ts",
+    "test:all": "npm run test:agents && npm run test:voice"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",

@@ -56,6 +56,12 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { UnlockAgentsModal } from "@/components/UnlockAgentsModal";
 
+interface Referral {
+  creatorId: string;
+  creatorName: string;
+  domain: string;
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -69,6 +75,7 @@ interface Message {
   isBuilding?: boolean; // Shows building indicator
   buildId?: string | null; // For polling build status
   taskId?: string | null; // For polling async task status
+  referral?: Referral | null; // Cross-agent referral
 }
 
 // Active build state for pinned banner
@@ -76,15 +83,6 @@ interface ActiveBuild {
   buildId: string;
   startTime: number;
   stage: 'generating' | 'deploying' | 'done' | 'error';
-}
-
-// Active task state for async tool execution
-interface ActiveTask {
-  taskId: string;
-  type: 'image' | 'video' | 'audio' | 'email' | 'other';
-  description: string;
-  startTime: number;
-  status: 'running' | 'complete' | 'error';
 }
 
 interface Character {
@@ -102,6 +100,20 @@ const CHARACTERS: Character[] = [
     fullName: "Kagan Sumer",
     title: "Entrepreneur, founder Gorillas",
     avatar: "/kagan-avatar.jpg",
+  },
+  {
+    id: "mike",
+    name: "Mike",
+    fullName: "Mike",
+    title: "Fitness Coach, former D1 athlete",
+    avatar: "/mike-avatar.jpg",
+  },
+  {
+    id: "sarah",
+    name: "Sarah",
+    fullName: "Sarah",
+    title: "Mindfulness Coach, ex-finance",
+    avatar: "/sarah-avatar.jpg",
   },
   {
     id: "joko",
@@ -150,7 +162,8 @@ export default function ChatPage() {
   const [sessionMetadata, setSessionMetadata] = useState<SessionMetadata | null>(null);
   const [sessionInitialized, setSessionInitialized] = useState(false);
   const [activeBuild, setActiveBuild] = useState<ActiveBuild | null>(null);
-  const [activeTask, setActiveTask] = useState<ActiveTask | null>(null);
+  // Track running tasks (for inline loading indicators)
+  const [runningTasks, setRunningTasks] = useState<Set<string>>(new Set());
   const [attachedImage, setAttachedImage] = useState<{ url: string; preview: string } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -283,7 +296,7 @@ export default function ChatPage() {
           message: messageWithImage,
           threadId,
           userId,
-          characterId,
+          creatorId: characterId, // Use URL param as creatorId for agent
           // Send session metadata to server for context building
           sessionMetadata: sessionMetadata ? {
             lastSessionTimestamp: sessionMetadata.lastSessionTimestamp,
@@ -342,6 +355,7 @@ export default function ChatPage() {
           isBuilding: data.isBuilding,
           buildId: data.buildId,
           taskId: data.taskId,
+          referral: data.referral || null,
         },
       ]);
 
@@ -466,7 +480,7 @@ export default function ChatPage() {
   };
 
   // Poll for async task status (image/video/audio generation)
-  const pollTaskStatus = (taskId: string, taskType: string, description: string) => {
+  const pollTaskStatus = (taskId: string, taskType: string, _description: string) => {
     const maxAttempts = 120; // 120 attempts * 2 seconds = 4 minutes max
     let attempts = 0;
     let intervalId: NodeJS.Timeout | null = null;
@@ -474,14 +488,8 @@ export default function ChatPage() {
 
     console.log('[TASK] Starting poll for taskId:', taskId, 'type:', taskType);
 
-    // Set active task banner
-    setActiveTask({
-      taskId,
-      type: taskType as ActiveTask['type'],
-      description,
-      startTime,
-      status: 'running',
-    });
+    // Track this task as running (for inline loading indicator)
+    setRunningTasks(prev => new Set(prev).add(taskId));
 
     const poll = async () => {
       attempts++;
@@ -496,7 +504,7 @@ export default function ChatPage() {
           console.error('[TASK] Response not OK:', res.status, res.statusText);
           if (attempts >= maxAttempts && intervalId) {
             clearInterval(intervalId);
-            setActiveTask(null);
+            setRunningTasks(prev => { const next = new Set(prev); next.delete(taskId); return next; });
           }
           return;
         }
@@ -508,9 +516,24 @@ export default function ChatPage() {
           console.log('[TASK] Complete! Result:', data.result);
           if (intervalId) clearInterval(intervalId);
 
-          // Update banner briefly then clear
-          setActiveTask(prev => prev?.taskId === taskId ? { ...prev, status: 'complete' } : prev);
-          setTimeout(() => setActiveTask(null), 2000);
+          // Remove from running tasks
+          setRunningTasks(prev => { const next = new Set(prev); next.delete(taskId); return next; });
+
+          // Extract document from toolResults if present
+          let agentDocument: { title: string; content: string; type: string } | null = null;
+          if (data.result?.data?.toolResults) {
+            for (const tr of data.result.data.toolResults as Array<{ tool: string; result: { success?: boolean; data?: { title?: string; content?: string; type?: string } } }>) {
+              if (tr.tool === 'create_document' && tr.result?.success && tr.result?.data) {
+                agentDocument = {
+                  title: tr.result.data.title || 'Document',
+                  content: tr.result.data.content || '',
+                  type: tr.result.data.type || 'other',
+                };
+                console.log('[TASK] Extracted document:', agentDocument.title);
+                break;
+              }
+            }
+          }
 
           // Update the message that has this taskId with the result
           setMessages((prev) => {
@@ -523,6 +546,7 @@ export default function ChatPage() {
                     imageUrl: data.result?.imageUrl || msg.imageUrl,
                     videoUrl: data.result?.videoUrl || msg.videoUrl,
                     audioUrl: data.result?.audioUrl || msg.audioUrl,
+                    agentDocument: agentDocument || msg.agentDocument,
                   }
                 : msg
             );
@@ -535,8 +559,7 @@ export default function ChatPage() {
         if (data.status === 'error') {
           console.error('[TASK] Failed:', data.error);
           if (intervalId) clearInterval(intervalId);
-          setActiveTask(prev => prev?.taskId === taskId ? { ...prev, status: 'error' } : prev);
-          setTimeout(() => setActiveTask(null), 3000);
+          setRunningTasks(prev => { const next = new Set(prev); next.delete(taskId); return next; });
           return;
         }
 
@@ -545,13 +568,13 @@ export default function ChatPage() {
         if (attempts >= maxAttempts) {
           console.error('[TASK] Timeout after', maxAttempts, 'attempts');
           if (intervalId) clearInterval(intervalId);
-          setActiveTask(null);
+          setRunningTasks(prev => { const next = new Set(prev); next.delete(taskId); return next; });
         }
       } catch (err) {
         console.error('[TASK] Poll error:', err);
         if (attempts >= maxAttempts && intervalId) {
           clearInterval(intervalId);
-          setActiveTask(null);
+          setRunningTasks(prev => { const next = new Set(prev); next.delete(taskId); return next; });
         }
       }
     };
@@ -827,44 +850,8 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* Pinned Task Progress Banner */}
-        {activeTask && !activeBuild && (
-          <div className="liquid-glass rounded-2xl px-4 py-3 flex items-center gap-3">
-            <span className={`text-lg ${activeTask.status === 'running' ? 'animate-pulse' : ''}`}>
-              {activeTask.status === 'error' ? '💀' :
-               activeTask.type === 'image' ? '🎨' :
-               activeTask.type === 'video' ? '🎬' :
-               activeTask.type === 'audio' ? '🎵' :
-               activeTask.type === 'email' ? '📧' : '⚙️'}
-            </span>
-            <div className="flex-1 min-w-0">
-              <span className={`text-sm font-medium ${
-                activeTask.status === 'complete' ? 'text-green-700' :
-                activeTask.status === 'error' ? 'text-red-700' :
-                'text-purple-700'
-              }`}>
-                {activeTask.status === 'complete' ? 'done!' :
-                 activeTask.status === 'error' ? 'rip' :
-                 activeTask.description}
-              </span>
-              <p className="text-xs text-gray-600">
-                {activeTask.status === 'complete' ? 'check it out below' :
-                 activeTask.status === 'error' ? 'something broke' :
-                 'u can keep chatting'}
-              </p>
-            </div>
-            {activeTask.status === 'running' && (
-              <div className="flex gap-1">
-                <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Pinned ONE THING Banner */}
-        {pinnedAction && !activeBuild && !activeTask && (
+        {pinnedAction && !activeBuild && (
           <div className="liquid-glass-warm rounded-2xl px-4 py-3 flex items-center gap-2">
             <span className="text-lg">📌</span>
             <div className="flex-1 min-w-0">
@@ -904,18 +891,33 @@ export default function ChatPage() {
             <div className="max-w-[80%]">
               {/* Split assistant messages into multiple bubbles on double newline */}
               {message.role === "assistant" ? (
-                message.content && message.content.trim() && (
-                  <div className="space-y-2">
-                    {message.content.split(/\n\n+/).filter(part => part.trim()).map((part, partIndex) => (
-                      <div
-                        key={partIndex}
-                        className="rounded-3xl px-4 py-3 liquid-glass text-gray-800"
-                      >
-                        <p className="whitespace-pre-wrap text-sm">{part.trim()}</p>
+                <>
+                  {/* Inline loading for running tasks */}
+                  {message.taskId && runningTasks.has(message.taskId) && (
+                    <div className="rounded-3xl px-4 py-3 liquid-glass text-gray-800">
+                      <div className="flex items-center gap-2">
+                        <div className="flex gap-1">
+                          <span className="w-2 h-2 bg-gray-500/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                          <span className="w-2 h-2 bg-gray-500/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                          <span className="w-2 h-2 bg-gray-500/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                )
+                    </div>
+                  )}
+                  {/* Content */}
+                  {message.content && message.content.trim() && (
+                    <div className="space-y-2">
+                      {message.content.split(/\n\n+/).filter(part => part.trim()).map((part, partIndex) => (
+                        <div
+                          key={partIndex}
+                          className="rounded-3xl px-4 py-3 liquid-glass text-gray-800"
+                        >
+                          <p className="whitespace-pre-wrap text-sm">{part.trim()}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
               ) : (
                 /* User messages - show image and/or text */
                 (message.content?.trim() || message.imageUrl) && (
@@ -1021,6 +1023,39 @@ export default function ChatPage() {
                     Copy to clipboard
                   </button>
                 </div>
+              )}
+
+              {/* Referral contact card */}
+              {message.referral && (
+                <button
+                  onClick={() => {
+                    if (isLoggedIn) {
+                      // Logged in - redirect directly
+                      router.push(`/chat/${message.referral!.creatorId}`);
+                    } else {
+                      // Anonymous - show unlock modal
+                      setPendingAgentId(message.referral!.creatorId);
+                      setUnlockModalReason('agent');
+                      setShowUnlockModal(true);
+                    }
+                  }}
+                  className={`${message.content?.trim() ? 'mt-2' : ''} w-full liquid-glass rounded-2xl p-3 hover:scale-[1.02] active:scale-[0.98] transition-transform text-left`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold text-sm">
+                      {message.referral.creatorName.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800">{message.referral.creatorName}</p>
+                      <p className="text-xs text-gray-500 truncate">{message.referral.domain}</p>
+                    </div>
+                    <div className="text-purple-600">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    </div>
+                  </div>
+                </button>
               )}
             </div>
           </div>

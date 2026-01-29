@@ -1,6 +1,8 @@
 // Quick memory test script
 // Run with: npx ts-node scripts/test-memory.ts
 
+export {}; // Make this a module to avoid global scope conflicts
+
 const BASE_URL = "https://nutz-rooms.vercel.app";
 
 async function testMemory() {

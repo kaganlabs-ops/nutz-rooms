@@ -139,6 +139,20 @@ export class Agent {
     let toolResults: Array<{ tool: string; result: unknown }> = [];
     let stopReason = 'end_turn';
 
+    // Debug: Log prompt to verify no emojis in instructions
+    console.log(`[AGENT] System prompt length: ${systemPrompt.length}`);
+    console.log(`[AGENT] Prompt contains emoji instruction: ${systemPrompt.includes('NEVER use emojis')}`);
+    console.log(`[AGENT] Messages count: ${currentMessages.length}`);
+
+    // Check if any past messages have emojis
+    const messagesWithEmojis = currentMessages.filter(m => {
+      const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+      return /[\u{1F300}-\u{1F9FF}]/u.test(content);
+    });
+    if (messagesWithEmojis.length > 0) {
+      console.log(`[AGENT] WARNING: ${messagesWithEmojis.length} past messages contain emojis!`);
+    }
+
     // First Claude call
     const firstResponse = await this.anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
@@ -482,14 +496,17 @@ ${zepContext}
 
 IMPORTANT:
 - Only reference things EXPLICITLY in the memory above
-- NEVER make up or hallucinate conversations that aren't in FACTS`;
+- NEVER make up or hallucinate conversations that aren't in FACTS
+- If user says "remember when you said X" and its not in memory above, say "i dont remember that tbh"
+- NEVER double down on fake memories. If you dont have it, you dont have it.`;
     } else if (!sessionMetadata?.sessionCount || sessionMetadata.sessionCount <= 1) {
       prompt += `\n\n## MEMORY:
 NO MEMORY AVAILABLE. This is a new user.
 
 CRITICAL:
 - Do NOT make up or hallucinate past conversations
-- Be direct: "im not seeing our past convos, fill me in"`;
+- If they say "remember X" or "you said Y" → say "nah i dont have that in my memory"
+- NEVER pretend to remember something. NEVER double down on fake memories.`;
     }
 
     // Add tool instructions

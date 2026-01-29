@@ -7,6 +7,7 @@ import { extractOneThing } from "@/lib/sessionStorage";
 import { setBuildEntry, updateBuildComplete, updateBuildError, setTaskEntry, updateTaskComplete, updateTaskError } from "@/lib/redis";
 import { createAgent } from "@/lib/agent";
 import { getConnectedApps, initiateConnection } from "@/lib/integrations/composio";
+import { detectConversationalReferral } from "@/lib/agent/conversational-referral";
 import { BrainFact } from "@/types";
 
 export async function POST(req: NextRequest) {
@@ -18,7 +19,8 @@ export async function POST(req: NextRequest) {
       message,
       threadId: existingThreadId,
       userId,
-      sessionMetadata
+      sessionMetadata,
+      creatorId = 'kagan'
     } = await req.json();
 
     if (!message || !userId) {
@@ -28,7 +30,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log(`[CHAT-V2] Request from user: ${userId}`);
+    console.log(`[CHAT-V2] Request from user: ${userId}, creator: ${creatorId}`);
 
     // ============================================
     // STEP 1: ZEP SETUP (same as v1)
@@ -57,8 +59,8 @@ export async function POST(req: NextRequest) {
     console.log(`[CHAT-V2] Memory fetch completed in ${Date.now() - startTime}ms`);
 
     const messageHistory: Array<{ role: "user" | "assistant"; content: string }> = [];
-    const recentMessages = threadMessages.slice(-6);
-    for (const msg of recentMessages) {
+    // Use full conversation history (Zep manages this, Claude context window is large enough)
+    for (const msg of threadMessages) {
       if ((msg.role === "user" || msg.role === "assistant") && msg.content && msg.content.trim()) {
         messageHistory.push({ role: msg.role, content: msg.content });
       }
@@ -85,11 +87,15 @@ export async function POST(req: NextRequest) {
     // Also skip for image editing keywords (realistic, 3d, icon, logo, etc.)
     const isMediaGeneration = /\b(generate|create|make)\s+(an?\s+)?(image|picture|photo|video|audio|music|song|icon|logo|illustration|artwork)\b/i.test(message)
       || /\b(realistic|hyper.?realistic|3d|transparent|edit.*image|remove.*background)\b/i.test(message);
-    console.log(`[CHAT-V2] isMediaGeneration=${isMediaGeneration} for message: "${message}"`);
+
+    // Skip fast path for fitness-related "build" phrases (build muscle, build strength, etc.)
+    const isFitnessBuild = /\b(build|gain|grow)\s+(muscle|strength|mass|endurance|stamina)\b/i.test(message);
+
+    console.log(`[CHAT-V2] isMediaGeneration=${isMediaGeneration}, isFitnessBuild=${isFitnessBuild} for message: "${message}"`);
 
     const buildMatch = message.toLowerCase().match(/(?:build|make|create)\s+(?:me\s+)?(?:a\s+)?(.+?)(?:\s+app|\s+game|\s+demo|\s+tool|\s+page)?$/i);
-    console.log(`[CHAT-V2] buildMatch=${!!buildMatch}, skipping fast path=${isMediaGeneration}`);
-    if (buildMatch && !isMediaGeneration) {
+    console.log(`[CHAT-V2] buildMatch=${!!buildMatch}, skipping fast path=${isMediaGeneration || isFitnessBuild}`);
+    if (buildMatch && !isMediaGeneration && !isFitnessBuild) {
       const thing = buildMatch[1].replace(/\s+(app|game|demo|tool|page|for\s+.*)$/i, '').trim();
       const fastBuildId = `build-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const fastResponse = `building u ${thing}`;
@@ -186,7 +192,45 @@ export async function POST(req: NextRequest) {
     }
 
     // ============================================
-    // STEP 4: AGENT CALL WITH TOOL DETECTION
+    // STEP 4: CHECK FOR REFERRAL ACCEPTANCE (before agent call)
+    // If user accepted a referral offer, skip agent and return card
+    // ============================================
+
+    const conversationForReferral = [
+      ...messageHistory,
+      { role: 'user' as const, content: message }
+    ];
+    const earlyReferral = detectConversationalReferral(conversationForReferral, creatorId);
+
+    if (earlyReferral) {
+      console.log(`[CHAT-V2] 🔀 Referral accepted! ${creatorId} → ${earlyReferral.creatorId}`);
+
+      // Brief acknowledgment in the creator's style
+      const referralAck = creatorId === 'kagan' ? 'bet, here u go' :
+                          creatorId === 'mike' ? 'here u go bro' :
+                          creatorId === 'sarah' ? 'here you go' : 'connecting you';
+
+      // Save acknowledgment to Zep
+      await addMessages(threadId, [
+        { role: "assistant", content: referralAck, name: creatorId.charAt(0).toUpperCase() + creatorId.slice(1) },
+      ]);
+
+      return NextResponse.json({
+        response: referralAck,
+        threadId,
+        artifact: null,
+        gifUrl: null,
+        imageUrl: null,
+        oneThing: null,
+        isNewSession,
+        buildId: null,
+        isBuilding: false,
+        referral: earlyReferral,
+      });
+    }
+
+    // ============================================
+    // STEP 5: AGENT CALL WITH TOOL DETECTION
     // If tools detected → return immediately, execute in background
     // If no tools → return response directly
     // ============================================
@@ -194,7 +238,7 @@ export async function POST(req: NextRequest) {
     console.log(`[CHAT-V2] ========== AGENT CALL ==========`);
     console.log(`[CHAT-V2] 🤖 Calling agent with message: "${message}"`);
 
-    const agent = createAgent('kagan', userId);
+    const agent = createAgent(creatorId, userId);
     const agentResponse = await agent.chat(message, {
       history: messageHistory,
       zepContext: memoryContext,
@@ -364,7 +408,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ============================================
-    // STEP 9: SAVE TO ZEP (same as v1)
+    // STEP 9: SAVE TO ZEP
     // ============================================
 
     if (responseText?.trim()) {
@@ -391,6 +435,7 @@ export async function POST(req: NextRequest) {
       isNewSession,
       buildId,
       isBuilding: !!buildId,
+      referral: null,
     });
 
   } catch (error) {
