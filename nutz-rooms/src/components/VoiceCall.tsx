@@ -423,6 +423,7 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
     type: 'research' | 'deploy' | 'image';
     result?: string;
     deployedUrl?: string;
+    imageUrl?: string;
   } | null>(null);
   // Pending agent result for injection into conversation
   const pendingAgentResult = useRef<string | null>(null);
@@ -574,16 +575,17 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
       }),
     })
       .then(res => res.json())
-      .then(({ result, deployedUrl }) => {
+      .then(({ result, deployedUrl, imageUrl }) => {
         console.log('[AGENT] Task completed:', taskId);
         console.log('[AGENT] Result preview:', result?.slice(0, 200));
         console.log('[AGENT] Deployed URL:', deployedUrl);
+        console.log('[AGENT] Image URL:', imageUrl);
         pendingAgentResult.current = result;
         // Also append to zepContextRef so Kagan can see it in context
         if (result) {
           zepContextRef.current = zepContextRef.current + `\n\nAGENT_RESULT:\n${result}`;
         }
-        setAgentTask(prev => prev ? { ...prev, status: 'done', result, deployedUrl } : null);
+        setAgentTask(prev => prev ? { ...prev, status: 'done', result, deployedUrl, imageUrl } : null);
       })
       .catch((err) => {
         console.error('[AGENT] Task failed:', err);
@@ -1111,10 +1113,26 @@ export default function VoiceCall({ agentId, characterName, userId, onClose }: V
                 </a>
               )}
               {/* Show result preview when done (for research) */}
-              {agentTask.status === 'done' && agentTask.result && !agentTask.deployedUrl && (
+              {agentTask.status === 'done' && agentTask.result && !agentTask.deployedUrl && !agentTask.imageUrl && (
                 <p className="text-xs text-white/50 mt-2 line-clamp-2">
                   {agentTask.result.slice(0, 150)}...
                 </p>
+              )}
+              {/* Show image when done */}
+              {agentTask.status === 'done' && agentTask.imageUrl && (
+                <a
+                  href={agentTask.imageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 block"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <img
+                    src={agentTask.imageUrl}
+                    alt="Generated image"
+                    className="w-full rounded-lg max-h-48 object-cover"
+                  />
+                </a>
               )}
             </div>
           </div>
