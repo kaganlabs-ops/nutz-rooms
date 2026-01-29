@@ -174,15 +174,26 @@ export async function POST(req: NextRequest) {
     // No tools - direct response
     console.log(`[CHAT-V2] ⚡ No tools, direct response in ${Date.now() - startTime}ms`);
 
-    // Extract image URL from tool results (FAL generate_image)
+    // Extract image URL and referral from tool results
     let imageUrl: string | null = null;
+    let referral: { creatorId: string; creatorName: string; domain: string } | null = null;
+
     if (agentResponse.toolResults?.length) {
       for (const tr of agentResponse.toolResults) {
-        const result = tr.result as { success?: boolean; data?: { imageUrl?: string } };
+        // Check for image URL (FAL generate_image)
+        const result = tr.result as { success?: boolean; data?: { imageUrl?: string }; agent_id?: string; agent_name?: string; domain?: string; reason?: string };
         if (result?.success && result?.data?.imageUrl) {
           imageUrl = result.data.imageUrl;
           console.log(`[CHAT-V2] 🖼️ Extracted image URL:`, imageUrl);
-          break;
+        }
+        // Check for referral (refer_to_agent) - map to chat page's expected shape
+        if (tr.tool === 'refer_to_agent' && result?.success && result?.agent_id) {
+          referral = {
+            creatorId: result.agent_id,
+            creatorName: result.agent_name || result.agent_id,
+            domain: result.domain || '',
+          };
+          console.log(`[CHAT-V2] 🤝 Referral to:`, referral.creatorName);
         }
       }
     }
@@ -242,7 +253,7 @@ export async function POST(req: NextRequest) {
       isNewSession,
       buildId: null,
       isBuilding: false,
-      referral: null,
+      referral,
     });
 
   } catch (error) {
