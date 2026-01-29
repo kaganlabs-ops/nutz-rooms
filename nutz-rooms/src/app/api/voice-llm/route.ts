@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
-import { anthropic, KAGAN_VOICE_PROMPT } from "@/lib/openai";
+import { anthropic } from "@/lib/openai";
+import { getKaganPrompt } from "@/lib/agent";
 import { getUserMemoryFromThread, hasRealMemory } from "@/lib/zep";
 import { findRelevantFacts, formatBrainContext, getKaganBrain } from "@/lib/brain";
-// Voice always uses the battle-tested old prompt
-// New lean prompt is for chat only (different needs: silence handling, pacing, etc)
+// Voice now uses the lean prompt with voice mode (no emojis, full words)
 
 // CORS headers for ElevenLabs
 const corsHeaders = {
@@ -104,10 +104,10 @@ export async function POST(req: NextRequest) {
     const simpleMessages = ['hey', 'hi', 'hello', 'yo', 'sup', 'whats up', "what's up", 'how are you', 'good morning', 'good evening'];
     const isSimpleMessage = simpleMessages.some(s => userMessage.toLowerCase().trim() === s || userMessage.toLowerCase().trim().startsWith(s + ' '));
 
-    // Voice always uses the old prompt (battle-tested, has silence handling, pacing)
-    let systemPrompt = KAGAN_VOICE_PROMPT;
+    // Use the lean prompt with voice mode (no emojis, full words)
+    let systemPrompt = getKaganPrompt('voice');
 
-    console.log(`[VOICE] Using voice prompt (${systemPrompt.length} chars)`);
+    console.log(`[VOICE] Using lean voice prompt (${systemPrompt.length} chars)`);
 
     // For simple greetings, just use cached brain (instant)
     // For real questions, fetch user memory in parallel with brain
